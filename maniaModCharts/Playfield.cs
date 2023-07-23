@@ -47,11 +47,17 @@ namespace StorybrewScripts
         public void initilizePlayField(StoryboardLayer receptors, StoryboardLayer notes, int starttime, int endtime, float receportWidth, float receptorHeightOffset, float noteHeightOffset)
         {
 
+            var bg = notes.CreateSprite("sb/transparent.png");
+            bg.ScaleVec(0, new Vector2(width, height));
+            bg.Fade(starttime, 1);
+            bg.Fade(endtime, 0);
 
-            Column one = new Column(128, ColumnType.one, receptorSpritePath, receptors, receptorScale);
-            Column two = new Column(256, ColumnType.two, receptorSpritePath, receptors, receptorScale);
-            Column three = new Column(384, ColumnType.three, receptorSpritePath, receptors, receptorScale);
-            Column four = new Column(512, ColumnType.four, receptorSpritePath, receptors, receptorScale);
+            this.bg = bg;
+
+            Column one = new Column(128, ColumnType.one, receptorSpritePath, receptors, receptorScale, starttime);
+            Column two = new Column(256, ColumnType.two, receptorSpritePath, receptors, receptorScale, starttime);
+            Column three = new Column(384, ColumnType.three, receptorSpritePath, receptors, receptorScale, starttime);
+            Column four = new Column(512, ColumnType.four, receptorSpritePath, receptors, receptorScale, starttime);
 
             columns.Add(one.type, one);
             columns.Add(two.type, two);
@@ -79,13 +85,6 @@ namespace StorybrewScripts
 
                 position += getColumnWidth();
             }
-
-            var bg = notes.CreateSprite("sb/transparent.png");
-            bg.ScaleVec(0, new Vector2(width, height));
-            bg.Fade(starttime, 1);
-            bg.Fade(endtime, 0);
-
-            this.bg = bg;
 
             this.noteHeightOffset = noteHeightOffset;
             this.receptorHeightOffset = receptorHeightOffset;
@@ -284,7 +283,13 @@ namespace StorybrewScripts
                         debug = $"Progress: {progress}, Position: {newPosition}, SnapDuration: {snapDuration}, Currenttime: {currentTime}, timeleft: {timeLeft}  \n";
 
                         note.Move(currentTime, snapLength, easing, currentPosition, newPosition);
-                        note.Scale(currentTime, snapLength, easing, column.origin.getCurrentScale(currentTime), column.origin.getCurrentScale(currentTime + snapLength));
+
+                        Vector2 originScale = column.origin.getCurrentScale(currentTime);
+                        Vector2 receptorScale = column.receptor.getCurrentScale(currentTime);
+
+                        Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, progress);
+
+                        note.Scale(currentTime, snapLength, easing, column.origin.getCurrentScale(currentTime), scaleProgress);
 
                         currentTime += snapLength;
 
@@ -328,7 +333,7 @@ namespace StorybrewScripts
         public void ScalePlayField(int starttime, int duration, OsbEasing easing, float width, float height)
         {
 
-            // bg.ScaleVec(easing, starttime, starttime + duration, this.width, this.height, width, height);
+            bg.ScaleVec(easing, starttime, starttime + duration, this.width, this.height, width, height);
 
             this.width = width;
             this.height = height;
@@ -369,6 +374,60 @@ namespace StorybrewScripts
 
         }
 
+        public double Zoom(int starttime, int duration, OsbEasing easing, double zoomAmount, Boolean keepXPosition)
+        {
+            double endtime = starttime + duration;
+
+            bg.ScaleVec(easing, starttime, starttime + duration, bg.ScaleAt(starttime), Vector2.Multiply(bg.ScaleAt(starttime), (float)zoomAmount));
+            Vector2 center = bg.PositionAt(starttime);
+            Vector2 newScale = bg.ScaleAt(starttime + duration);
+
+            foreach (Column column in columns.Values)
+            {
+                Receptor receptor = column.receptor;
+                NoteOrigin origin = column.origin;
+
+                Vector2 receptorScale = receptor.getCurrentScale(starttime);
+                Vector2 originScale = origin.getCurrentScale(starttime);
+
+                Vector2 receptorPosition = receptor.getCurrentPosition(starttime);
+                Vector2 originPosition = origin.getCurrentPosition(starttime);
+
+                Vector2 scaledReceptorScale = Vector2.Multiply(receptorScale, (float)zoomAmount);
+                Vector2 scaledOriginScale = Vector2.Multiply(originScale, (float)zoomAmount);
+
+                receptor.ScaleReceptor(starttime, scaledReceptorScale, easing, duration);
+                origin.ScaleReceptor(starttime, scaledOriginScale, easing, duration);
+
+                Vector2 receptorTarget = receptorPosition;
+                Vector2 originTarget = originPosition;
+
+                if (!keepXPosition)
+                {
+                    Vector2 relativeReceptorPosition = Vector2.Subtract(receptorPosition, center);
+                    Vector2 relativeOriginPosition = Vector2.Subtract(originPosition, center);
+
+                    Vector2 zoomedReceptorPosition = Vector2.Multiply(relativeReceptorPosition, (float)zoomAmount);
+                    Vector2 zoomedOriginPosition = Vector2.Multiply(relativeOriginPosition, (float)zoomAmount);
+
+                    receptorTarget = Vector2.Add(zoomedReceptorPosition, center);
+                    originTarget = Vector2.Add(zoomedOriginPosition, center);
+                }
+                else
+                {
+                    receptorTarget.Y *= (float)zoomAmount;
+                    originTarget.Y *= (float)zoomAmount;
+                }
+
+                receptor.MoveReceptor(starttime, receptorTarget, easing, duration);
+                origin.MoveReceptor(starttime, originTarget, easing, duration);
+            }
+
+            return endtime;
+        }
+
+
+
         public double SwapColumn(int starttime, int duration, OsbEasing easing, ColumnType column1, ColumnType column2)
         {
 
@@ -393,7 +452,7 @@ namespace StorybrewScripts
 
             Boolean isFlipped = false;
 
-            bg.ScaleVec(easing, starttime, starttime + duration, this.width, this.height, width, height);
+            // bg.ScaleVec(easing, starttime, starttime + duration, this.width, this.height, width, height);
 
             if (height < this.height / 2)
             {
@@ -492,8 +551,8 @@ namespace StorybrewScripts
                 Receptor receptor = column.receptor;
                 NoteOrigin origin = column.origin;
 
-                receptor.PivotReceptor(starttime, radians, easing, duration, sampleCount);
-                origin.PivotReceptor(starttime, radians, easing, duration, sampleCount);
+                receptor.PivotReceptor(starttime, radians, easing, duration, sampleCount, bg.PositionAt(starttime));
+                origin.PivotReceptor(starttime, radians, easing, duration, sampleCount, bg.PositionAt(starttime));
             }
 
         }
@@ -502,6 +561,11 @@ namespace StorybrewScripts
         {
 
             int half = duration / 2;
+
+            Vector2 bgPosition = bg.PositionAt(starttime);
+
+            bg.Move(easing, starttime, half, bgPosition, Vector2.Add(bgPosition, new Vector2(amount, 0)));
+            bg.Move(easing, starttime + half, half, Vector2.Add(bgPosition, new Vector2(amount, 0)), bgPosition);
 
             foreach (Column column in columns.Values)
             {
@@ -555,8 +619,6 @@ namespace StorybrewScripts
         {
             return (absoluteWidth - width) / 2;
         }
-
-
 
     }
 }

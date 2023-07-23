@@ -27,7 +27,7 @@ namespace StorybrewScripts
         public NoteOrigin origin;
 
 
-        public Column(double offset, ColumnType type, String receptorSpritePath, StoryboardLayer columnLayer, CommandScale scale)
+        public Column(double offset, ColumnType type, String receptorSpritePath, StoryboardLayer columnLayer, CommandScale scale, double starttime)
         {
             this.offset = offset;
             this.type = type;
@@ -51,8 +51,8 @@ namespace StorybrewScripts
                     break;
             }
 
-            this.receptor = new Receptor(receptorSpritePath, rotation, columnLayer, scale);
-            this.origin = new NoteOrigin(receptorSpritePath, rotation, columnLayer, scale);
+            this.receptor = new Receptor(receptorSpritePath, rotation, columnLayer, scale, starttime);
+            this.origin = new NoteOrigin(receptorSpritePath, rotation, columnLayer, scale, starttime);
 
         }
 

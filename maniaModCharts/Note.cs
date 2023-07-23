@@ -129,7 +129,7 @@ namespace StorybrewScripts
         {
             OsbSprite note = this.noteSprite;
 
-            note.Rotate(easing, starttime, starttime + duration, getRotation(starttime), rotation);
+            note.Rotate(easing, starttime, starttime + duration, getRotation(starttime), getRotation(starttime) + rotation);
         }
 
         public void Scale(double starttime, double duration, OsbEasing easeing, Vector2 before, Vector2 after)

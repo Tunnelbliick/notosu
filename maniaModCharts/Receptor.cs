@@ -27,12 +27,12 @@ namespace StorybrewScripts
         // Rotation in radiants
         public double rotation = 0f;
 
-        public Receptor(String receptorSpritePath, double rotation, StoryboardLayer layer, CommandScale scale)
+        public Receptor(String receptorSpritePath, double rotation, StoryboardLayer layer, CommandScale scale, double starttime)
         {
 
             OsbSprite receptor = layer.CreateSprite(receptorSpritePath, OsbOrigin.Centre);
-            receptor.Rotate(0, rotation);
-            receptor.ScaleVec(0, scale);
+            receptor.Rotate(starttime, rotation);
+            receptor.ScaleVec(starttime, scale);
 
 
             this.receptorSpritePath = receptorSpritePath;
@@ -66,11 +66,11 @@ namespace StorybrewScripts
 
         }
 
-        public void ScaleReceptor(int starttime, Vector2 newPosition, OsbEasing ease, int duration)
+        public void ScaleReceptor(int starttime, Vector2 newScale, OsbEasing ease, int duration)
         {
             OsbSprite receptor = this.receptorSprite;
 
-            receptor.ScaleVec(ease, starttime, starttime + duration, getCurrentScale(starttime), newPosition);
+            receptor.ScaleVec(ease, starttime, starttime + duration, getCurrentScale(starttime), newScale);
 
         }
 
@@ -86,13 +86,12 @@ namespace StorybrewScripts
 
         }
 
-        public void PivotReceptor(int starttime, double rotation, OsbEasing ease, int duration, int stepcount)
+        public void PivotReceptor(int starttime, double rotation, OsbEasing ease, int duration, int stepcount, Vector2 center)
         {
 
             //this.RotateReceptor(starttime, rotation, ease, duration);
 
             Vector2 point = this.position;
-            Vector2 center = new Vector2(320f, 240f);
 
             int totalTime = starttime + duration; // Total duration in milliseconds
             int stepTime = duration / stepcount; // Step duration in milliseconds

@@ -22,12 +22,12 @@ namespace StorybrewScripts
         // Rotation in radiants
         public double rotation = 0f;
 
-        public NoteOrigin(String receptorSpritePath, double rotation, StoryboardLayer layer, CommandScale scale)
+        public NoteOrigin(String receptorSpritePath, double rotation, StoryboardLayer layer, CommandScale scale, double starttime)
         {
 
             OsbSprite receptor = layer.CreateSprite("sb/transparent.png", OsbOrigin.Centre);
-            receptor.Rotate(0, rotation);
-            receptor.ScaleVec(0, scale);
+            receptor.Rotate(starttime, rotation);
+            receptor.ScaleVec(starttime, scale);
 
 
             this.receptorSpritePath = receptorSpritePath;
@@ -76,13 +76,12 @@ namespace StorybrewScripts
 
         }
 
-        public void  PivotReceptor(int starttime, double rotation, OsbEasing ease, int duration, int stepcount)
+        public void  PivotReceptor(int starttime, double rotation, OsbEasing ease, int duration, int stepcount, Vector2 center)
         {
 
             this.RotateReceptor(starttime, rotation, ease, duration);
 
             Vector2 point = this.position;
-            Vector2 center = new Vector2(320f, 240f);
 
             int totalTime = starttime + duration; // Total duration in milliseconds
             int stepTime = duration / stepcount; // Step duration in milliseconds
