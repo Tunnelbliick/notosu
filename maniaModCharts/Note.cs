@@ -93,22 +93,29 @@ namespace StorybrewScripts
             switch (this.columnType)
             {
                 case ColumnType.one:
-                    note.Rotate(starttime, 1.5708);
+                    note.Rotate(starttime - 1, Math.PI / 2);
                     break;
                 case ColumnType.two:
-                    note.Rotate(starttime, 0f);
+                    note.Rotate(starttime - 1, 0f);
                     break;
                 case ColumnType.three:
-                    note.Rotate(starttime, 3.14159);
+                    note.Rotate(starttime - 1, Math.PI);
                     break;
                 case ColumnType.four:
-                    note.Rotate(starttime, 4.71239);
+                    note.Rotate(starttime - 1, Math.PI * 2);
                     break;
             }
 
             note.Fade(starttime, 1);
             note.Fade(starttime + duration, 0);
 
+        }
+
+        public void invisible(double time)
+        {
+            OsbSprite note = this.noteSprite;
+
+            note.Fade(time, 0);
         }
 
         public void Move(double starttime, double duration, OsbEasing easeing, Vector2 startposition, Vector2 endposition)
@@ -130,6 +137,13 @@ namespace StorybrewScripts
             OsbSprite note = this.noteSprite;
 
             note.Rotate(easing, starttime, starttime + duration, getRotation(starttime), getRotation(starttime) + rotation);
+        }
+
+        public void AbsoluteRotate(double starttime, double duration, OsbEasing easing, double rotation)
+        {
+            OsbSprite note = this.noteSprite;
+
+            note.Rotate(easing, starttime, starttime + duration, getRotation(starttime), rotation);
         }
 
         public void Scale(double starttime, double duration, OsbEasing easeing, Vector2 before, Vector2 after)

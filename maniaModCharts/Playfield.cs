@@ -256,11 +256,20 @@ namespace StorybrewScripts
                     Note note = notes[key];
                     double noteTime = note.starttime;
                     double fadeInTime = noteTime - easetime;
+                    double renderTime = Math.Max(fadeInTime, starttime);
+                    double noteOnScreanDuration = easetime - (renderTime - fadeInTime);
 
                     double currentTime = fadeInTime;
                     float progress = 0;
 
-                    Vector2 currentPosition = column.origin.getCurrentPosition(currentTime);
+                    Vector2 currentPosition = column.origin.getCurrentPosition(currentTime + 10);
+
+
+                    // TODO fix render in position beeing center of screen then initial receptor position
+                    // IDK why this happens but it does happen prob some weird order issue.
+                    note.invisible(fadeInTime - 1);
+                    note.Move(currentTime - 1, 0, easing, currentPosition, currentPosition);
+                    note.Render(renderTime, noteOnScreanDuration, easing);
 
                     for (int i = 0; i <= snaps; i++)
                     {
@@ -269,36 +278,29 @@ namespace StorybrewScripts
 
                         Vector2 originPosition = column.origin.getCurrentPosition(currentTime);
                         Vector2 receptorPosition = column.receptor.getCurrentPosition(currentTime);
-
+                        Vector2 newPosition = Vector2.Lerp(receptorPosition, originPosition, progress);
+                        Vector2 originScale = column.origin.getCurrentScale(currentTime);
+                        Vector2 receptorScale = column.receptor.getCurrentScale(currentTime);
+                        Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, progress);
                         // Calculate the progress based on the remaining time
                         progress = (float)timeLeft / (float)easetime;
 
                         if (progress == 1)
-                        {
                             continue;
-                        }
-
-                        Vector2 newPosition = Vector2.Lerp(receptorPosition, originPosition, progress);
 
                         debug = $"Progress: {progress}, Position: {newPosition}, SnapDuration: {snapDuration}, Currenttime: {currentTime}, timeleft: {timeLeft}  \n";
 
                         note.Move(currentTime, snapLength, easing, currentPosition, newPosition);
-
-                        Vector2 originScale = column.origin.getCurrentScale(currentTime);
-                        Vector2 receptorScale = column.receptor.getCurrentScale(currentTime);
-
-                        Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, progress);
-
                         note.Scale(currentTime, snapLength, easing, column.origin.getCurrentScale(currentTime), scaleProgress);
 
-                        currentTime += snapLength;
+                        // Weird spinn in issues?
+                        //if (note.getRotation(currentTime) != column.receptor.getCurrentRotaion(currentTime))
+                        //note.AbsoluteRotate(currentTime, snapLength, easing, column.receptor.getCurrentRotaion(currentTime));
 
+                        currentTime += snapLength;
                         currentPosition = newPosition;
 
-
                     }
-
-                    note.Render(fadeInTime, easetime, easing);
                 }
             }
 
@@ -374,7 +376,7 @@ namespace StorybrewScripts
 
         }
 
-        public double Zoom(int starttime, int duration, OsbEasing easing, double zoomAmount, Boolean keepXPosition)
+        public double Zoom(int starttime, int duration, OsbEasing easing, double zoomAmount, Boolean keepPosition)
         {
             double endtime = starttime + duration;
 
@@ -402,7 +404,7 @@ namespace StorybrewScripts
                 Vector2 receptorTarget = receptorPosition;
                 Vector2 originTarget = originPosition;
 
-                if (!keepXPosition)
+                if (!keepPosition)
                 {
                     Vector2 relativeReceptorPosition = Vector2.Subtract(receptorPosition, center);
                     Vector2 relativeOriginPosition = Vector2.Subtract(originPosition, center);
@@ -412,21 +414,124 @@ namespace StorybrewScripts
 
                     receptorTarget = Vector2.Add(zoomedReceptorPosition, center);
                     originTarget = Vector2.Add(zoomedOriginPosition, center);
-                }
-                else
-                {
-                    receptorTarget.Y *= (float)zoomAmount;
-                    originTarget.Y *= (float)zoomAmount;
+
+                    receptor.MoveReceptor(starttime, receptorTarget, easing, duration);
+                    origin.MoveReceptor(starttime, originTarget, easing, duration);
                 }
 
-                receptor.MoveReceptor(starttime, receptorTarget, easing, duration);
-                origin.MoveReceptor(starttime, originTarget, easing, duration);
             }
 
             return endtime;
         }
+        public double ZoomAndMove(int starttime, int duration, OsbEasing easing, Vector2 absoluteScale, Vector2 newPosition)
+        {
+            double endtime = starttime + duration;
 
+            Vector2 center = calculatePlayFieldCenter(starttime);
 
+            foreach (Column column in columns.Values)
+            {
+                Receptor receptor = column.receptor;
+                NoteOrigin origin = column.origin;
+                float xOffset = 0;
+                float yOffset = 0;
+
+                Vector2 receptorPosition = receptor.getCurrentPosition(starttime);
+                Vector2 originPosition = origin.getCurrentPosition(starttime);
+
+                Vector2 currentScale = receptor.getCurrentScale(starttime);
+
+                
+                if (absoluteScale != currentScale)
+                {
+                    // This needs to be calculated differently to match scale changes above 1 since 1 doesnt change anything but the sprite scale changes with 1
+                    xOffset = (receptorPosition.X - center.X) * absoluteScale.X - (receptorPosition.X - center.X) * currentScale.X;
+                    yOffset = (receptorPosition.Y - center.Y) * absoluteScale.Y - (receptorPosition.Y - center.Y) * currentScale.X;
+                }
+
+                receptorPosition.X += xOffset;
+                originPosition.X += xOffset;
+
+                receptorPosition.Y += yOffset;
+                originPosition.Y += -yOffset;
+
+                Vector2 movement = Vector2.Subtract(newPosition, center);
+
+                receptorPosition = Vector2.Add(receptorPosition, movement);
+                originPosition = Vector2.Add(originPosition, movement);
+
+                // Move and scale the receptors and origins
+                receptor.MoveReceptor(starttime, receptorPosition, easing, duration);
+                origin.MoveReceptor(starttime, originPosition, easing, duration);
+
+                receptor.ScaleReceptor(starttime, absoluteScale, easing, duration);
+                origin.ScaleReceptor(starttime, absoluteScale, easing, duration);
+            }
+
+            return endtime;
+        }
+        public Vector2 calculatePlayFieldCenter(int currentTime)
+        {
+            Vector2 center;
+
+            Vector2 topLeft = new Vector2(0, 0);
+            Vector2 bottomRight = new Vector2(0, 0);
+
+            foreach (Column column in columns.Values)
+            {
+
+                Vector2 receptor = column.getReceptorPosition(currentTime);
+                Vector2 origin = column.getOriginPosition(currentTime);
+
+                if (topLeft == new Vector2(0, 0))
+                {
+                    topLeft = receptor;
+                    bottomRight = origin;
+                }
+
+                if (receptor.X < topLeft.X)
+                {
+                    topLeft.X = receptor.X;
+                }
+                if (origin.X < topLeft.X)
+                {
+                    topLeft.X = origin.X;
+                }
+
+                if (receptor.Y < topLeft.Y)
+                {
+                    topLeft.Y = receptor.X;
+                }
+                if (origin.Y < topLeft.Y)
+                {
+                    topLeft.Y = origin.Y;
+                }
+
+                if (receptor.X > bottomRight.X)
+                {
+                    bottomRight.X = receptor.X;
+                }
+                if (origin.X > bottomRight.X)
+                {
+                    bottomRight.X = origin.X;
+                }
+
+                if (receptor.Y > bottomRight.Y)
+                {
+                    bottomRight.Y = receptor.X;
+                }
+                if (origin.Y > bottomRight.Y)
+                {
+                    bottomRight.Y = origin.Y;
+                }
+
+            }
+
+            center.X = (topLeft.X + bottomRight.X) / 2;
+            center.Y = (topLeft.Y + bottomRight.Y) / 2;
+
+            return center;
+        }
 
         public double SwapColumn(int starttime, int duration, OsbEasing easing, ColumnType column1, ColumnType column2)
         {
@@ -590,7 +695,7 @@ namespace StorybrewScripts
 
         }
 
-        public double moveField(int starttime, int duration, OsbEasing easing, float amount)
+        public double moveFieldX(int starttime, int duration, OsbEasing easing, float amount)
         {
             foreach (Column column in columns.Values)
             {
@@ -605,6 +710,49 @@ namespace StorybrewScripts
 
                 receptor.MoveReceptor(starttime, currentReceptorPosition, easing, duration);
                 origin.MoveReceptor(starttime, currentOriginPosition, easing, duration);
+            }
+
+            return starttime + duration;
+        }
+
+        public double moveField(int starttime, int duration, OsbEasing easing, float amountX, float amountY)
+        {
+            foreach (Column column in columns.Values)
+            {
+                Receptor receptor = column.receptor;
+                NoteOrigin origin = column.origin;
+
+                Vector2 currentReceptorPosition = receptor.getCurrentPosition(starttime);
+                Vector2 currentOriginPosition = origin.getCurrentPosition(starttime);
+
+                currentReceptorPosition.X += amountX;
+                currentOriginPosition.X += amountX;
+
+                currentReceptorPosition.Y += amountY;
+                currentOriginPosition.Y += amountY;
+
+                receptor.MoveReceptor(starttime, currentReceptorPosition, easing, duration);
+                origin.MoveReceptor(starttime, currentOriginPosition, easing, duration);
+            }
+
+            return starttime + duration;
+        }
+
+
+        public double movePosition(int starttime, int duration, OsbEasing easing, Vector2 position)
+        {
+            foreach (Column column in columns.Values)
+            {
+                Receptor receptor = column.receptor;
+                NoteOrigin origin = column.origin;
+
+                Vector2 currentReceptorPosition = receptor.getCurrentPosition(starttime);
+                Vector2 currentOriginPosition = origin.getCurrentPosition(starttime);
+
+                var difference = Vector2.Subtract(currentReceptorPosition, currentOriginPosition);
+
+                receptor.MoveReceptor(starttime, position, easing, duration);
+                origin.MoveReceptor(starttime, new Vector2(position.X, difference.Y), easing, duration);
             }
 
             return starttime + duration;

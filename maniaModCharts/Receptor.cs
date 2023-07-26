@@ -143,5 +143,9 @@ namespace StorybrewScripts
             return new Vector2(position.X, position.Y);
         }
 
+        public float getCurrentRotaion(double currentTIme) {
+            return this.receptorSprite.RotationAt(currentTIme);
+        }
+
     }
 }
