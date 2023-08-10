@@ -38,6 +38,9 @@ namespace StorybrewScripts
 
         private OsbSprite bg;
 
+        private int starttime;
+        private int endtime;
+
         // Reference for active Columns;
         public Dictionary<ColumnType, Column> columns = new Dictionary<ColumnType, Column>();
 
@@ -53,6 +56,8 @@ namespace StorybrewScripts
             bg.Fade(endtime, 0);
 
             this.bg = bg;
+            this.starttime = starttime;
+            this.endtime = endtime;
 
             Column one = new Column(128, ColumnType.one, receptorSpritePath, receptors, receptorScale, starttime);
             Column two = new Column(256, ColumnType.two, receptorSpritePath, receptors, receptorScale, starttime);
@@ -106,9 +111,10 @@ namespace StorybrewScripts
                 {
 
                     if (hitobject.Position.X != xOffset)
-                    {
                         continue;
-                    }
+
+                    if (hitobject.StartTime - 2000 <= this.starttime && (hitobject.StartTime - 2000) >= this.endtime)
+                        continue;
 
                     Note currentNote = new Note(noteLayer, hitobject, column, bpm, offset);
 
@@ -143,7 +149,7 @@ namespace StorybrewScripts
                     double fadeInTime = noteTime - easetime;
 
                     note.Render(fadeInTime, easetime, easing);
-                    note.Move(fadeInTime, easetime, easing, column.origin.getCurrentPosition(note.starttime), column.receptor.getCurrentPosition(note.starttime));
+                    note.Move(fadeInTime, easetime, easing, column.origin.getCurrentPosition(note.starttime), column.receptor.getCurrentPositionForNotes(note.starttime));
                     note.Scale(fadeInTime, easetime, easing, column.origin.getCurrentScale(note.starttime), column.receptor.getCurrentScale(note.starttime));
                 }
             }
@@ -172,7 +178,7 @@ namespace StorybrewScripts
                     double fadeInTime = noteTime - easetime;
 
                     note.Render(fadeInTime, easetime, easing);
-                    note.Move(fadeInTime, easetime, easing, new Vector2(column.receptor.getCurrentPosition(note.starttime).X, column.origin.getCurrentPosition(fadeInTime).Y), column.receptor.getCurrentPosition(note.starttime));
+                    note.Move(fadeInTime, easetime, easing, new Vector2(column.receptor.getCurrentPositionForNotes(note.starttime).X, column.origin.getCurrentPosition(fadeInTime).Y), column.receptor.getCurrentPositionForNotes(note.starttime));
                     note.Scale(fadeInTime, easetime, easing, column.origin.getCurrentScale(fadeInTime), column.receptor.getCurrentScale(note.starttime));
                 }
             }
@@ -207,7 +213,7 @@ namespace StorybrewScripts
                     bool moveUpwards = column.origin.getCurrentPosition(fadeInTime).Y > column.receptor.getCurrentPosition(fadeInTime).Y;
 
                     Vector2 originPosition = column.origin.getCurrentPosition(fadeInTime);
-                    Vector2 receptorPosition = column.receptor.getCurrentPosition(fadeInTime);
+                    Vector2 receptorPosition = column.receptor.getCurrentPositionForNotes(fadeInTime);
 
                     double currentTime = fadeInTime;
 
@@ -262,7 +268,7 @@ namespace StorybrewScripts
                     double currentTime = fadeInTime;
                     float progress = 0;
 
-                    Vector2 currentPosition = column.origin.getCurrentPosition(currentTime + 10);
+                    Vector2 currentPosition = column.origin.getCurrentPosition(currentTime);
 
 
                     // TODO fix render in position beeing center of screen then initial receptor position
@@ -273,11 +279,10 @@ namespace StorybrewScripts
 
                     for (int i = 0; i <= snaps; i++)
                     {
-                        double snapDuration = snapLength * i;
                         double timeLeft = easetime - snapLength * i; ;
 
                         Vector2 originPosition = column.origin.getCurrentPosition(currentTime);
-                        Vector2 receptorPosition = column.receptor.getCurrentPosition(currentTime);
+                        Vector2 receptorPosition = column.receptor.getCurrentPositionForNotes(currentTime);
                         Vector2 newPosition = Vector2.Lerp(receptorPosition, originPosition, progress);
                         Vector2 originScale = column.origin.getCurrentScale(currentTime);
                         Vector2 receptorScale = column.receptor.getCurrentScale(currentTime);
@@ -287,8 +292,6 @@ namespace StorybrewScripts
 
                         if (progress == 1)
                             continue;
-
-                        debug = $"Progress: {progress}, Position: {newPosition}, SnapDuration: {snapDuration}, Currenttime: {currentTime}, timeleft: {timeLeft}  \n";
 
                         note.Move(currentTime, snapLength, easing, currentPosition, newPosition);
                         note.Scale(currentTime, snapLength, easing, column.origin.getCurrentScale(currentTime), scaleProgress);
@@ -300,6 +303,62 @@ namespace StorybrewScripts
                         currentTime += snapLength;
                         currentPosition = newPosition;
 
+                    }
+
+                    if (note.isSlider)
+                    {
+
+                        foreach (Vector2WithTimestamp parts in note.sliderPositions)
+                        {
+                            double sliderStartime = parts.Timestamp;
+                            OsbSprite sprite = parts.Sprite;
+                            double sliderCurrentTime = sliderStartime - easetime;
+                            Vector2 currentSliderPositon = column.origin.getCurrentPosition(sliderCurrentTime); ;
+                            float sliderProgress = 0;
+
+                            sprite.Move(sliderCurrentTime - 1, currentSliderPositon);
+
+                            for (int i = 0; i <= snaps; i++)
+                            {
+
+                                double snapDuration = snapLength * i;
+                                double timeLeft = easetime - snapLength * i; ;
+
+                                Vector2 originPosition = column.origin.getCurrentPosition(sliderCurrentTime);
+                                Vector2 receptorPosition = column.receptor.getCurrentPositionForNotes(sliderCurrentTime);
+                                Vector2 newPosition = Vector2.Lerp(receptorPosition, originPosition, sliderProgress);
+                                Vector2 receptorScale = column.receptor.getCurrentScale(sliderCurrentTime);
+
+                                //Vector2 originScale = column.origin.getCurrentScale(sliderCurrentTime);
+                                //Vector2 receptorScale = column.receptor.getCurrentScale(sliderCurrentTime);
+                                //Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, sliderProgress);
+
+                                // Calculate the progress based on the remaining time
+                                sliderProgress = (float)timeLeft / (float)easetime;
+
+                                if (i == snaps)
+                                {
+                                    note.Move(sliderCurrentTime, snapLength, easing, currentPosition, column.receptor.getCurrentPosition(sliderCurrentTime));
+                                    note.Scale(sliderCurrentTime, snapLength, easing, receptorScale, receptorScale);
+                                    currentPosition = column.receptor.getCurrentPosition(sliderCurrentTime);
+                                }
+
+                                // Weird spinn in issues?
+                                //if (note.getRotation(currentTime) != column.receptor.getCurrentRotaion(currentTime))
+                                //note.AbsoluteRotate(currentTime, snapLength, easing, column.receptor.getCurrentRotaion(currentTime));
+
+                                if (sliderProgress == 1)
+                                    continue;
+
+                                sprite.Move(easing, sliderCurrentTime, sliderCurrentTime + snapLength, currentSliderPositon, newPosition);
+                                sprite.ScaleVec(sliderCurrentTime, column.origin.getCurrentScale(sliderCurrentTime).X + 0.2f, 0.125f);
+
+                                sliderCurrentTime += snapLength;
+                                currentSliderPositon = newPosition;
+
+                            }
+
+                        }
                     }
                 }
             }
@@ -423,9 +482,11 @@ namespace StorybrewScripts
 
             return endtime;
         }
-        public double ZoomAndMove(int starttime, int duration, OsbEasing easing, Vector2 absoluteScale, Vector2 newPosition)
+        public String ZoomAndMove(int starttime, int duration, OsbEasing easing, Vector2 absoluteScale, Vector2 newPosition)
         {
             double endtime = starttime + duration;
+
+            String debug = "";
 
             Vector2 center = calculatePlayFieldCenter(starttime);
 
@@ -441,12 +502,13 @@ namespace StorybrewScripts
 
                 Vector2 currentScale = receptor.getCurrentScale(starttime);
 
-                
+                Vector2 scaleDifference = new Vector2(absoluteScale.X / currentScale.X, absoluteScale.Y / currentScale.Y);
+
                 if (absoluteScale != currentScale)
                 {
                     // This needs to be calculated differently to match scale changes above 1 since 1 doesnt change anything but the sprite scale changes with 1
-                    xOffset = (receptorPosition.X - center.X) * absoluteScale.X - (receptorPosition.X - center.X) * currentScale.X;
-                    yOffset = (receptorPosition.Y - center.Y) * absoluteScale.Y - (receptorPosition.Y - center.Y) * currentScale.X;
+                    xOffset = (receptorPosition.X - center.X) * scaleDifference.X - (receptorPosition.X - center.X);
+                    yOffset = (receptorPosition.Y - center.Y) * scaleDifference.Y - (receptorPosition.Y - center.Y);
                 }
 
                 receptorPosition.X += xOffset;
@@ -455,10 +517,16 @@ namespace StorybrewScripts
                 receptorPosition.Y += yOffset;
                 originPosition.Y += -yOffset;
 
-                Vector2 movement = Vector2.Subtract(newPosition, center);
+                // Apparently subtract returns a whole number
+                Vector2 movement = new Vector2(newPosition.X - center.X, newPosition.Y - center.Y);
 
                 receptorPosition = Vector2.Add(receptorPosition, movement);
                 originPosition = Vector2.Add(originPosition, movement);
+
+                // debug += $"({receptorPosition.X} - {center.X}) * {scaleDifference.X} - ({receptorPosition.X} - {center.X})\n";
+                // debug += $"{movement} = {newPosition} - {center}\n";
+                // debug += $"({receptorPosition} = {receptorPosition} + {movement}\n";
+                // debug += "\n";
 
                 // Move and scale the receptors and origins
                 receptor.MoveReceptor(starttime, receptorPosition, easing, duration);
@@ -468,7 +536,7 @@ namespace StorybrewScripts
                 origin.ScaleReceptor(starttime, absoluteScale, easing, duration);
             }
 
-            return endtime;
+            return debug;
         }
         public Vector2 calculatePlayFieldCenter(int currentTime)
         {
@@ -552,7 +620,7 @@ namespace StorybrewScripts
 
         }
 
-        public void flipPlayField(int starttime, int duration, OsbEasing easing, float width, float height, float closeScale, float fareScale)
+        public void flipPlayField(int starttime, int duration, OsbEasing easing, float width, float height, float closeScale, float farScale)
         {
 
             Boolean isFlipped = false;
@@ -569,13 +637,22 @@ namespace StorybrewScripts
 
             float position = 0f;
 
+            Vector2 center = calculatePlayFieldCenter(starttime);
+
             foreach (Column column in columns.Values)
             {
 
                 Receptor receptor = column.receptor;
                 NoteOrigin origin = column.origin;
 
-                var x = calculateOffset() + position + getColumnWidth() / 2;
+                Vector2 receptorPosition = receptor.getCurrentPosition(starttime);
+                Vector2 currentScale = receptor.getCurrentScale(starttime);
+
+                float closeScaleDifference = closeScale / currentScale.X;
+                float farScaleDifference = farScale / currentScale.X;
+                // float xDifference = fareScale / currentScale.X;
+
+                var xOffset = (receptorPosition.X - center.X) * closeScaleDifference - (receptorPosition.X - center.X);
 
                 var newHeight = Math.Max(height, 0);
                 var oppositHeight = Math.Max(height * -1, 0);
@@ -591,29 +668,33 @@ namespace StorybrewScripts
                     oppositHeight -= this.noteHeightOffset;
                 }
 
-                Vector2 newPosition = new Vector2(x, newHeight);
-                Vector2 newOpposit = new Vector2(x, oppositHeight);
+                Vector2 newPosition = new Vector2(receptorPosition.X + xOffset, 240);
+                Vector2 newOpposit = new Vector2(receptorPosition.X + xOffset, 240);
 
-                Vector2 currentScale = receptor.getCurrentScale(starttime);
+                Vector2 newPositionAfter = new Vector2(receptorPosition.X, newHeight);
+                Vector2 newOppositAfter = new Vector2(receptorPosition.X, oppositHeight);
 
-                receptor.MoveReceptor(starttime, newPosition, easing, duration);
-                origin.MoveReceptor(starttime, newOpposit, easing, duration);
+                receptor.MoveReceptor(starttime - 1, newPosition, easing, duration / 2);
+                origin.MoveReceptor(starttime - 1, newOpposit, easing, duration / 2);
+
+                receptor.MoveReceptor(starttime + duration / 2, newPositionAfter, easing, duration / 2);
+                origin.MoveReceptor(starttime + duration / 2, newOppositAfter, easing, duration / 2);
 
 
                 if (isFlipped)
                 {
-                    receptor.ScaleReceptor(starttime, new Vector2(currentScale.X * closeScale, currentScale.Y * closeScale), easing, duration / 2);
+                    receptor.ScaleReceptor(starttime, new Vector2(currentScale.X * closeScaleDifference, currentScale.Y * closeScaleDifference), easing, duration / 2);
                     receptor.ScaleReceptor(starttime + duration / 2, new Vector2(currentScale.X, currentScale.Y), easing, duration / 2);
 
-                    origin.ScaleReceptor(starttime, new Vector2(currentScale.X * fareScale, currentScale.Y * fareScale), easing, duration / 2);
+                    origin.ScaleReceptor(starttime, new Vector2(currentScale.X * farScaleDifference, currentScale.Y * farScaleDifference), easing, duration / 2);
                     origin.ScaleReceptor(starttime + duration / 2, new Vector2(currentScale.X, currentScale.Y), easing, duration / 2);
                 }
                 else
                 {
-                    receptor.ScaleReceptor(starttime, new Vector2(currentScale.X * fareScale, currentScale.Y * fareScale), easing, duration / 2);
+                    receptor.ScaleReceptor(starttime, new Vector2(currentScale.X * farScaleDifference, currentScale.Y * farScaleDifference), easing, duration / 2);
                     receptor.ScaleReceptor(starttime + duration / 2, new Vector2(currentScale.X, currentScale.Y), easing, duration / 2);
 
-                    origin.ScaleReceptor(starttime, new Vector2(currentScale.X * closeScale, currentScale.Y * closeScale), easing, duration / 2);
+                    origin.ScaleReceptor(starttime, new Vector2(currentScale.X * closeScaleDifference, currentScale.Y * closeScaleDifference), easing, duration / 2);
                     origin.ScaleReceptor(starttime + duration / 2, new Vector2(currentScale.X, currentScale.Y), easing, duration / 2);
                 }
 

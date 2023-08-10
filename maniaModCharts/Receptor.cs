@@ -138,12 +138,32 @@ namespace StorybrewScripts
             return new Vector2(scale.X, scale.Y);
         }
 
-        public Vector2 getCurrentPosition(double currentTime){
-            CommandPosition position = this.receptorSprite.PositionAt(currentTime);
-            return new Vector2(position.X, position.Y);
+        public Vector2 getCurrentPosition(double currentTime)
+        {
+            Vector2 position = this.receptorSprite.PositionAt(currentTime);
+
+            return position;
         }
 
-        public float getCurrentRotaion(double currentTIme) {
+        public Vector2 getCurrentPositionForNotes(double currentTime)
+        {
+            Vector2 position = this.receptorSprite.PositionAt(currentTime);
+            Vector2 currentScale = getCurrentScale(currentTime);
+
+            if (position.Y > 240)
+            {
+                position.Y += 9f *  currentScale.Y / 0.5f;
+            }
+            else
+            {
+                position.Y -= 9f * currentScale.Y / 0.5f;
+            }
+
+            return position;
+        }
+
+        public float getCurrentRotaion(double currentTIme)
+        {
             return this.receptorSprite.RotationAt(currentTIme);
         }
 

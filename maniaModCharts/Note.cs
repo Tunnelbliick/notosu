@@ -17,9 +17,12 @@ namespace StorybrewScripts
         public StoryboardLayer layer;
         public OsbSprite noteSprite;
         public OsuHitObject hitObject;
+        public bool isSlider = false;
         public double starttime;
         public double endtime;
         public ColumnType columnType;
+        public List<Vector2WithTimestamp> sliderPositions = new List<Vector2WithTimestamp>();
+        public int sliderParts = 1;
 
         public Note(StoryboardLayer layer, OsuHitObject hitObject, Column column, double bpm, double offset)
         {
@@ -41,11 +44,33 @@ namespace StorybrewScripts
 
             Column currentColumn = column;
 
+            if (this.starttime != this.endtime)
+            {
+
+                this.isSlider = true;
+                var sliderDuration = this.endtime - this.starttime;
+
+                for (int i = 0; sliderDuration > i; i += 20)
+                {
+                    double split = 20 / sliderParts;
+                    for (int count = 0; sliderParts >= count; count++)
+                    {
+
+                        OsbSprite body = this.layer.CreateSprite("sb/hold_body.png");
+
+                        var variation = split * count;
+
+                        Vector2WithTimestamp sliderPositon = new Vector2WithTimestamp(new Vector2(10, 10), this.starttime + i + variation, body);
+                        this.sliderPositions.Add(sliderPositon);
+                    }
+                }
+            }
+
             // Adjust the StartTime by the offset and calculate its position in the cycle
 
             int cycle = (int)Math.Floor((hitObject.StartTime - offset) / beatDuration);
 
-            int adjustedTime = (int)Math.Round((hitObject.StartTime - offset) - (cycle * beatDuration));
+            int adjustedTime = (int)Math.Round(hitObject.StartTime - offset - (cycle * beatDuration));
             int margin = 2; // Change this value to increase or decrease the margin of error
 
             if (Math.Abs(adjustedTime - white) <= margin) // The cycle starts with a white tick
@@ -90,24 +115,42 @@ namespace StorybrewScripts
         {
             OsbSprite note = this.noteSprite;
 
+
             switch (this.columnType)
             {
                 case ColumnType.one:
-                    note.Rotate(starttime - 1, Math.PI / 2);
+                    note.Rotate(starttime - 1, 1 * Math.PI / 2);
                     break;
                 case ColumnType.two:
-                    note.Rotate(starttime - 1, 0f);
+                    note.Rotate(starttime - 1, 0 * Math.PI / 2);
                     break;
                 case ColumnType.three:
-                    note.Rotate(starttime - 1, Math.PI);
+                    note.Rotate(starttime - 1, 2 * Math.PI / 2);
                     break;
                 case ColumnType.four:
-                    note.Rotate(starttime - 1, Math.PI * 2);
+                    note.Rotate(starttime - 1, 3 * Math.PI / 2);
                     break;
             }
 
-            note.Fade(starttime, 1);
-            note.Fade(starttime + duration, 0);
+            if (this.isSlider)
+            {
+
+                foreach (Vector2WithTimestamp sliderBody in sliderPositions)
+                {
+
+                    note.Fade(sliderBody.Timestamp, 1);
+                    note.Fade(this.endtime + 20, 0);
+
+                }
+
+                note.Fade(starttime, 1);
+                note.Fade(this.endtime + 20, 0);
+            }
+            else
+            {
+                note.Fade(starttime, 1);
+                note.Fade(starttime + duration + 20, 0);
+            }
 
         }
 
@@ -121,7 +164,6 @@ namespace StorybrewScripts
         public void Move(double starttime, double duration, OsbEasing easeing, Vector2 startposition, Vector2 endposition)
         {
             OsbSprite note = this.noteSprite;
-
             note.Move(easeing, starttime, starttime + duration, startposition, endposition);
         }
 
