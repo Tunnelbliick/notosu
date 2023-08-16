@@ -86,7 +86,7 @@ namespace StorybrewScripts
                 receptor.Render(starttime, endtime);
                 origin.Render(starttime, endtime);
                 receptor.MoveReceptor(starttime, new Vector2(x, height - receptorHeightOffset), OsbEasing.None, 0);
-                origin.MoveReceptor(starttime, new Vector2(x, 240 + (240 - height + noteHeightOffset)), OsbEasing.None, 0);
+                origin.MoveOrigin(starttime, new Vector2(x, 240 + (240 - height + noteHeightOffset)), OsbEasing.None, 0);
 
                 position += getColumnWidth();
             }
@@ -113,7 +113,7 @@ namespace StorybrewScripts
                     if (hitobject.Position.X != xOffset)
                         continue;
 
-                    if (hitobject.StartTime - 2000 <= this.starttime && (hitobject.StartTime - 2000) >= this.endtime)
+                    if (hitobject.StartTime <= this.starttime && hitobject.EndTime >= this.endtime)
                         continue;
 
                     Note currentNote = new Note(noteLayer, hitobject, column, bpm, offset);
@@ -188,7 +188,7 @@ namespace StorybrewScripts
                 Vector2 newOpposit = new Vector2(x, oppositHeight);
 
                 receptor.MoveReceptor(starttime, newPosition, easing, duration);
-                origin.MoveReceptor(starttime, newOpposit, easing, duration);
+                origin.MoveOrigin(starttime, newOpposit, easing, duration);
 
                 position += getColumnWidth();
             }
@@ -236,7 +236,7 @@ namespace StorybrewScripts
                     originTarget = Vector2.Add(zoomedOriginPosition, center);
 
                     receptor.MoveReceptor(starttime, receptorTarget, easing, duration);
-                    origin.MoveReceptor(starttime, originTarget, easing, duration);
+                    origin.MoveOrigin(starttime, originTarget, easing, duration);
                 }
 
             }
@@ -291,7 +291,7 @@ namespace StorybrewScripts
 
                 // Move and scale the receptors and origins
                 receptor.MoveReceptor(starttime, receptorPosition, easing, duration);
-                origin.MoveReceptor(starttime, originPosition, easing, duration);
+                origin.MoveOrigin(starttime, originPosition, easing, duration);
 
                 receptor.ScaleReceptor(starttime, absoluteScale, easing, duration);
                 origin.ScaleReceptor(starttime, absoluteScale, easing, duration);
@@ -381,6 +381,43 @@ namespace StorybrewScripts
 
         }
 
+        public double MoveColumnRelative(double starttime, double duration, OsbEasing easing, ColumnType column, Vector2 relativeMovement)
+        {
+
+            Column currentColumn = columns[column];
+
+            Vector2 originPosition = currentColumn.getOriginPosition(starttime);
+            Vector2 receptorPosition = currentColumn.getReceptorPosition(starttime);
+
+            MoveOriginAbsolute(starttime, duration, easing, column, Vector2.Add(originPosition, relativeMovement));
+            MoveReceptorAbsolute(starttime, duration, easing, column, Vector2.Add(receptorPosition, relativeMovement));
+
+            return starttime + duration;
+
+        }
+
+        public double MoveReceptorAbsolute(double starttime, double duration, OsbEasing easing, ColumnType column, Vector2 position)
+        {
+
+            Column currentColumn = columns[column];
+
+            currentColumn.MoveReceptor(starttime, duration, position, easing);
+
+            return starttime + duration;
+
+        }
+
+        public double MoveOriginAbsolute(double starttime, double duration, OsbEasing easing, ColumnType column, Vector2 position)
+        {
+
+            Column currentColumn = columns[column];
+
+            currentColumn.MoveOrigin(starttime, duration, position, easing);
+
+            return starttime + duration;
+
+        }
+
         public void flipPlayField(int starttime, int duration, OsbEasing easing, float width, float height, float closeScale, float farScale)
         {
 
@@ -436,10 +473,10 @@ namespace StorybrewScripts
                 Vector2 newOppositAfter = new Vector2(receptorPosition.X, oppositHeight);
 
                 receptor.MoveReceptor(starttime - 1, newPosition, easing, duration / 2);
-                origin.MoveReceptor(starttime - 1, newOpposit, easing, duration / 2);
+                origin.MoveOrigin(starttime - 1, newOpposit, easing, duration / 2);
 
                 receptor.MoveReceptor(starttime + duration / 2, newPositionAfter, easing, duration / 2);
-                origin.MoveReceptor(starttime + duration / 2, newOppositAfter, easing, duration / 2);
+                origin.MoveOrigin(starttime + duration / 2, newOppositAfter, easing, duration / 2);
 
 
                 if (isFlipped)
@@ -498,8 +535,8 @@ namespace StorybrewScripts
                 Receptor receptor = column.receptor;
                 NoteOrigin origin = column.origin;
 
-                receptor.PivotReceptor(starttime, radians, easing, duration, sampleCount, bg.PositionAt(starttime));
-                origin.PivotReceptor(starttime, radians, easing, duration, sampleCount, bg.PositionAt(starttime));
+                receptor.PivotReceptor(starttime, radians, easing, duration, sampleCount, calculatePlayFieldCenter(starttime));
+                origin.PivotReceptor(starttime, radians, easing, duration, sampleCount, calculatePlayFieldCenter(starttime));
             }
 
         }
@@ -529,10 +566,10 @@ namespace StorybrewScripts
                 currentOriginPosition.X += amount;
 
                 receptor.MoveReceptor(starttime, currentReceptorPosition, easing, half);
-                origin.MoveReceptor(starttime, currentOriginPosition, easing, half);
+                origin.MoveOrigin(starttime, currentOriginPosition, easing, half);
 
                 receptor.MoveReceptor(starttime + half, originaleReceptorPosition, easing, half);
-                origin.MoveReceptor(starttime + half, originalOriginPosition, easing, half);
+                origin.MoveOrigin(starttime + half, originalOriginPosition, easing, half);
             }
 
         }
@@ -551,7 +588,7 @@ namespace StorybrewScripts
                 currentOriginPosition.X += amount;
 
                 receptor.MoveReceptor(starttime, currentReceptorPosition, easing, duration);
-                origin.MoveReceptor(starttime, currentOriginPosition, easing, duration);
+                origin.MoveOrigin(starttime, currentOriginPosition, easing, duration);
             }
 
             return starttime + duration;
@@ -574,7 +611,7 @@ namespace StorybrewScripts
                 currentOriginPosition.Y += amountY;
 
                 receptor.MoveReceptor(starttime, currentReceptorPosition, easing, duration);
-                origin.MoveReceptor(starttime, currentOriginPosition, easing, duration);
+                origin.MoveOrigin(starttime, currentOriginPosition, easing, duration);
             }
 
             return starttime + duration;
@@ -594,7 +631,7 @@ namespace StorybrewScripts
                 var difference = Vector2.Subtract(currentReceptorPosition, currentOriginPosition);
 
                 receptor.MoveReceptor(starttime, position, easing, duration);
-                origin.MoveReceptor(starttime, new Vector2(position.X, difference.Y), easing, duration);
+                origin.MoveOrigin(starttime, new Vector2(position.X, difference.Y), easing, duration);
             }
 
             return starttime + duration;

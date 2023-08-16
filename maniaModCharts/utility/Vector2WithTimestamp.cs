@@ -7,7 +7,7 @@ using StorybrewCommon.Storyboarding;
 
 namespace StorybrewScripts
 {
-    public class Vector2WithTimestamp
+    public class SliderParts
     {
         private object sliderEnd;
         private object value;
@@ -16,14 +16,14 @@ namespace StorybrewScripts
         public double Timestamp { get; }
         public OsbSprite Sprite { get; }
 
-        public Vector2WithTimestamp(Vector2 vector2, double timestamp, OsbSprite sprite)
+        public SliderParts(Vector2 vector2, double timestamp, OsbSprite sprite)
         {
             Vector2 = vector2;
             Timestamp = timestamp;
             Sprite = sprite;
         }
 
-        public Vector2WithTimestamp(object sliderEnd, object value)
+        public SliderParts(object sliderEnd, object value)
         {
             this.sliderEnd = sliderEnd;
             this.value = value;

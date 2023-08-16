@@ -21,7 +21,7 @@ namespace StorybrewScripts
         public double starttime;
         public double endtime;
         public ColumnType columnType;
-        public List<Vector2WithTimestamp> sliderPositions = new List<Vector2WithTimestamp>();
+        public List<SliderParts> sliderPositions = new List<SliderParts>();
         public int sliderParts = 1;
 
         public Note(StoryboardLayer layer, OsuHitObject hitObject, Column column, double bpm, double offset)
@@ -60,7 +60,7 @@ namespace StorybrewScripts
 
                         var variation = split * count;
 
-                        Vector2WithTimestamp sliderPositon = new Vector2WithTimestamp(new Vector2(10, 10), this.starttime + i + variation, body);
+                        SliderParts sliderPositon = new SliderParts(new Vector2(10, 10), this.starttime + i + variation, body);
                         this.sliderPositions.Add(sliderPositon);
                     }
                 }
@@ -111,7 +111,7 @@ namespace StorybrewScripts
 
         }
 
-        public void Render(double starttime, double duration, OsbEasing easeing)
+        public void Render(double starttime, double duration, OsbEasing easeing, double fadeOutTime = 0)
         {
             OsbSprite note = this.noteSprite;
 
@@ -135,21 +135,23 @@ namespace StorybrewScripts
             if (this.isSlider)
             {
 
-                foreach (Vector2WithTimestamp sliderBody in sliderPositions)
+                foreach (SliderParts sliderBody in sliderPositions)
                 {
 
-                    note.Fade(sliderBody.Timestamp, 1);
-                    note.Fade(this.endtime + 20, 0);
+                    OsbSprite sprite = sliderBody.Sprite;
+
+                    sprite.Fade(sliderBody.Timestamp - duration, sliderBody.Timestamp - duration + 50, 0, 1);
+                    sprite.Fade(Math.Min(sliderBody.Timestamp + fadeOutTime, this.endtime), 0);
 
                 }
 
-                note.Fade(starttime, 1);
-                note.Fade(this.endtime + 20, 0);
+                note.Fade(starttime, starttime + 50, 0, 1);
+                note.Fade(this.endtime, 0);
             }
             else
             {
-                note.Fade(starttime, 1);
-                note.Fade(starttime + duration + 20, 0);
+                note.Fade(starttime, starttime + 50, 0, 1);
+                note.Fade(starttime + duration + fadeOutTime, 0);
             }
 
         }

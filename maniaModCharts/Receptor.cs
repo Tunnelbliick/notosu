@@ -56,17 +56,17 @@ namespace StorybrewScripts
 
         }
 
-        public void MoveReceptor(int starttime, Vector2 newPosition, OsbEasing ease, int duration)
+        public void MoveReceptor(double starttime, Vector2 newPosition, OsbEasing ease, double duration)
         {
             OsbSprite receptor = this.receptorSprite;
 
-            receptor.Move(ease, starttime, starttime + duration, getCurrentPosition(starttime), newPosition);
+            receptor.Move(ease, starttime, starttime + duration, getCurrentPosition(starttime - 1), newPosition);
 
             this.position = newPosition;
 
         }
 
-        public void ScaleReceptor(int starttime, Vector2 newScale, OsbEasing ease, int duration)
+        public void ScaleReceptor(double starttime, Vector2 newScale, OsbEasing ease, double duration)
         {
             OsbSprite receptor = this.receptorSprite;
 
@@ -74,7 +74,7 @@ namespace StorybrewScripts
 
         }
 
-        public void RotateReceptor(int starttime, double rotation, OsbEasing ease, int duration)
+        public void RotateReceptor(double starttime, double rotation, OsbEasing ease, double duration)
         {
             OsbSprite receptor = this.receptorSprite;
 
@@ -86,15 +86,15 @@ namespace StorybrewScripts
 
         }
 
-        public void PivotReceptor(int starttime, double rotation, OsbEasing ease, int duration, int stepcount, Vector2 center)
+        public void PivotReceptor(double starttime, double rotation, OsbEasing ease, double duration, int stepcount, Vector2 center)
         {
 
             //this.RotateReceptor(starttime, rotation, ease, duration);
 
             Vector2 point = this.position;
 
-            int totalTime = starttime + duration; // Total duration in milliseconds
-            int stepTime = duration / stepcount; // Step duration in milliseconds
+            double totalTime = starttime + duration; // Total duration in milliseconds
+            double stepTime = duration / stepcount; // Step duration in milliseconds
 
             double endRadians = rotation; // Set the desired end radians here, 2*PI radians is a full circle
             double rotationPerIteration = endRadians / stepcount; // Rotation per iteration
@@ -149,15 +149,6 @@ namespace StorybrewScripts
         {
             Vector2 position = this.receptorSprite.PositionAt(currentTime);
             Vector2 currentScale = getCurrentScale(currentTime);
-
-            if (position.Y > 240)
-            {
-                position.Y += 9f *  currentScale.Y / 0.5f;
-            }
-            else
-            {
-                position.Y -= 9f * currentScale.Y / 0.5f;
-            }
 
             return position;
         }

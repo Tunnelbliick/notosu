@@ -10,7 +10,7 @@ namespace StorybrewScripts
 {
     public enum ColumnType
     {
-        one, two, three, four
+        one, two, three, four, all
     };
 
     public class Column
@@ -60,19 +60,40 @@ namespace StorybrewScripts
         {
 
             this.receptor.MoveReceptor(starttime, newColumnPosition, easing, duration);
-            this.origin.MoveReceptor(starttime, newOriginPosition, easing, duration);
+            this.origin.MoveOrigin(starttime, newOriginPosition, easing, duration);
+
+            return starttime + duration;
+        }
+
+        public double MoveReceptor(double starttime, double duration, Vector2 newReceptorPosition, OsbEasing easing)
+        {
+
+            this.receptor.MoveReceptor(starttime, newReceptorPosition, easing, duration);
+
+            return starttime + duration;
+        }
+
+        public double MoveOrigin(double starttime, double duration, Vector2 newOriginPosition, OsbEasing easing)
+        {
+
+            this.origin.MoveOrigin(starttime, newOriginPosition, easing, duration);
 
             return starttime + duration;
         }
 
         public Vector2 getOriginPosition(double starttime)
         {
-            return this.origin.getCurrentPosition(starttime);
+            return this.origin.getCurrentPosition(starttime - 1);
         }
 
         public Vector2 getReceptorPosition(double starttime)
         {
-            return this.receptor.getCurrentPosition(starttime);
+            return this.receptor.getCurrentPosition(starttime - 1);
+        }
+
+        public Vector2 getReceptorPositionForNotes(double starttime)
+        {
+            return this.receptor.getCurrentPositionForNotes(starttime - 1);
         }
 
     }
