@@ -73,6 +73,23 @@ namespace StorybrewScripts
             return starttime + duration;
         }
 
+
+        public double RotateReceptorRelative(double starttime, double duration, OsbEasing easing, double rotation)
+        {
+
+            this.receptor.RotateReceptor(starttime, duration, easing, rotation);
+
+            return starttime + duration;
+        }
+
+        public double RotateReceptor(double starttime, double duration, OsbEasing easing, double rotation)
+        {
+
+            this.receptor.RotateReceptorAbsolute(starttime, duration, easing, rotation);
+
+            return starttime + duration;
+        }
+
         public double MoveOrigin(double starttime, double duration, Vector2 newOriginPosition, OsbEasing easing)
         {
 
@@ -83,17 +100,22 @@ namespace StorybrewScripts
 
         public Vector2 getOriginPosition(double starttime)
         {
-            return this.origin.getCurrentPosition(starttime - 1);
+            return this.origin.getCurrentPosition(starttime);
         }
 
         public Vector2 getReceptorPosition(double starttime)
         {
-            return this.receptor.getCurrentPosition(starttime - 1);
+            return this.receptor.getCurrentPosition(starttime);
         }
 
         public Vector2 getReceptorPositionForNotes(double starttime)
         {
-            return this.receptor.getCurrentPositionForNotes(starttime - 1);
+            return this.receptor.getCurrentPositionForNotes(starttime);
+        }
+
+        public double getReceptorRotation(double starttime)
+        {
+            return this.receptor.getCurrentRotaion(starttime);
         }
 
     }

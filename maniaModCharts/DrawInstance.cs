@@ -15,32 +15,32 @@ namespace StorybrewScripts
         public double easetime = 0;
         public OsbEasing easing;
         public Playfield playfieldInstance;
-        public int snapShots = 25;
+        public double updatesPerSecond = 2;
         public bool rotateToFaceReceptor = true;
         public Dictionary<ColumnType, List<Anchor>> notePathByColumn = new Dictionary<ColumnType, List<Anchor>>();
 
-        public DrawInstance InitializeDrawInstance(Playfield playfieldInstance, double starttime, double easetime, int snapShots, OsbEasing easing, bool rotateToFaceReceptor)
+        public DrawInstance InitializeDrawInstance(Playfield playfieldInstance, double starttime, double easetime, double updatesPerSecond, OsbEasing easing, bool rotateToFaceReceptor)
         {
 
             this.starttime = starttime;
             this.easetime = easetime;
             this.easing = easing;
             this.playfieldInstance = playfieldInstance;
-            this.snapShots = snapShots;
+            this.updatesPerSecond = updatesPerSecond;
             this.rotateToFaceReceptor = rotateToFaceReceptor;
 
             return this;
 
         }
 
-        public DrawInstance(Playfield playfieldInstance, double starttime, double easetime, int snapShots, OsbEasing easing, bool rotateToFaceReceptor)
+        public DrawInstance(Playfield playfieldInstance, double starttime, double easetime, double updatesPerSecond, OsbEasing easing, bool rotateToFaceReceptor)
         {
 
             this.starttime = starttime;
             this.easetime = easetime;
             this.easing = easing;
             this.playfieldInstance = playfieldInstance;
-            this.snapShots = snapShots;
+            this.updatesPerSecond = updatesPerSecond;
             this.rotateToFaceReceptor = rotateToFaceReceptor;
 
         }
@@ -103,7 +103,7 @@ namespace StorybrewScripts
         {
 
             double endtime = starttime + duration;
-
+            int snapShots = (int)(duration / 1000 * updatesPerSecond);
             double snapLength = easetime / snapShots;
 
             foreach (Column column in playfieldInstance.columns.Values)
@@ -155,7 +155,7 @@ namespace StorybrewScripts
         public double drawNotesByOriginToReceptor(double duration)
         {
             double endtime = starttime + duration;
-
+            int snapShots = (int)(duration / 1000 * updatesPerSecond);
             // This will guarantee that the total time of all snaps is exactly easetime
             double snapLength = easetime / (snapShots + 0f);
 
@@ -300,6 +300,7 @@ namespace StorybrewScripts
         public double drawNotesByAnchors(double duration, string type = "line")
         {
             double endtime = starttime + duration;
+            int snapShots = (int)(duration / 1000 * updatesPerSecond);
             double snapLength = easetime / snapShots;
 
             foreach (Column column in playfieldInstance.columns.Values)
@@ -466,7 +467,7 @@ namespace StorybrewScripts
 
                             totalProgress = i / (snapShots - 1.0f);
 
-                            Vector2 newPosition = CalculateBezierPoint(totalProgress, points);
+                            Vector2 newPosition = BezierCurve.CalculatePoint(points, totalProgress);
 
                             double theta = 0;
 
@@ -529,15 +530,16 @@ namespace StorybrewScripts
                                 Vector2 receptorScale = column.receptor.getCurrentScale(sliderCurrentTime);
                                 Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, sliderProgress);
 
-                                Vector2 newPosition = CalculateBezierPoint(sliderProgress, points);
+                                Vector2 newPosition = BezierCurve.CalculatePoint(points, sliderProgress);
+                                Vector2 nextPosition = BezierCurve.CalculatePoint(points, Math.Min(1, (i + 1) / (snapShots - 1.0f)));
 
                                 double theta = 0;
 
-                                Vector2 delta = newPosition - currentSliderPositon;
+                                Vector2 delta = newPosition - nextPosition;
 
                                 theta = Math.Atan2(delta.X, delta.Y);
 
-                                if (i == snapShots - 1)
+                                if (i == snapShots - 1 && sliderCurrentTime > note.starttime)
                                 {
                                     note.Move(sliderCurrentTime, snapLength, easing, currentPosition, column.receptor.getCurrentPosition(sliderCurrentTime));
                                     note.Scale(sliderCurrentTime, snapLength, easing, receptorScale, receptorScale);
@@ -546,7 +548,7 @@ namespace StorybrewScripts
 
                                 sprite.Move(easing, sliderCurrentTime, sliderCurrentTime + snapLength, currentSliderPositon, newPosition);
                                 sprite.ScaleVec(sliderCurrentTime, column.origin.getCurrentScale(sliderCurrentTime).X + 0.25f, 0.1525f);
-                                sprite.Rotate(easing, sliderCurrentTime + 1, 1, sliderRotation, -theta);
+                                sprite.Rotate(sliderCurrentTime, -theta);
 
                                 sliderCurrentTime += snapLength;
                                 currentSliderPositon = newPosition;
@@ -763,9 +765,10 @@ namespace StorybrewScripts
             return debugString;
         }
 
-        public void updateAnchors(double starttime, double duration, ColumnType column, int precision)
+        public void updateAnchors(double starttime, double duration, ColumnType column, double updatesPerSecond)
         {
 
+            int precision = (int)(duration / 1000 * updatesPerSecond);
             double instanceLength = duration / precision;
 
             for (int i = 0; i <= precision; i++)
@@ -875,7 +878,7 @@ namespace StorybrewScripts
                 const int resolution = 50;
                 for (float t = 0; t <= 1; t += 1f / (resolution - 1))
                 {
-                    Vector2 pointOnCurve = CalculateBezierPoint(t, points);
+                    Vector2 pointOnCurve = BezierCurve.CalculatePoint(points, t);
                     // Draw or store the point as required
                     debug += $"{pointOnCurve}";
                     OsbSprite sprite = layer.CreateSprite("sb/white1x.png", OsbOrigin.Centre, pointOnCurve);
@@ -887,24 +890,6 @@ namespace StorybrewScripts
 
             return debug;
 
-        }
-
-        public Vector2 CalculateBezierPoint(float t, List<Vector2> controlPoints)
-        {
-
-            if (controlPoints.Count == 1)
-                return controlPoints[0];
-
-            var newPoints = new List<Vector2>();
-
-
-            for (int i = 0; i < controlPoints.Count - 1; i++)
-            {
-                var pt = Vector2.Lerp(controlPoints[i], controlPoints[i + 1], t);
-                newPoints.Add(pt);
-            }
-
-            return CalculateBezierPoint(t, newPoints);
         }
     }
 }

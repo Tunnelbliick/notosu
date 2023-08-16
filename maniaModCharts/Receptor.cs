@@ -74,13 +74,23 @@ namespace StorybrewScripts
 
         }
 
-        public void RotateReceptor(double starttime, double rotation, OsbEasing ease, double duration)
+        public void RotateReceptorAbsolute(double starttime, double duration, OsbEasing ease, double rotation)
         {
             OsbSprite receptor = this.receptorSprite;
 
-            var newRotation = this.rotation + rotation;
+            receptor.Rotate(ease, starttime, starttime + duration, getCurrentRotaion(starttime), rotation);
 
-            receptor.Rotate(ease, starttime, starttime + duration, this.rotation, newRotation);
+            this.rotation = rotation;
+
+        }
+
+        public void RotateReceptor(double starttime, double duration, OsbEasing ease, double rotation)
+        {
+            OsbSprite receptor = this.receptorSprite;
+
+            var newRotation = getCurrentRotaion(starttime) + rotation;
+
+            receptor.Rotate(ease, starttime, starttime + duration, getCurrentRotaion(starttime), newRotation);
 
             this.rotation = newRotation;
 
@@ -103,24 +113,9 @@ namespace StorybrewScripts
             {
                 var currentTime = starttime + stepTime * i;
 
-                Vector2 rotatedPoint = PivotPoint(point, center, rotationPerIteration * i);
+                Vector2 rotatedPoint = Utility.PivotPoint(point, center, rotationPerIteration * i);
                 this.MoveReceptor(currentTime, rotatedPoint, ease, stepTime);
             }
-        }
-
-        public static Vector2 PivotPoint(Vector2 point, Vector2 center, double radians)
-        {
-            // Translate point back to origin
-            point -= center;
-
-            // Rotate point
-            Vector2 rotatedPoint = new Vector2(
-                point.X * (float)Math.Cos(radians) - point.Y * (float)Math.Sin(radians),
-                point.X * (float)Math.Sin(radians) + point.Y * (float)Math.Cos(radians)
-            );
-
-            // Translate point back
-            return rotatedPoint + center;
         }
 
         public void Render(int starttime, int endTime)

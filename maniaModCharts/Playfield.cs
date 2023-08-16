@@ -299,7 +299,7 @@ namespace StorybrewScripts
 
             return debug;
         }
-        public Vector2 calculatePlayFieldCenter(int currentTime)
+        public Vector2 calculatePlayFieldCenter(double currentTime)
         {
             Vector2 center;
 
@@ -402,6 +402,52 @@ namespace StorybrewScripts
             Column currentColumn = columns[column];
 
             currentColumn.MoveReceptor(starttime, duration, position, easing);
+
+            return starttime + duration;
+
+        }
+
+        public double RotateReceptorRelative(double starttime, double duration, OsbEasing easing, ColumnType column, double rotation)
+        {
+            if (column == ColumnType.all)
+            {
+                foreach (Column currentColumn in columns.Values)
+                {
+
+                    currentColumn.RotateReceptorRelative(starttime, duration, easing, rotation);
+
+                }
+            }
+            else
+            {
+
+                Column currentColumn = columns[column];
+
+                currentColumn.RotateReceptorRelative(starttime, duration, easing, rotation);
+            }
+
+            return starttime + duration;
+
+        }
+
+        public double RotateReceptorAbsolute(double starttime, double duration, OsbEasing easing, ColumnType column, double rotation)
+        {
+            if (column == ColumnType.all)
+            {
+                foreach (Column currentColumn in columns.Values)
+                {
+
+                    currentColumn.RotateReceptor(starttime, duration, easing, rotation);
+
+                }
+            }
+            else
+            {
+
+                Column currentColumn = columns[column];
+
+                currentColumn.RotateReceptor(starttime, duration, easing, rotation);
+            }
 
             return starttime + duration;
 
@@ -514,7 +560,7 @@ namespace StorybrewScripts
             {
                 Receptor receptor = column.receptor;
 
-                receptor.RotateReceptor(starttime, radians, easing, duration);
+                receptor.RotateReceptor(starttime, duration, easing, radians);
             }
 
 
