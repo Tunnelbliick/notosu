@@ -203,7 +203,7 @@ namespace StorybrewScripts
 
                         double theta = 0;
 
-                        if (progress > 0.15 && rotateToFaceReceptor)
+                        if (progress < 0.15 && rotateToFaceReceptor)
                         {
                             Vector2 delta = receptorPosition - currentPosition;
 
@@ -213,6 +213,7 @@ namespace StorybrewScripts
                                 // If the receptor is above the origin, reverse the direction
                                 delta = -delta;
                             }
+
 
                             theta = Math.Atan2(delta.X, delta.Y);
                         }
@@ -282,7 +283,7 @@ namespace StorybrewScripts
                             //note.AbsoluteRotate(currentTime, snapLength, easing, column.receptor.getCurrentRotaion(currentTime));
 
                             sprite.Move(easing, sliderCurrentTime, sliderCurrentTime + snapLength, currentSliderPositon, newPosition);
-                            sprite.ScaleVec(sliderCurrentTime, column.origin.getCurrentScale(sliderCurrentTime).X + 0.2f, 0.1525f);
+                            sprite.ScaleVec(sliderCurrentTime, 0.7f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).X, 0.16f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).Y);
                             sprite.Rotate(easing, sliderCurrentTime, sliderCurrentTime + snapLength, sprite.RotationAt(sliderCurrentTime), sliderRotation - theta);
 
                             sliderCurrentTime += snapLength;
@@ -462,7 +463,8 @@ namespace StorybrewScripts
 
                             foreach (Anchor noteAnchor in notePath)
                             {
-                                points.Add(noteAnchor.sprite.PositionAt(currentTime));
+                                // points.Add(noteAnchor.sprite.PositionAt(currentTime));
+                                points.Add(noteAnchor.getPositionAt(currentTime));
                             }
 
                             totalProgress = i / (snapShots - 1.0f);
@@ -519,7 +521,8 @@ namespace StorybrewScripts
 
                                 foreach (Anchor noteAnchor in notePath)
                                 {
-                                    points.Add(noteAnchor.sprite.PositionAt(sliderCurrentTime));
+                                    // points.Add(noteAnchor.sprite.PositionAt(sliderCurrentTime));
+                                    points.Add(noteAnchor.getPositionAt(sliderCurrentTime));
                                 }
 
                                 // Calculate the progress based on the remaining time
@@ -872,7 +875,8 @@ namespace StorybrewScripts
 
                 foreach (Anchor noteAnchor in notePath)
                 {
-                    points.Add(noteAnchor.sprite.PositionAt(starttime));
+                    // points.Add(noteAnchor.sprite.PositionAt(starttime));
+                    points.Add(noteAnchor.getPositionAt(starttime));
                 }
 
                 const int resolution = 50;

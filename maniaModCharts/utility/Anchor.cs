@@ -16,6 +16,7 @@ namespace StorybrewScripts
         public OsbSprite sprite;
         public bool debug = false;
         public ColumnType column;
+        public Dictionary<double, Vector2> positions = new Dictionary<double, Vector2>();
 
         public Anchor(int type, ColumnType column, Vector2 initialPosition, Vector2 offset, bool debug, StoryboardLayer layer)
         {
@@ -35,6 +36,7 @@ namespace StorybrewScripts
 
             this.debug = debug;
             this.position = initialPosition;
+            this.positions.Add(0, initialPosition);
             this.offset = offset;
             this.type = type;
             this.column = column;
@@ -47,6 +49,11 @@ namespace StorybrewScripts
             OsbSprite sprite = this.sprite;
             sprite.Move(easing, starttime, starttime + transitionTime, this.position, newPosition);
 
+            /*if (positions.ContainsKey(starttime) == false)
+                this.positions.Add(starttime, this.position);
+
+            if (positions.ContainsKey(starttime + transitionTime) == false)
+                this.positions.Add(starttime + transitionTime, newPosition);*/
 
             this.position = newPosition;
 
@@ -58,8 +65,17 @@ namespace StorybrewScripts
         public void MoveAnchor(double time, Vector2 newPosition)
         {
             OsbSprite sprite = this.sprite;
-
             sprite.Move(time, newPosition);
+
+            /*if (positions.ContainsKey(time) == false)
+                this.positions.Add(time, newPosition);*/
+        }
+
+        public Vector2 getPositionAt(double targetTime)
+        {
+            return sprite.PositionAt(targetTime);
+            /*var closestKey = positions.Keys.Aggregate((x, y) => Math.Abs(x - targetTime) < Math.Abs(y - targetTime) ? x : y);
+            return positions[closestKey];*/
         }
     }
 }

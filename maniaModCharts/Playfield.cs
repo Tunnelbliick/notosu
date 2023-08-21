@@ -17,8 +17,8 @@ namespace StorybrewScripts
         // Default SB height / width
 
         private float absoluteWidth = 640f;
-        private float width = 250f;
-        private float height = 480f;
+        public float width = 250f;
+        public float height = 480f;
 
         private float receptorHeightOffset = 0f;
         private float noteHeightOffset = 0f;
@@ -38,8 +38,8 @@ namespace StorybrewScripts
 
         private OsbSprite bg;
 
-        private int starttime;
-        private int endtime;
+        private double starttime;
+        private double endtime;
 
         // Reference for active Columns;
         public Dictionary<ColumnType, Column> columns = new Dictionary<ColumnType, Column>();
@@ -47,7 +47,7 @@ namespace StorybrewScripts
         // Notes Per Column
         public Dictionary<ColumnType, Dictionary<double, Note>> columnNotes = new Dictionary<ColumnType, Dictionary<double, Note>>();
 
-        public void initilizePlayField(StoryboardLayer receptors, StoryboardLayer notes, int starttime, int endtime, float receportWidth, float receptorHeightOffset, float noteHeightOffset)
+        public void initilizePlayField(StoryboardLayer receptors, StoryboardLayer notes, double starttime, double endtime, float receportWidth, float receptorHeightOffset, float noteHeightOffset)
         {
 
             var bg = notes.CreateSprite("sb/transparent.png");
@@ -94,6 +94,14 @@ namespace StorybrewScripts
             this.noteHeightOffset = noteHeightOffset;
             this.receptorHeightOffset = receptorHeightOffset;
 
+        }
+
+        public void SetWidth(float width) {
+            this.width = width;
+        }
+
+        public void SetHeight(float height) {
+            this.height = height;
         }
 
         public void initializeNotes(List<OsuHitObject> objects, StoryboardLayer noteLayer, double bpm, double offset)
@@ -152,7 +160,7 @@ namespace StorybrewScripts
 
 
 
-        public void ScalePlayField(int starttime, int duration, OsbEasing easing, float width, float height)
+        public double ScalePlayField(double starttime, double duration, OsbEasing easing, float width, float height)
         {
 
             bg.ScaleVec(easing, starttime, starttime + duration, this.width, this.height, width, height);
@@ -193,10 +201,11 @@ namespace StorybrewScripts
                 position += getColumnWidth();
             }
 
+            return starttime + duration;
 
         }
 
-        public double Zoom(int starttime, int duration, OsbEasing easing, double zoomAmount, Boolean keepPosition)
+        public double Zoom(double starttime, double duration, OsbEasing easing, double zoomAmount, Boolean keepPosition)
         {
             double endtime = starttime + duration;
 

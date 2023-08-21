@@ -118,7 +118,7 @@ namespace StorybrewScripts
             }
         }
 
-        public void Render(int starttime, int endTime)
+        public void Render(double starttime, double endTime)
         {
             OsbSprite receptor = this.receptorSprite;
 
