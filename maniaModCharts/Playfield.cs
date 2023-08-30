@@ -20,20 +20,12 @@ namespace StorybrewScripts
         public float width = 250f;
         public float height = 480f;
 
-        private float receptorHeightOffset = 0f;
-        private float noteHeightOffset = 0f;
-        private float offsetX = 0f;
-        private float offsetY = 0f;
-        // Scale to dynamically scale Playfield elements effects all elements
-        private float scale = 0.05f;
+        public float receptorHeightOffset = 0f;
+        public float noteHeightOffset = 0f;
 
         private double rotation = 0f;
 
         private CommandScale receptorScale = new CommandScale(0.5);
-        private string fullNotePath = "sb/4th.png";
-        private string halfNotePath = "sb/8th.png";
-        private string quarterNotePath = "sb/16th.png";
-        private string sliderPath = "sb/hold_body.png";
         private string receptorSpritePath = "sb/receiver.png";
 
         private OsbSprite bg;
@@ -371,40 +363,6 @@ namespace StorybrewScripts
             return center;
         }
 
-        public double SwapColumn(int starttime, int duration, OsbEasing easing, ColumnType column1, ColumnType column2)
-        {
-
-            Column left = this.columns[column1];
-            Column right = this.columns[column2];
-
-            Vector2 leftOrigin = left.getOriginPosition(starttime);
-            Vector2 leftReceptor = left.getReceptorPosition(starttime);
-
-            Vector2 rightOrigin = right.getOriginPosition(starttime);
-            Vector2 rightReceptor = right.getReceptorPosition(starttime);
-
-            left.MoveColumn(starttime, duration, rightReceptor, rightOrigin, easing);
-            right.MoveColumn(starttime, duration, leftReceptor, leftOrigin, easing);
-
-            return starttime + duration;
-
-        }
-
-        public double MoveColumnRelative(double starttime, double duration, OsbEasing easing, ColumnType column, Vector2 relativeMovement)
-        {
-
-            Column currentColumn = columns[column];
-
-            Vector2 originPosition = currentColumn.getOriginPosition(starttime);
-            Vector2 receptorPosition = currentColumn.getReceptorPosition(starttime);
-
-            MoveOriginAbsolute(starttime, duration, easing, column, Vector2.Add(originPosition, relativeMovement));
-            MoveReceptorAbsolute(starttime, duration, easing, column, Vector2.Add(receptorPosition, relativeMovement));
-
-            return starttime + duration;
-
-        }
-
         public double MoveReceptorAbsolute(double starttime, double duration, OsbEasing easing, ColumnType column, Vector2 position)
         {
 
@@ -470,90 +428,6 @@ namespace StorybrewScripts
             currentColumn.MoveOrigin(starttime, duration, position, easing);
 
             return starttime + duration;
-
-        }
-
-        public void flipPlayField(int starttime, int duration, OsbEasing easing, float width, float height, float closeScale, float farScale)
-        {
-
-            Boolean isFlipped = false;
-
-            // bg.ScaleVec(easing, starttime, starttime + duration, this.width, this.height, width, height);
-
-            if (height < this.height / 2)
-            {
-                isFlipped = true;
-            }
-
-            this.width = width;
-            this.height = height;
-
-            float position = 0f;
-
-            Vector2 center = calculatePlayFieldCenter(starttime);
-
-            foreach (Column column in columns.Values)
-            {
-
-                Receptor receptor = column.receptor;
-                NoteOrigin origin = column.origin;
-
-                Vector2 receptorPosition = receptor.getCurrentPosition(starttime);
-                Vector2 currentScale = receptor.getCurrentScale(starttime);
-
-                float closeScaleDifference = closeScale / currentScale.X;
-                float farScaleDifference = farScale / currentScale.X;
-                // float xDifference = fareScale / currentScale.X;
-
-                var xOffset = (receptorPosition.X - center.X) * closeScaleDifference - (receptorPosition.X - center.X);
-
-                var newHeight = Math.Max(height, 0);
-                var oppositHeight = Math.Max(height * -1, 0);
-
-                if (newHeight > 240)
-                {
-                    newHeight -= this.receptorHeightOffset;
-                    oppositHeight += this.noteHeightOffset;
-                }
-                else
-                {
-                    newHeight += this.receptorHeightOffset;
-                    oppositHeight -= this.noteHeightOffset;
-                }
-
-                Vector2 newPosition = new Vector2(receptorPosition.X + xOffset, 240);
-                Vector2 newOpposit = new Vector2(receptorPosition.X + xOffset, 240);
-
-                Vector2 newPositionAfter = new Vector2(receptorPosition.X, newHeight);
-                Vector2 newOppositAfter = new Vector2(receptorPosition.X, oppositHeight);
-
-                receptor.MoveReceptor(starttime - 1, newPosition, easing, duration / 2);
-                origin.MoveOrigin(starttime - 1, newOpposit, easing, duration / 2);
-
-                receptor.MoveReceptor(starttime + duration / 2, newPositionAfter, easing, duration / 2);
-                origin.MoveOrigin(starttime + duration / 2, newOppositAfter, easing, duration / 2);
-
-
-                if (isFlipped)
-                {
-                    receptor.ScaleReceptor(starttime, new Vector2(currentScale.X * closeScaleDifference, currentScale.Y * closeScaleDifference), easing, duration / 2);
-                    receptor.ScaleReceptor(starttime + duration / 2, new Vector2(currentScale.X, currentScale.Y), easing, duration / 2);
-
-                    origin.ScaleReceptor(starttime, new Vector2(currentScale.X * farScaleDifference, currentScale.Y * farScaleDifference), easing, duration / 2);
-                    origin.ScaleReceptor(starttime + duration / 2, new Vector2(currentScale.X, currentScale.Y), easing, duration / 2);
-                }
-                else
-                {
-                    receptor.ScaleReceptor(starttime, new Vector2(currentScale.X * farScaleDifference, currentScale.Y * farScaleDifference), easing, duration / 2);
-                    receptor.ScaleReceptor(starttime + duration / 2, new Vector2(currentScale.X, currentScale.Y), easing, duration / 2);
-
-                    origin.ScaleReceptor(starttime, new Vector2(currentScale.X * closeScaleDifference, currentScale.Y * closeScaleDifference), easing, duration / 2);
-                    origin.ScaleReceptor(starttime + duration / 2, new Vector2(currentScale.X, currentScale.Y), easing, duration / 2);
-                }
-
-                position += getColumnWidth();
-            }
-
 
         }
 
@@ -629,7 +503,7 @@ namespace StorybrewScripts
 
         }
 
-        public double moveFieldX(int starttime, int duration, OsbEasing easing, float amount)
+        public double moveFieldX(double starttime, double duration, OsbEasing easing, float amount)
         {
             foreach (Column column in columns.Values)
             {
@@ -649,7 +523,7 @@ namespace StorybrewScripts
             return starttime + duration;
         }
 
-        public double moveField(int starttime, int duration, OsbEasing easing, float amountX, float amountY)
+        public double moveField(double starttime, double duration, OsbEasing easing, float amountX, float amountY)
         {
             foreach (Column column in columns.Values)
             {
@@ -673,24 +547,6 @@ namespace StorybrewScripts
         }
 
 
-        public double movePosition(int starttime, int duration, OsbEasing easing, Vector2 position)
-        {
-            foreach (Column column in columns.Values)
-            {
-                Receptor receptor = column.receptor;
-                NoteOrigin origin = column.origin;
-
-                Vector2 currentReceptorPosition = receptor.getCurrentPosition(starttime);
-                Vector2 currentOriginPosition = origin.getCurrentPosition(starttime);
-
-                var difference = Vector2.Subtract(currentReceptorPosition, currentOriginPosition);
-
-                receptor.MoveReceptor(starttime, position, easing, duration);
-                origin.MoveOrigin(starttime, new Vector2(position.X, difference.Y), easing, duration);
-            }
-
-            return starttime + duration;
-        }
 
         public float getColumnWidth()
         {

@@ -56,7 +56,7 @@ namespace StorybrewScripts
 
         }
 
-        public double MoveColumn(int starttime, int duration, Vector2 newColumnPosition, Vector2 newOriginPosition, OsbEasing easing)
+        public double MoveColumn(double starttime, double duration, Vector2 newColumnPosition, Vector2 newOriginPosition, OsbEasing easing)
         {
 
             this.receptor.MoveReceptor(starttime, newColumnPosition, easing, duration);
