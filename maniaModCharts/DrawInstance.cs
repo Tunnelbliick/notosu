@@ -110,6 +110,8 @@ namespace StorybrewScripts
             {
                 Dictionary<double, Note> notes = playfieldInstance.columnNotes[column.type];
 
+                RenderReceptor(duration);
+
                 // Get only the keys (hittimes) that fall within the specified range considering easetime
                 var keysInRange = notes.Keys.Where(hittime => hittime >= starttime && hittime <= endtime).ToList();
 
@@ -152,16 +154,60 @@ namespace StorybrewScripts
             return endtime;
         }
 
-        public double drawNotesByOriginToReceptor(double duration)
+        public void RenderReceptor(double duration)
+        {
+
+            double currentTime = starttime;
+            double endTime = starttime + duration;
+            double iterationLenght = 1000 / updatesPerSecond;
+
+            while (currentTime < endTime)
+            {
+
+                foreach (Column column in playfieldInstance.columns.Values)
+                {
+                    Receptor receptor = column.receptor;
+
+                    var foundEntry = playfieldInstance.effectReferenceByStartTime
+                    .Where(kvp => kvp.Key <= currentTime)
+                    .OrderByDescending(kvp => kvp.Key)
+                    .FirstOrDefault();
+
+                    if (foundEntry.Value != null)
+                    {
+                        receptor.RenderTransformed(currentTime, currentTime + iterationLenght + 10, foundEntry.Value.reference);
+                    }
+                    else
+                    {
+                        receptor.Render(currentTime, endTime);
+                    }
+
+                    OsbSprite renderedReceptor = receptor.renderedSprite;
+
+                    renderedReceptor.Move(currentTime, currentTime + iterationLenght, receptor.getCurrentPosition(currentTime), receptor.getCurrentPosition(currentTime + iterationLenght));
+
+                }
+
+                currentTime += iterationLenght;
+
+            }
+
+        }
+
+        public string drawNotesByOriginToReceptor(double duration)
         {
             double endtime = starttime + duration;
             int snapShots = (int)(duration / 1000 * updatesPerSecond);
             // This will guarantee that the total time of all snaps is exactly easetime
             double snapLength = easetime / (snapShots + 0f);
 
+            string debug = "";
 
             foreach (Column column in playfieldInstance.columns.Values)
             {
+
+                RenderReceptor(duration);
+
                 Dictionary<double, Note> notes = playfieldInstance.columnNotes[column.type];
 
                 var keysInRange = notes.Keys.Where(hittime => hittime >= starttime && hittime <= endtime).ToList();
@@ -179,23 +225,46 @@ namespace StorybrewScripts
 
                     Vector2 currentPosition = column.origin.getCurrentPosition(currentTime);
 
-
-                    // TODO fix render in position beeing center of screen then initial receptor position
-                    // IDK why this happens but it does happen prob some weird order issue.
                     note.invisible(fadeInTime - 1);
+
                     note.Move(currentTime - 1, 0, easing, currentPosition, currentPosition);
-                    note.Render(renderTime, noteOnScreanDuration, easing, 10);
+                    var foundEntry = playfieldInstance.effectReferenceByStartTime
+                    .Where(kvp => kvp.Key <= renderTime)
+                    .OrderByDescending(kvp => kvp.Key)
+                    .FirstOrDefault();
+
+                    if (foundEntry.Value != null)
+                    {
+                        debug += $"{foundEntry.Value.reference}\n";
+                        note.RenderTransformed(renderTime, noteOnScreanDuration, easing, foundEntry.Key, foundEntry.Value.reference, 10);
+                    }
+                    else
+                    {
+                        note.Render(renderTime, noteOnScreanDuration, easing, 10);
+                    }
+
                     double startRotation = note.getRotation(currentTime);
 
                     for (int i = 0; i < snapShots; i++)
                     {
+
                         double timeLeft = easetime - snapLength * i;
+
+                        foundEntry = playfieldInstance.effectReferenceByStartTime
+                            .Where(kvp => kvp.Key <= currentTime)
+                            .OrderByDescending(kvp => kvp.Key)
+                            .FirstOrDefault();
+
+                        if (foundEntry.Value != null)
+                        {
+                            note.UpdateTransformed(currentTime, timeLeft, easing, foundEntry.Key, foundEntry.Value.reference, 10);
+                        }
 
                         // Calculate the progress based on the remaining time
                         progress = (float)i / (snapShots - 1);
 
                         Vector2 originPosition = column.origin.getCurrentPosition(currentTime);
-                        Vector2 receptorPosition = column.receptor.getCurrentPositionForNotes(currentTime);
+                        Vector2 receptorPosition = column.receptor.getCurrentPosition(currentTime);
                         Vector2 newPosition = Vector2.Lerp(originPosition, receptorPosition, progress);
                         Vector2 originScale = column.origin.getCurrentScale(currentTime);
                         Vector2 receptorScale = column.receptor.getCurrentScale(currentTime);
@@ -222,13 +291,8 @@ namespace StorybrewScripts
                         note.Scale(currentTime, snapLength, easing, column.origin.getCurrentScale(currentTime), scaleProgress);
                         note.AbsoluteRotate(currentTime, snapLength, easing, startRotation - theta);
 
-                        // Weird spinn in issues?
-                        //if (note.getRotation(currentTime) != column.receptor.getCurrentRotaion(currentTime))
-                        //note.AbsoluteRotate(currentTime, snapLength, easing, column.receptor.getCurrentRotaion(currentTime));
-
                         currentTime += snapLength;
                         currentPosition = newPosition;
-
                     }
 
                     foreach (SliderParts parts in note.sliderPositions)
@@ -254,18 +318,12 @@ namespace StorybrewScripts
                             Vector2 newPosition = Vector2.Lerp(originPosition, receptorPosition, sliderProgress);
                             Vector2 receptorScale = column.receptor.getCurrentScale(sliderCurrentTime);
 
-                            //Vector2 originScale = column.origin.getCurrentScale(sliderCurrentTime);
-                            //Vector2 receptorScale = column.receptor.getCurrentScale(sliderCurrentTime);
-                            //Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, sliderProgress);
-
                             double theta = 0;
 
                             Vector2 delta = receptorPosition - currentSliderPositon;
 
-                            // Check relative vertical positions
                             if (currentSliderPositon.Y > receptorPosition.Y)
                             {
-                                // If the receptor is above the origin, reverse the direction
                                 delta = -delta;
                             }
 
@@ -277,10 +335,6 @@ namespace StorybrewScripts
                                 note.Scale(sliderCurrentTime, snapLength, easing, receptorScale, receptorScale);
                                 currentPosition = column.receptor.getCurrentPosition(sliderCurrentTime);
                             }
-
-                            // Weird spinn in issues?
-                            //if (note.getRotation(currentTime) != column.receptor.getCurrentRotaion(currentTime))
-                            //note.AbsoluteRotate(currentTime, snapLength, easing, column.receptor.getCurrentRotaion(currentTime));
 
                             sprite.Move(easing, sliderCurrentTime, sliderCurrentTime + snapLength, currentSliderPositon, newPosition);
                             sprite.ScaleVec(sliderCurrentTime, 0.7f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).X, 0.16f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).Y);
@@ -295,7 +349,7 @@ namespace StorybrewScripts
                 }
             }
 
-            return endtime;
+            return debug;
         }
 
         public double drawNotesByAnchors(double duration, string type = "line")

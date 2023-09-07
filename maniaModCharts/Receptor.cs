@@ -11,6 +11,9 @@ using StorybrewCommon.Subtitles;
 using StorybrewCommon.Util;
 using OpenTK;
 using StorybrewCommon.Storyboarding.CommandValues;
+using storyboard.scriptslibrary.maniaModCharts.utility;
+using StorybrewCommon.Animations;
+using System.IO;
 
 namespace StorybrewScripts
 {
@@ -21,34 +24,75 @@ namespace StorybrewScripts
         public Vector2 position = new Vector2(0, 0);
         public StoryboardLayer layer;
         public OsbSprite receptorSprite;
-
+        public OsbSprite renderedSprite;
+        public Operation currentOperation;
         public OsbSprite debug;
+        public string appliedTransformation = "";
+        public Dictionary<Guid, Operation> operationLog = new Dictionary<Guid, Operation>();
 
         // Rotation in radiants
         public double rotation = 0f;
+        public double startRotation = 0f;
+        public ColumnType columnType;
 
-        public Receptor(String receptorSpritePath, double rotation, StoryboardLayer layer, CommandScale scale, double starttime)
+        public Receptor(String receptorSpritePath, double rotation, StoryboardLayer layer, CommandScale scale, double starttime, ColumnType type)
         {
 
-            OsbSprite receptor = layer.CreateSprite(receptorSpritePath, OsbOrigin.Centre);
-            receptor.Rotate(starttime, rotation);
-            receptor.ScaleVec(starttime, scale);
+            OsbSprite receptor = layer.CreateSprite("sb/transparent.png", OsbOrigin.Centre);
+            OsbSprite receptorSprite = layer.CreateSprite(receptorSpritePath, OsbOrigin.Centre);
 
+            switch (type)
+            {
+                case ColumnType.one:
+                    receptorSprite.Rotate(starttime - 1, 1 * Math.PI / 2);
+                    break;
+                case ColumnType.two:
+                    receptorSprite.Rotate(starttime - 1, 0 * Math.PI / 2);
+                    break;
+                case ColumnType.three:
+                    receptorSprite.Rotate(starttime - 1, 2 * Math.PI / 2);
+                    break;
+                case ColumnType.four:
+                    receptorSprite.Rotate(starttime - 1, 3 * Math.PI / 2);
+                    break;
+            }
 
+            receptorSprite.ScaleVec(starttime, scale);
+
+            this.columnType = type;
             this.receptorSpritePath = receptorSpritePath;
+            this.renderedSprite = receptorSprite;
             this.rotation = rotation;
+            this.startRotation = rotation;
             this.layer = layer;
             this.receptorSprite = receptor;
 
         }
 
-        public Receptor(String receptorSpritePath, double rotation, StoryboardLayer layer, Vector2 position)
+        public Receptor(String receptorSpritePath, double rotation, StoryboardLayer layer, Vector2 position, ColumnType type)
         {
-            OsbSprite receptor = layer.CreateSprite(receptorSpritePath);
-            receptor.Rotate(0, rotation);
-            receptor.Move(0, position);
+            OsbSprite receptor = layer.CreateSprite("sb/transparent.png", OsbOrigin.Centre);
+            OsbSprite receptorSprite = layer.CreateSprite(receptorSpritePath, OsbOrigin.Centre);
 
+            switch (type)
+            {
+                case ColumnType.one:
+                    receptorSprite.Rotate(0 - 1, 1 * Math.PI / 2);
+                    break;
+                case ColumnType.two:
+                    receptorSprite.Rotate(0 - 1, 0 * Math.PI / 2);
+                    break;
+                case ColumnType.three:
+                    receptorSprite.Rotate(0 - 1, 2 * Math.PI / 2);
+                    break;
+                case ColumnType.four:
+                    receptorSprite.Rotate(0 - 1, 3 * Math.PI / 2);
+                    break;
+            }
+
+            this.columnType = type;
             this.receptorSpritePath = receptorSpritePath;
+            this.renderedSprite = receptorSprite;
             this.rotation = rotation;
             this.layer = layer;
             this.receptorSprite = receptor;
@@ -60,7 +104,10 @@ namespace StorybrewScripts
         {
             OsbSprite receptor = this.receptorSprite;
 
-            receptor.Move(ease, starttime, starttime + duration, getCurrentPosition(starttime - 1), newPosition);
+
+            Vector2 originalPostion = getCurrentPosition(starttime - 1);
+
+            receptor.Move(ease, starttime, starttime + duration, originalPostion, newPosition);
 
             this.position = newPosition;
 
@@ -70,7 +117,9 @@ namespace StorybrewScripts
         {
             OsbSprite receptor = this.receptorSprite;
 
-            receptor.ScaleVec(ease, starttime, starttime + duration, getCurrentScale(starttime), newScale);
+            Vector2 originalScale = getCurrentScale(starttime);
+
+            receptor.ScaleVec(ease, starttime, starttime + duration, originalScale, newScale);
 
         }
 
@@ -118,15 +167,6 @@ namespace StorybrewScripts
             }
         }
 
-        public void Render(double starttime, double endTime)
-        {
-            OsbSprite receptor = this.receptorSprite;
-
-            receptor.Fade(starttime, 1);
-            receptor.Fade(endTime, 0);
-
-        }
-
         public Vector2 getCurrentScale(double currentTime)
         {
             CommandScale scale = this.receptorSprite.ScaleAt(currentTime);
@@ -153,5 +193,60 @@ namespace StorybrewScripts
             return this.receptorSprite.RotationAt(currentTIme);
         }
 
+        public void Render(double starttime, double endtime)
+        {
+
+            if (this.appliedTransformation != "")
+            {
+                return;
+            }
+
+            OsbSprite sprite = this.renderedSprite;
+
+            switch (this.columnType)
+            {
+                case ColumnType.one:
+                    sprite.Rotate(starttime - 1, 1 * Math.PI / 2);
+                    break;
+                case ColumnType.two:
+                    sprite.Rotate(starttime - 1, 0 * Math.PI / 2);
+                    break;
+                case ColumnType.three:
+                    sprite.Rotate(starttime - 1, 2 * Math.PI / 2);
+                    break;
+                case ColumnType.four:
+                    sprite.Rotate(starttime - 1, 3 * Math.PI / 2);
+                    break;
+            }
+
+
+            sprite.Fade(starttime, 1);
+            sprite.ScaleVec(starttime, receptorSprite.ScaleAt(starttime));
+            sprite.Fade(endtime, 0);
+
+        }
+
+        public void RenderTransformed(double starttime, double endtime, string reference)
+        {
+
+            if (this.appliedTransformation == reference)
+            {
+                return;
+            }
+
+            OsbSprite oldSprite = this.renderedSprite;
+            this.appliedTransformation = reference;
+            oldSprite.Fade(starttime, 0);
+            OsbSprite sprite = layer.CreateSprite(Path.Combine("sb", "transformation", reference, this.columnType.ToString(), "receptor", "receptor" + ".png"), OsbOrigin.Centre, receptorSprite.PositionAt(starttime));
+
+            sprite.Rotate(starttime, 0);
+            sprite.ScaleVec(starttime, receptorSprite.ScaleAt(starttime));
+            sprite.Fade(starttime, 1);
+            sprite.Fade(endtime, 0);
+
+            this.renderedSprite = sprite;
+
+           // oldSprite = null;
+        }
     }
 }

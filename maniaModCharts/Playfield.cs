@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using OpenTK;
+using storyboard.scriptslibrary.maniaModCharts.effects;
 using StorybrewCommon.Mapset;
 using StorybrewCommon.Scripting;
 using StorybrewCommon.Storyboarding;
@@ -11,7 +12,7 @@ using StorybrewCommon.Storyboarding.CommandValues;
 namespace StorybrewScripts
 {
 
-    public class Playfield
+    public class Playfield : IDisposable
     {
 
         // Default SB height / width
@@ -35,9 +36,42 @@ namespace StorybrewScripts
 
         // Reference for active Columns;
         public Dictionary<ColumnType, Column> columns = new Dictionary<ColumnType, Column>();
+        public Dictionary<double, EffectInfo> effectReferenceByStartTime = new Dictionary<double, EffectInfo>();
 
         // Notes Per Column
         public Dictionary<ColumnType, Dictionary<double, Note>> columnNotes = new Dictionary<ColumnType, Dictionary<double, Note>>();
+
+        private bool disposed = false;
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    // Set managed objects to null
+                    columns = null;
+                    effectReferenceByStartTime = null;
+                    columnNotes = null;
+                    bg = null;
+                }
+
+                // Nullify any unmanaged resources here, if any
+
+                disposed = true;
+            }
+        }
+
+        ~Playfield()
+        {
+            Dispose(false);
+        }
 
         public void initilizePlayField(StoryboardLayer receptors, StoryboardLayer notes, double starttime, double endtime, float receportWidth, float receptorHeightOffset, float noteHeightOffset)
         {
@@ -88,11 +122,13 @@ namespace StorybrewScripts
 
         }
 
-        public void SetWidth(float width) {
+        public void SetWidth(float width)
+        {
             this.width = width;
         }
 
-        public void SetHeight(float height) {
+        public void SetHeight(float height)
+        {
             this.height = height;
         }
 
@@ -113,7 +149,7 @@ namespace StorybrewScripts
                     if (hitobject.Position.X != xOffset)
                         continue;
 
-                    if (hitobject.StartTime <= this.starttime && hitobject.EndTime >= this.endtime)
+                    if (hitobject.StartTime <= this.starttime || hitobject.EndTime >= this.endtime)
                         continue;
 
                     Note currentNote = new Note(noteLayer, hitobject, column, bpm, offset);
@@ -244,7 +280,7 @@ namespace StorybrewScripts
 
             return endtime;
         }
-        public String ZoomAndMove(int starttime, int duration, OsbEasing easing, Vector2 absoluteScale, Vector2 newPosition)
+        public String ZoomAndMove(double starttime, double duration, OsbEasing easing, Vector2 absoluteScale, Vector2 newPosition)
         {
             double endtime = starttime + duration;
 
@@ -371,6 +407,29 @@ namespace StorybrewScripts
             currentColumn.MoveReceptor(starttime, duration, position, easing);
 
             return starttime + duration;
+
+        }
+
+        public void MoveReceptorRelative(double starttime, double duration, OsbEasing easing, ColumnType column, Vector2 position)
+        {
+            if (column == ColumnType.all)
+            {
+                foreach (Column currentColumn in columns.Values)
+                {
+                    Vector2 currentPosition = currentColumn.getReceptorPosition(starttime);
+
+                    currentColumn.MoveReceptor(starttime, duration, Vector2.Add(currentPosition, position), easing);
+                }
+            }
+            else
+            {
+                Column currentColumn = columns[column];
+
+                Vector2 currentPosition = currentColumn.getReceptorPosition(starttime);
+
+                currentColumn.MoveReceptor(starttime, duration, Vector2.Add(currentPosition, position), easing);
+
+            }
 
         }
 
@@ -546,6 +605,25 @@ namespace StorybrewScripts
             return starttime + duration;
         }
 
+        public void calculateOperations(double starttime, double duration, int iterationsPerSecond = 5)
+        {
+            foreach (Column column in columns.Values)
+            {
+                Receptor receptor = column.receptor;
+
+                receptor.calculateMovementViaLog(starttime, duration, iterationsPerSecond);
+
+            }
+        }
+
+        public void addEffect(double starttime, double endtime, EffectType type, string reference)
+        {
+
+            EffectInfo info = new EffectInfo(starttime, endtime, type, reference);
+
+            this.effectReferenceByStartTime.Add(starttime, info);
+
+        }
 
 
         public float getColumnWidth()
@@ -557,6 +635,5 @@ namespace StorybrewScripts
         {
             return (absoluteWidth - width) / 2;
         }
-
     }
 }

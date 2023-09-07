@@ -51,7 +51,7 @@ namespace StorybrewScripts
                     break;
             }
 
-            this.receptor = new Receptor(receptorSpritePath, rotation, columnLayer, scale, starttime);
+            this.receptor = new Receptor(receptorSpritePath, rotation, columnLayer, scale, starttime, this.type);
             this.origin = new NoteOrigin(receptorSpritePath, rotation, columnLayer, scale, starttime);
 
         }

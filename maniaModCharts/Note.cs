@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using OpenTK;
@@ -17,12 +18,16 @@ namespace StorybrewScripts
         public StoryboardLayer layer;
         public OsbSprite noteSprite;
         public OsuHitObject hitObject;
+        public double renderStart = 0;
+        public double renderEnd = 0;
+        public double renderDuration = 0;
         public bool isSlider = false;
         public double starttime;
         public double endtime;
         public ColumnType columnType;
         public List<SliderParts> sliderPositions = new List<SliderParts>();
         public int sliderParts = 1;
+        public string appliedTransformation = "";
 
         public Note(StoryboardLayer layer, OsuHitObject hitObject, Column column, double bpm, double offset)
         {
@@ -101,6 +106,7 @@ namespace StorybrewScripts
                     sprite = layer.CreateSprite("sb/16th.png");
                     break;
                 default:
+                    this.noteType = 4;
                     sprite = layer.CreateSprite("sb/4th.png");
                     break;
 
@@ -113,8 +119,13 @@ namespace StorybrewScripts
 
         public void Render(double starttime, double duration, OsbEasing easeing, double fadeOutTime = 0)
         {
-            OsbSprite note = this.noteSprite;
 
+            if (this.appliedTransformation != "")
+            {
+                return;
+            }
+
+            OsbSprite note = this.noteSprite;
 
             switch (this.columnType)
             {
@@ -147,12 +158,146 @@ namespace StorybrewScripts
 
                 note.Fade(starttime, starttime + 50, 0, 1);
                 note.Fade(this.endtime, 0);
+                renderEnd = this.endtime;
             }
             else
             {
                 note.Fade(starttime, starttime + 50, 0, 1);
                 note.Fade(starttime + duration + fadeOutTime, 0);
+                renderEnd = starttime + duration + fadeOutTime;
             }
+
+            renderStart = starttime;
+            renderDuration = duration;
+
+        }
+
+        public void RenderTransformed(double starttime, double duration, OsbEasing easeing, double transformationTime, string reference, double fadeOutTime = 0)
+        {
+
+            if (this.appliedTransformation == reference)
+            {
+                return;
+            }
+
+            OsbSprite oldSprite = this.noteSprite;
+
+            this.appliedTransformation = reference;
+            oldSprite.Fade(starttime, 0);
+            this.noteSprite = layer.CreateSprite(Path.Combine("sb", "transformation", reference, this.columnType.ToString(), noteType.ToString(), noteType.ToString() + ".png"), OsbOrigin.Centre, oldSprite.PositionAt(starttime));
+            layer.Discard(oldSprite);
+
+            OsbSprite note = this.noteSprite;
+            note.Rotate(starttime, 0);
+
+            if (this.isSlider)
+            {
+
+                foreach (SliderParts sliderBody in sliderPositions)
+                {
+
+                    OsbSprite sprite = sliderBody.Sprite;
+
+                    sprite.Fade(sliderBody.Timestamp - duration, sliderBody.Timestamp - duration + 50, 0, 1);
+                    sprite.Fade(Math.Min(sliderBody.Timestamp + fadeOutTime, this.endtime), 0);
+
+                }
+
+                note.Fade(starttime, starttime + 50, 0, 1);
+                note.Fade(this.endtime, 0);
+            }
+            else
+            { 
+                note.Fade(starttime, starttime + 50, 0, 1);
+                note.Fade(starttime + duration + fadeOutTime, 0);
+            }
+
+        }
+
+        public void UpdateTransformed(double starttime, double duration, OsbEasing easeing, double transformationTime, string reference, double fadeOutTime = 0)
+        {
+
+            if (this.appliedTransformation == reference)
+            {
+                return;
+            }
+
+            OsbSprite oldSprite = this.noteSprite;
+
+            this.appliedTransformation = reference;
+            oldSprite.Fade(starttime, 0);
+            this.noteSprite = layer.CreateSprite(Path.Combine("sb", "transformation", reference, this.columnType.ToString(), noteType.ToString(), noteType.ToString() + ".png"), OsbOrigin.Centre, oldSprite.PositionAt(starttime));
+
+            OsbSprite note = this.noteSprite;
+            note.Rotate(starttime, 0);
+
+            if (this.isSlider)
+            {
+
+                foreach (SliderParts sliderBody in sliderPositions)
+                {
+
+                    OsbSprite sprite = sliderBody.Sprite;
+
+                    sprite.Fade(sliderBody.Timestamp - duration, 1);
+                    sprite.Fade(Math.Min(sliderBody.Timestamp + fadeOutTime, this.endtime), 0);
+
+                }
+
+                note.Fade(starttime, 1);
+                note.Fade(this.endtime, 0);
+            }
+            else
+            {
+                note.Fade(starttime, 1);
+                note.Fade(starttime + duration + fadeOutTime, 0);
+            }
+
+        }
+
+        public string update(double currentTime, string reference, double easetime, double fadeOutTime = 0)
+        {
+
+            if (currentTime < renderStart)
+            {
+                return "deb";
+            }
+
+            if (currentTime > renderEnd)
+            {
+                return "deb";
+            }
+
+            this.appliedTransformation = reference;
+            this.noteSprite.Fade(currentTime, 0);
+            this.noteSprite = layer.CreateSprite(Path.Combine("sb", "transformation", reference, this.columnType.ToString(), noteType.ToString(), noteType.ToString() + ".png"), OsbOrigin.Centre, this.noteSprite.PositionAt(currentTime));
+
+            OsbSprite note = this.noteSprite;
+            note.Rotate(currentTime, 0);
+
+            if (this.isSlider)
+            {
+
+                foreach (SliderParts sliderBody in sliderPositions)
+                {
+
+                    OsbSprite sprite = sliderBody.Sprite;
+
+                    sprite.Fade(sliderBody.Timestamp - renderDuration, 1);
+                    sprite.Fade(renderEnd, 0);
+
+                }
+
+                note.Fade(currentTime, 1);
+                note.Fade(renderEnd, 0);
+            }
+            else
+            {
+                note.Fade(currentTime, 1);
+                note.Fade(renderEnd, 0);
+            }
+
+            return "deb";
 
         }
 

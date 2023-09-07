@@ -7,89 +7,70 @@ using System.Collections.Generic;
 using AForge;
 using System.Linq;
 using System.Runtime.InteropServices;
+using OpenTK;
 
 namespace StorybrewScripts
 {
     public static class ImageManipulator
     {
 
-        private static double previousScaleFactor = 1;
-        private static PointF previousCenter = new PointF(0, 0);
-        private const double smoothingFactor = 0.2; // Adjust this as needed
-        private static readonly object locker = new object();
-        private static System.Collections.Concurrent.ConcurrentQueue<PointF> centerBuffer = new System.Collections.Concurrent.ConcurrentQueue<PointF>();
-        private const int BufferSize = 5;  // Adjust as needed
-        private static object lockObj = new object();
-        public static void testImage(string path, int frames = 20)
+        public static Bitmap transformImage(Bitmap input, Vector2 topLeft, Vector2 topRight, Vector2 bottomRight, Vector2 bottomLeft)
         {
-            frames = 120;
-            int amountPerFrame = 2;
-            int currentAmount = amountPerFrame;
-            // Load the image
-            Bitmap sourceImage = new Bitmap(Path.Combine(path, "sb", "receiver", "default.png"));
-
-            for (int i = 0; i < frames; i++)
+            Bitmap paddedImage = new Bitmap(input.Width * 2 + 100, input.Height * 2 + 100);
+            using (Graphics g = Graphics.FromImage(paddedImage))
             {
+                // Explicitly set graphics properties
+                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
+                g.DrawImage(input, new Rectangle(input.Width / 2 + 50, input.Height / 2 + 50, input.Width, input.Height));
+            }
 
-                // Pad the source image to 256x256
-                Bitmap paddedImage = new Bitmap(sourceImage.Width * 2 + 100, sourceImage.Height * 2 + 100);
-                using (Graphics g = Graphics.FromImage(paddedImage))
+            IntPoint topLeftInt = new IntPoint((int)topLeft.X, (int)topLeft.Y);
+            IntPoint topRightInt = new IntPoint((int)topRight.X, (int)topRight.Y);
+            IntPoint bottomRightInt = new IntPoint((int)bottomRight.X, (int)bottomRight.Y);
+            IntPoint bottomLeftInt = new IntPoint((int)bottomLeft.X, (int)bottomLeft.Y);
+
+            List<IntPoint> sourcePoints = new List<IntPoint>
+            {
+                new IntPoint(topLeftInt.X, topLeftInt.Y),
+                new IntPoint(input.Width + topRightInt.X, topRightInt.Y),
+                new IntPoint(input.Width + bottomRightInt.X, input.Height + bottomRightInt.Y),
+                new IntPoint(bottomLeftInt.X, input.Height + bottomLeftInt.Y)
+            };
+
+            // Calculate scale factors based on the dimensions of the padded image and the original image
+            double xScaleFactor = (double)paddedImage.Width / input.Width;
+            double yScaleFactor = (double)paddedImage.Height / input.Height;
+
+            List<IntPoint> destinationPoints = new List<IntPoint>
+            {
+                new IntPoint((int)(topLeftInt.X * xScaleFactor), (int)(topLeftInt.Y * yScaleFactor)),
+                new IntPoint((int)((input.Width + topRightInt.X) * xScaleFactor), (int)(topRightInt.Y * yScaleFactor)),
+                new IntPoint((int)((input.Width + bottomRightInt.X) * xScaleFactor), (int)((input.Height + bottomRightInt.Y) * yScaleFactor)),
+                new IntPoint((int)(bottomLeftInt.X * xScaleFactor), (int)((input.Height + bottomLeftInt.Y) * yScaleFactor))
+            };
+
+            int transformedWidth = paddedImage.Width;
+            int transformedHeight = paddedImage.Height;
+
+            QuadrilateralTransformation filter = new QuadrilateralTransformation(destinationPoints, transformedWidth, transformedHeight);
+            Bitmap transformedImage = filter.Apply(paddedImage);
+
+            Bitmap adjustedImage = AdjustImageToFit(transformedImage, input);
+
+            using (Graphics g = Graphics.FromImage(adjustedImage))
+            {
+                foreach (IntPoint p in sourcePoints)
                 {
-                    g.Clear(Color.Transparent);
-                    g.DrawImage(sourceImage, new System.Drawing.Point(sourceImage.Width / 2 + 25, sourceImage.Height / 2 + 25)); // centered
-                }
+                    int x = Math.Max(0, Math.Min(adjustedImage.Width - 2, p.X));
+                    int y = Math.Max(0, Math.Min(adjustedImage.Height - 2, p.Y));
 
-                // Define the destination points for the transformation
-                List<IntPoint> sourcePoints = new List<IntPoint>
-                {
-                    new IntPoint(0, currentAmount), new IntPoint(sourceImage.Width, 0),
-                    new IntPoint(sourceImage.Width, sourceImage.Height),
-                    new IntPoint(0, sourceImage.Height - currentAmount)
-                };
-
-                // Define the destination points for the transformation
-                List<IntPoint> destinationPoints = new List<IntPoint>
-                {
-                    new IntPoint(0, currentAmount), new IntPoint(paddedImage.Width, 0),
-                    new IntPoint(paddedImage.Width, paddedImage.Height),
-                    new IntPoint(0, paddedImage.Height - currentAmount)
-                };
-
-                // Create the transformation filter with desired dimensions
-                int transformedWidth = paddedImage.Width;
-                int transformedHeight = paddedImage.Height;
-                QuadrilateralTransformation filter = new QuadrilateralTransformation(destinationPoints, transformedWidth, transformedHeight);
-                Bitmap transformedImage = filter.Apply(paddedImage);
-
-                Bitmap adjustedImage = AdjustImageToFit(transformedImage, sourceImage);
-
-                using (Graphics g = Graphics.FromImage(adjustedImage))
-                {
-                    foreach (IntPoint p in sourcePoints)
-                    {
-                        // Ensure the points are within the boundaries of the 128x128 image
-                        int x = Math.Max(0, Math.Min(adjustedImage.Width - 2, p.X));  // ensure x is within [0, 126]
-                        int y = Math.Max(0, Math.Min(adjustedImage.Height - 2, p.Y)); // ensure y is within [0, 126]
-
-                        // Draw a rectangle around each point
-                        g.DrawRectangle(Pens.Red, x, y, 2, 2);
-                    }
-                }
-
-
-                // Save the adjusted image
-                adjustedImage.Save(Path.Combine(path, "sb", "receiver", "test", $"test{i}.png"));
-
-
-                if (i > 59)
-                {
-                    currentAmount -= amountPerFrame;
-                }
-                else
-                {
-                    currentAmount += amountPerFrame;
+                    g.DrawRectangle(Pens.Red, x, y, 2, 2);
                 }
             }
+
+
+            // Save the adjusted image
+            return adjustedImage;
         }
 
         private static Bitmap AdjustImageToFit(Bitmap inputImage, Bitmap sourceImage)
@@ -106,7 +87,6 @@ namespace StorybrewScripts
             double desiredDistanceSquared = Math.Pow(Math.Min(sourceImage.Width, sourceImage.Height) / 2.0, 2);
             double scaleFactor = 1;
 
-            // Lock bits for faster pixel access
             Rectangle rect = new Rectangle(0, 0, inputImage.Width, inputImage.Height);
             var bmpData = inputImage.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadOnly, inputImage.PixelFormat);
             int bytesPerPixel = System.Drawing.Image.GetPixelFormatSize(inputImage.PixelFormat) / 8;
@@ -119,7 +99,7 @@ namespace StorybrewScripts
                 for (int x = 0; x < inputImage.Width; x++)
                 {
                     int bytePosition = y * bmpData.Stride + x * bytesPerPixel;
-                    byte alpha = bytes[bytePosition + 3]; // Assuming image is 32bpp (position + 3 is the alpha channel)
+                    byte alpha = bytes[bytePosition + 3];
 
                     if (alpha > 0)
                     {
@@ -149,6 +129,29 @@ namespace StorybrewScripts
             }
 
             return finalImage;
+        }
+
+        public static Bitmap RotateBitmap(Bitmap input, double radians)
+        {
+            Bitmap rotated = new Bitmap(input.Width, input.Height);
+
+            float angleInDegrees = (float)(radians * (180.0 / Math.PI));
+
+            using (Graphics g = Graphics.FromImage(rotated))
+            {
+                // Explicitly set graphics properties
+                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
+
+                g.TranslateTransform((float)input.Width / 2, (float)input.Height / 2);
+                g.RotateTransform(angleInDegrees);
+                g.TranslateTransform(-(float)input.Width / 2, -(float)input.Height / 2);
+                g.DrawImage(input, new Rectangle(0, 0, rotated.Width, rotated.Height));
+            }
+
+            return rotated;
+
         }
 
 
