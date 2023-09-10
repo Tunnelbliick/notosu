@@ -27,7 +27,7 @@ namespace StorybrewScripts
         private double rotation = 0f;
 
         private CommandScale receptorScale = new CommandScale(0.5);
-        private string receptorSpritePath = "sb/receiver.png";
+        private string receptorSpritePath = "sb/sprites/receiver.png";
 
         private OsbSprite bg;
 
@@ -186,7 +186,50 @@ namespace StorybrewScripts
             return endtime;
         }
 
+        public double ScalePlayFieldRelative(double starttime, double duration, OsbEasing easing, float width, float height)
+        {
 
+            bg.ScaleVec(easing, starttime, starttime + duration, this.width, this.height, width, height);
+
+            this.width = width;
+            this.height = height;
+
+            float position = 0f;
+
+            foreach (Column column in columns.Values)
+            {
+
+                Receptor receptor = column.receptor;
+                NoteOrigin origin = column.origin;
+
+                var x = position + getColumnWidth() / 2;
+
+                var newHeight = Math.Max(height, 0);
+                var oppositHeight = Math.Max(height * -1, 0);
+
+                if (newHeight > 240)
+                {
+                    newHeight -= this.receptorHeightOffset;
+                    oppositHeight += this.noteHeightOffset;
+                }
+                else
+                {
+                    newHeight += this.receptorHeightOffset;
+                    oppositHeight -= this.noteHeightOffset;
+                }
+
+                Vector2 newPosition = new Vector2(x, newHeight);
+                Vector2 newOpposit = new Vector2(x, oppositHeight);
+
+                receptor.MoveReceptor(starttime, newPosition, easing, duration);
+                origin.MoveOrigin(starttime, newOpposit, easing, duration);
+
+                position += getColumnWidth();
+            }
+
+            return starttime + duration;
+
+        }
 
         public double ScalePlayField(double starttime, double duration, OsbEasing easing, float width, float height)
         {
@@ -231,6 +274,23 @@ namespace StorybrewScripts
 
             return starttime + duration;
 
+        }
+
+        public double MoveColumnRelative(double starttime, double duration, OsbEasing easing, Vector2 offset, ColumnType type)
+        {
+
+            if (type == ColumnType.all)
+            {
+                foreach (Column column in columns.Values)
+                {
+                    column.MoveColumnRelative(starttime, duration, offset, easing);
+                }
+            }
+            else
+            {
+                columns[type].MoveColumnRelative(starttime, duration, offset, easing);
+            }
+            return starttime + duration;
         }
 
         public double Zoom(double starttime, double duration, OsbEasing easing, double zoomAmount, Boolean keepPosition)
@@ -410,7 +470,7 @@ namespace StorybrewScripts
 
         }
 
-        public void MoveReceptorRelative(double starttime, double duration, OsbEasing easing, ColumnType column, Vector2 position)
+        public void MoveReceptorRelative(double starttime, double duration, OsbEasing easing, Vector2 position, ColumnType column)
         {
             if (column == ColumnType.all)
             {
@@ -433,7 +493,7 @@ namespace StorybrewScripts
 
         }
 
-        public double RotateReceptorRelative(double starttime, double duration, OsbEasing easing, ColumnType column, double rotation)
+        public double RotateReceptorRelative(double starttime, double duration, OsbEasing easing, double rotation, ColumnType column)
         {
             if (column == ColumnType.all)
             {
@@ -476,6 +536,29 @@ namespace StorybrewScripts
             }
 
             return starttime + duration;
+
+        }
+
+        public void MoveOriginRelative(double starttime, double duration, OsbEasing easing, Vector2 position, ColumnType column)
+        {
+            if (column == ColumnType.all)
+            {
+                foreach (Column currentColumn in columns.Values)
+                {
+                    Vector2 currentPosition = currentColumn.getOriginPosition(starttime);
+
+                    currentColumn.MoveOrigin(starttime, duration, Vector2.Add(currentPosition, position), easing);
+                }
+            }
+            else
+            {
+                Column currentColumn = columns[column];
+
+                Vector2 currentPosition = currentColumn.getOriginPosition(starttime);
+
+                currentColumn.MoveOrigin(starttime, duration, Vector2.Add(currentPosition, position), easing);
+
+            }
 
         }
 
@@ -603,17 +686,6 @@ namespace StorybrewScripts
             }
 
             return starttime + duration;
-        }
-
-        public void calculateOperations(double starttime, double duration, int iterationsPerSecond = 5)
-        {
-            foreach (Column column in columns.Values)
-            {
-                Receptor receptor = column.receptor;
-
-                receptor.calculateMovementViaLog(starttime, duration, iterationsPerSecond);
-
-            }
         }
 
         public void addEffect(double starttime, double endtime, EffectType type, string reference)

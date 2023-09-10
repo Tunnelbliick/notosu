@@ -58,9 +58,16 @@ namespace StorybrewScripts
 
         public double MoveColumn(double starttime, double duration, Vector2 newColumnPosition, Vector2 newOriginPosition, OsbEasing easing)
         {
-
             this.receptor.MoveReceptor(starttime, newColumnPosition, easing, duration);
             this.origin.MoveOrigin(starttime, newOriginPosition, easing, duration);
+
+            return starttime + duration;
+        }
+
+        public double MoveColumnRelative(double starttime, double duration, Vector2 offset, OsbEasing easing)
+        {
+            this.receptor.MoveReceptorRelative(starttime, offset, easing, duration);
+            this.origin.MoveOriginRelative(starttime, offset, easing, duration);
 
             return starttime + duration;
         }

@@ -153,7 +153,7 @@ namespace StorybrewScripts
                 }
             }
 
-            if (alreadyGenerated)
+            if (alreadyGenerated || Directory.Exists(Path.Combine(relativePath, "sb", "transformation", hash)))
             {
                 field.addEffect(starttime, endtime, EffectType.TransformPlayfield3D, hash);
                 return hash;

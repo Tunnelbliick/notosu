@@ -56,6 +56,19 @@ namespace StorybrewScripts
 
         }
 
+        public void MoveOriginRelative(double starttime, Vector2 offset, OsbEasing ease, double duration)
+        {
+            OsbSprite receptor = this.originSprite;
+
+            Vector2 originalPosition = getCurrentPosition(starttime);
+            Vector2 newPosition = Vector2.Add(originalPosition, offset);
+
+            receptor.Move(ease, starttime, starttime + duration, originalPosition, newPosition);
+
+            this.position = newPosition;
+
+        }
+
         public void ScaleReceptor(double starttime, Vector2 newPosition, OsbEasing ease, double duration)
         {
             OsbSprite receptor = this.originSprite;
@@ -76,7 +89,7 @@ namespace StorybrewScripts
 
         }
 
-        public void  PivotReceptor(double starttime, double rotation, OsbEasing ease, double duration, int stepcount, Vector2 center)
+        public void PivotReceptor(double starttime, double rotation, OsbEasing ease, double duration, int stepcount, Vector2 center)
         {
 
             this.RotateReceptor(starttime, rotation, ease, duration);

@@ -44,20 +44,20 @@ namespace StorybrewScripts
             switch (type)
             {
                 case ColumnType.one:
-                    receptorSprite.Rotate(starttime - 1, 1 * Math.PI / 2);
+                    receptor.Rotate(starttime - 1, 1 * Math.PI / 2);
                     break;
                 case ColumnType.two:
-                    receptorSprite.Rotate(starttime - 1, 0 * Math.PI / 2);
+                    receptor.Rotate(starttime - 1, 0 * Math.PI / 2);
                     break;
                 case ColumnType.three:
-                    receptorSprite.Rotate(starttime - 1, 2 * Math.PI / 2);
+                    receptor.Rotate(starttime - 1, 2 * Math.PI / 2);
                     break;
                 case ColumnType.four:
-                    receptorSprite.Rotate(starttime - 1, 3 * Math.PI / 2);
+                    receptor.Rotate(starttime - 1, 3 * Math.PI / 2);
                     break;
             }
 
-            receptorSprite.ScaleVec(starttime, scale);
+            receptor.ScaleVec(starttime, scale);
 
             this.columnType = type;
             this.receptorSpritePath = receptorSpritePath;
@@ -77,16 +77,16 @@ namespace StorybrewScripts
             switch (type)
             {
                 case ColumnType.one:
-                    receptorSprite.Rotate(0 - 1, 1 * Math.PI / 2);
+                    receptor.Rotate(0 - 1, 1 * Math.PI / 2);
                     break;
                 case ColumnType.two:
-                    receptorSprite.Rotate(0 - 1, 0 * Math.PI / 2);
+                    receptor.Rotate(0 - 1, 0 * Math.PI / 2);
                     break;
                 case ColumnType.three:
-                    receptorSprite.Rotate(0 - 1, 2 * Math.PI / 2);
+                    receptor.Rotate(0 - 1, 2 * Math.PI / 2);
                     break;
                 case ColumnType.four:
-                    receptorSprite.Rotate(0 - 1, 3 * Math.PI / 2);
+                    receptor.Rotate(0 - 1, 3 * Math.PI / 2);
                     break;
             }
 
@@ -106,6 +106,21 @@ namespace StorybrewScripts
 
 
             Vector2 originalPostion = getCurrentPosition(starttime - 1);
+
+            receptor.Move(ease, starttime, starttime + duration, originalPostion, newPosition);
+
+            this.position = newPosition;
+
+        }
+
+        public void MoveReceptorRelative(double starttime, Vector2 offset, OsbEasing ease, double duration)
+        {
+            OsbSprite receptor = this.receptorSprite;
+
+
+            Vector2 originalPostion = getCurrentPosition(starttime);
+            Vector2 newPosition = originalPostion;
+            newPosition.Add(offset);
 
             receptor.Move(ease, starttime, starttime + duration, originalPostion, newPosition);
 
@@ -246,7 +261,7 @@ namespace StorybrewScripts
 
             this.renderedSprite = sprite;
 
-           // oldSprite = null;
+            // oldSprite = null;
         }
     }
 }

@@ -21,7 +21,7 @@ namespace StorybrewScripts
         public Anchor(int type, ColumnType column, Vector2 initialPosition, Vector2 offset, bool debug, StoryboardLayer layer)
         {
 
-            OsbSprite debugSprite = layer.CreateSprite("sb/white.png", OsbOrigin.Centre, position);
+            OsbSprite debugSprite = layer.CreateSprite("sb/white.png", OsbOrigin.Centre, initialPosition);
             if (debug)
             {
                 debugSprite.Fade(0, 1);

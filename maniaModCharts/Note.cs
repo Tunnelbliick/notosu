@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -38,14 +39,15 @@ namespace StorybrewScripts
             this.endtime = hitObject.EndTime;
 
             // calculate duration of one beat
-            double beatDuration = 60000 / bpm;
-            double tickDuration = beatDuration / 4f;
-            // Calculate tick values
-            int white = 0;
-            double blue = tickDuration * 1;
-            double red = tickDuration * 2;
-            double blue2 = tickDuration * 3;
-            double white2 = tickDuration * 4; // This is where the pattern repeats
+            double beatDuration = 60000f / bpm;
+            double whole = beatDuration; // 1/1
+            double half = beatDuration / 2f; // 1/2
+            double third = beatDuration / 3f; // 1/3
+            double quarter = beatDuration / 4f; // 1/4
+            double twelfth = beatDuration / 12f; // 1/12
+            double sixteenth = beatDuration / 16f; // 1/16
+            double twentyfourth = beatDuration / 24f; // 1/16
+            double thirthytwoth = beatDuration / 32f; // 1/16
 
             Column currentColumn = column;
 
@@ -61,7 +63,7 @@ namespace StorybrewScripts
                     for (int count = 0; sliderParts >= count; count++)
                     {
 
-                        OsbSprite body = this.layer.CreateSprite("sb/hold_body.png");
+                        OsbSprite body = this.layer.CreateSprite("sb/sprites/hold_body.png");
 
                         var variation = split * count;
 
@@ -76,38 +78,65 @@ namespace StorybrewScripts
             int cycle = (int)Math.Floor((hitObject.StartTime - offset) / beatDuration);
 
             int adjustedTime = (int)Math.Round(hitObject.StartTime - offset - (cycle * beatDuration));
-            int margin = 2; // Change this value to increase or decrease the margin of error
 
-            if (Math.Abs(adjustedTime - white) <= margin) // The cycle starts with a white tick
+            if (IsCloseTo(adjustedTime, beatDuration, 32))  // 1/3 rhythms
             {
-                this.noteType = 4;  // White tick
+                this.noteType = 16;  // Whole tick
             }
-            else if (Math.Abs(adjustedTime - blue) <= margin || Math.Abs(adjustedTime - blue2) <= margin)
+            if (IsCloseTo(adjustedTime, beatDuration, 24))  // 1/3 rhythms
             {
-                this.noteType = 16;  // Blue tick
+                this.noteType = 12;  // Whole tick
             }
-            else if (Math.Abs(adjustedTime - red) <= margin)
+            if (IsCloseTo(adjustedTime, beatDuration, 16))  // 1/3 rhythms
             {
-                this.noteType = 8;  // Red tick
+                this.noteType = 16;  // Whole tick
+            }
+            if (IsCloseTo(adjustedTime, beatDuration, 12))  // 1/3 rhythms
+            {
+                this.noteType = 12;  // Whole tick
+            }
+            if (IsCloseTo(adjustedTime, beatDuration, 4))  // 1/3 rhythms
+            {
+                this.noteType = 4;  // Whole tick
+            }
+            if (IsCloseTo(adjustedTime, beatDuration, 3))  // 1/3 rhythms
+            {
+                this.noteType = 3;  // Whole tick
+            }
+            if (IsCloseTo(adjustedTime, beatDuration, 2))  // 1/3 rhythms
+            {
+                this.noteType = 2;  // Whole tick
+            }
+            if (IsCloseTo(adjustedTime, beatDuration, 1))  // 1/3 rhythms
+            {
+                this.noteType = 1;  // Whole tick
             }
 
-
-            var sprite = layer.CreateSprite("sb/note.png"); ;
+            OsbSprite sprite = null;
 
             switch (this.noteType)
             {
-                case 4:
-                    sprite = layer.CreateSprite("sb/4th.png");
+                case 1:
+                    sprite = layer.CreateSprite("sb/sprites/1.png");
                     break;
-                case 8:
-                    sprite = layer.CreateSprite("sb/8th.png");
+                case 2:
+                    sprite = layer.CreateSprite("sb/sprites/2.png");
+                    break;
+                case 3:
+                    sprite = layer.CreateSprite("sb/sprites/3.png");
+                    break;
+                case 4:
+                    sprite = layer.CreateSprite("sb/sprites/4.png");
+                    break;
+                case 12:
+                    sprite = layer.CreateSprite("sb/sprites/12.png");
                     break;
                 case 16:
-                    sprite = layer.CreateSprite("sb/16th.png");
+                    sprite = layer.CreateSprite("sb/sprites/16.png");
                     break;
                 default:
-                    this.noteType = 4;
-                    sprite = layer.CreateSprite("sb/4th.png");
+                    this.noteType = 1;
+                    sprite = layer.CreateSprite("sb/sprites/1.png");
                     break;
 
             }
@@ -117,8 +146,10 @@ namespace StorybrewScripts
 
         }
 
-        public void Render(double starttime, double duration, OsbEasing easeing, double fadeOutTime = 0)
+        public void Render(double starttime, double endtime, OsbEasing easeing, double fadeInTime = 50, double fadeOutTime = 10)
         {
+
+            renderDuration = endtime - starttime;
 
             if (this.appliedTransformation != "")
             {
@@ -146,33 +177,33 @@ namespace StorybrewScripts
             if (this.isSlider)
             {
 
-                foreach (SliderParts sliderBody in sliderPositions)
+                /*foreach (SliderParts sliderBody in sliderPositions)
                 {
 
                     OsbSprite sprite = sliderBody.Sprite;
 
-                    sprite.Fade(sliderBody.Timestamp - duration, sliderBody.Timestamp - duration + 50, 0, 1);
+                    sprite.Fade(sliderBody.Timestamp - renderDuration - fadeInTime, sliderBody.Timestamp - renderDuration + fadeInTime, 0, 1);
                     sprite.Fade(Math.Min(sliderBody.Timestamp + fadeOutTime, this.endtime), 0);
 
-                }
+                }*/
 
-                note.Fade(starttime, starttime + 50, 0, 1);
+                note.Fade(starttime, starttime + fadeInTime, 0, 1);
                 note.Fade(this.endtime, 0);
                 renderEnd = this.endtime;
             }
             else
             {
-                note.Fade(starttime, starttime + 50, 0, 1);
-                note.Fade(starttime + duration + fadeOutTime, 0);
-                renderEnd = starttime + duration + fadeOutTime;
+                note.Fade(starttime, starttime + fadeInTime, 0, 1);
+                note.Fade(endtime + fadeOutTime, 0);
+                renderEnd = endtime + fadeOutTime;
             }
 
             renderStart = starttime;
-            renderDuration = duration;
+            renderDuration = endtime - starttime;
 
         }
 
-        public void RenderTransformed(double starttime, double duration, OsbEasing easeing, double transformationTime, string reference, double fadeOutTime = 0)
+        public void RenderTransformed(double starttime, double endTime, string reference, double fadeInTime = 50, double fadeOutTime = 0)
         {
 
             if (this.appliedTransformation == reference)
@@ -180,41 +211,43 @@ namespace StorybrewScripts
                 return;
             }
 
+            renderDuration = endTime - starttime;
+
             OsbSprite oldSprite = this.noteSprite;
 
             this.appliedTransformation = reference;
+            oldSprite.Rotate(starttime, 0);
             oldSprite.Fade(starttime, 0);
             this.noteSprite = layer.CreateSprite(Path.Combine("sb", "transformation", reference, this.columnType.ToString(), noteType.ToString(), noteType.ToString() + ".png"), OsbOrigin.Centre, oldSprite.PositionAt(starttime));
             layer.Discard(oldSprite);
 
             OsbSprite note = this.noteSprite;
-            note.Rotate(starttime, 0);
 
             if (this.isSlider)
             {
 
-                foreach (SliderParts sliderBody in sliderPositions)
+                /*foreach (SliderParts sliderBody in sliderPositions)
                 {
 
                     OsbSprite sprite = sliderBody.Sprite;
 
-                    sprite.Fade(sliderBody.Timestamp - duration, sliderBody.Timestamp - duration + 50, 0, 1);
+                    sprite.Fade(sliderBody.Timestamp - renderDuration, sliderBody.Timestamp - renderDuration + fadeInTime, 0, 1);
                     sprite.Fade(Math.Min(sliderBody.Timestamp + fadeOutTime, this.endtime), 0);
 
-                }
+                }*/
 
-                note.Fade(starttime, starttime + 50, 0, 1);
-                note.Fade(this.endtime, 0);
+                note.Fade(starttime, starttime + fadeInTime, 0, 1);
+                note.Fade(endTime, 0);
             }
             else
-            { 
-                note.Fade(starttime, starttime + 50, 0, 1);
-                note.Fade(starttime + duration + fadeOutTime, 0);
+            {
+                note.Fade(starttime, starttime + fadeInTime, 0, 1);
+                note.Fade(endTime + fadeOutTime, 0);
             }
 
         }
 
-        public void UpdateTransformed(double starttime, double duration, OsbEasing easeing, double transformationTime, string reference, double fadeOutTime = 0)
+        public void UpdateTransformed(double starttime, double endtime, string reference, double fadeOutTime = 0)
         {
 
             if (this.appliedTransformation == reference)
@@ -222,35 +255,37 @@ namespace StorybrewScripts
                 return;
             }
 
+            renderDuration = endtime - starttime;
+
             OsbSprite oldSprite = this.noteSprite;
 
             this.appliedTransformation = reference;
             oldSprite.Fade(starttime, 0);
             this.noteSprite = layer.CreateSprite(Path.Combine("sb", "transformation", reference, this.columnType.ToString(), noteType.ToString(), noteType.ToString() + ".png"), OsbOrigin.Centre, oldSprite.PositionAt(starttime));
+            // layer.Discard(oldSprite);
 
             OsbSprite note = this.noteSprite;
-            note.Rotate(starttime, 0);
 
             if (this.isSlider)
             {
 
-                foreach (SliderParts sliderBody in sliderPositions)
+                /*foreach (SliderParts sliderBody in sliderPositions)
                 {
 
                     OsbSprite sprite = sliderBody.Sprite;
 
-                    sprite.Fade(sliderBody.Timestamp - duration, 1);
+                    sprite.Fade(sliderBody.Timestamp - renderDuration, sliderBody.Timestamp - renderDuration, 0, 1);
                     sprite.Fade(Math.Min(sliderBody.Timestamp + fadeOutTime, this.endtime), 0);
 
-                }
+                }*/
 
                 note.Fade(starttime, 1);
-                note.Fade(this.endtime, 0);
+                note.Fade(endtime, 0);
             }
             else
             {
                 note.Fade(starttime, 1);
-                note.Fade(starttime + duration + fadeOutTime, 0);
+                note.Fade(endtime + fadeOutTime, 0);
             }
 
         }
@@ -300,6 +335,18 @@ namespace StorybrewScripts
             return "deb";
 
         }
+
+        bool IsCloseTo(int adjusted, double beatDuration, int divisions, int margin = 2)
+        {
+            double baseTick = beatDuration / divisions;
+            for (int multiplier = 1; multiplier <= divisions; multiplier++)
+            {
+                if (Math.Abs(adjusted - (baseTick * multiplier)) <= margin)
+                    return true;
+            }
+            return false;
+        }
+
 
         public void invisible(double time)
         {
