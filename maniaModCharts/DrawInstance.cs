@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.Remoting.Lifetime;
 using System.Threading.Tasks;
 using OpenTK;
+using storyboard.scriptslibrary.maniaModCharts.Draw;
 using storyboard.scriptslibrary.maniaModCharts.effects;
+using StorybrewCommon.Animations;
 using StorybrewCommon.Storyboarding;
 
 namespace StorybrewScripts
@@ -17,7 +20,7 @@ namespace StorybrewScripts
         bezier
     }
 
-    public class DrawInstance
+    public class DrawInstance : Drawer
     {
 
         public double starttime = 0;
@@ -31,7 +34,7 @@ namespace StorybrewScripts
         public double iterationLength = 1000 / 2;
         public Dictionary<ColumnType, List<OsbSprite>> pathWaySprites = new Dictionary<ColumnType, List<OsbSprite>>();
 
-        public Dictionary<double, Double> updatesPerSecondDictionary = new Dictionary<double, Double>();
+        public Dictionary<double, double> updatesPerSecondDictionary = new Dictionary<double, double>();
 
 
         public Dictionary<ColumnType, List<Anchor>> notePathByColumn = new Dictionary<ColumnType, List<Anchor>>();
@@ -46,7 +49,7 @@ namespace StorybrewScripts
             this.updatesPerSecond = updatesPerSecond;
             this.rotateToFaceReceptor = rotateToFaceReceptor;
             this.iterationLength = 1000 / updatesPerSecond;
-            updatesPerSecondDictionary.Add(starttime, updatesPerSecond);
+            this.changeUpdateRate(starttime, updatesPerSecond);
 
             return this;
 
@@ -62,7 +65,7 @@ namespace StorybrewScripts
             this.updatesPerSecond = updatesPerSecond;
             this.rotateToFaceReceptor = rotateToFaceReceptor;
             this.iterationLength = 1000 / updatesPerSecond;
-            updatesPerSecondDictionary.Add(starttime, updatesPerSecond);
+            this.changeUpdateRate(starttime, updatesPerSecond);
 
         }
 
@@ -78,7 +81,7 @@ namespace StorybrewScripts
             this.fadeInTime = fadeInTime;
             this.fadeOutTime = fadeOutTime;
             this.iterationLength = 1000 / updatesPerSecond;
-            updatesPerSecondDictionary.Add(starttime, updatesPerSecond);
+            this.changeUpdateRate(starttime, updatesPerSecond);
         }
 
         public double drawNotesDefault(double duration)
@@ -190,34 +193,30 @@ namespace StorybrewScripts
             return endtime;
         }
 
-        public string drawNotesByOriginToReceptor(double duration)
+        public string drawNotesByOriginToReceptor(double duration, bool renderReceptor = true)
         {
             double endtime = starttime + duration;
             string debug = "";
 
             foreach (Column column in playfieldInstance.columns.Values)
             {
-
-                RenderReceptor(column, duration);
+                if (renderReceptor)
+                    RenderReceptor(column, duration);
 
                 Dictionary<double, Note> notes = playfieldInstance.columnNotes[column.type];
-
                 var keysInRange = notes.Keys.Where(hittime => hittime >= starttime && hittime - easetime <= endtime).ToList();
-
-                double localIterationRate = this.iterationLength;
 
                 foreach (var key in keysInRange)
                 {
 
+                    KeyframedValue<Vector2> movement = new KeyframedValue<Vector2>(null);
+                    KeyframedValue<Vector2> scale = new KeyframedValue<Vector2>(null);
+                    KeyframedValue<double> rotation = new KeyframedValue<double>(null);
+
                     Note note = notes[key];
                     double totalDuration = easetime;
 
-                    var updateRate = findCurrentUpdateRate(note.starttime - easetime);
-
-                    if (updateRate.Value != this.updatesPerSecond && updateRate.Value != 0)
-                    {
-                        localIterationRate = 1000 / updateRate.Value;
-                    }
+                    double localIterationRate = findCurrentUpdateRate(note.starttime - easetime);
 
                     double currentTime = note.starttime - easetime - localIterationRate;
                     double renderStartTime = Math.Max(currentTime, starttime);
@@ -242,6 +241,13 @@ namespace StorybrewScripts
 
                     do
                     {
+
+                        FadeEffect noteFade = findFadeAtTime(currentTime);
+                        if (noteFade != null)
+                        {
+                            note.Fade(currentTime, currentTime, noteFade.easing, noteFade.value);
+                        }
+
                         double timeleft = note.starttime - currentTime;
                         double elapsedTime = currentTime - note.starttime;
 
@@ -270,9 +276,9 @@ namespace StorybrewScripts
                             theta = Math.Atan2(delta.X, delta.Y);
                         }
 
-                        note.Move(currentTime, localIterationRate, easing, currentPosition, newPosition);
-                        note.Scale(currentTime, localIterationRate, easing, column.origin.getCurrentScale(currentTime), scaleProgress);
-                        // note.AbsoluteRotate(currentTime, iterationLenght, easing, startRotation - theta);
+                        movement.Add(currentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
+                        scale.Add(currentTime + localIterationRate, scaleProgress, EasingFunctions.ToEasingFunction(easing));
+                        rotation.Add(currentTime + localIterationRate, startRotation - theta, EasingFunctions.ToEasingFunction(easing));
 
                         iteratedTime += localIterationRate;
                         currentTime += localIterationRate;
@@ -283,13 +289,11 @@ namespace StorybrewScripts
                     foreach (SliderParts parts in note.sliderPositions)
                     {
 
-                        double sliderIterationLenght = localIterationRate;
-                        updateRate = findCurrentUpdateRate(parts.Timestamp - this.easetime);
+                        KeyframedValue<Vector2> SliderMovement = new KeyframedValue<Vector2>(null);
+                        KeyframedValue<Vector2> SliderScale = new KeyframedValue<Vector2>(null);
+                        KeyframedValue<double> SliderRotation = new KeyframedValue<double>(null);
 
-                        if (updateRate.Value != this.updatesPerSecond && updateRate.Value != 0)
-                        {
-                            sliderIterationLenght = 1000 / updateRate.Value;
-                        }
+                        double sliderIterationLenght = findCurrentUpdateRate(parts.Timestamp - this.easetime);
 
                         double sliderStartime = parts.Timestamp;
                         OsbSprite sprite = parts.Sprite;
@@ -301,12 +305,23 @@ namespace StorybrewScripts
                         double sliderIteratedTime = 0;
 
                         // sprite.Fade(sliderStartime - easetime, 0);
-                        sprite.Fade(sliderCurrentTime, 1);
+                        sprite.Fade(sliderRenderStartTime, 1);
                         sprite.Fade(sliderRenderEndTime, 0);
                         double sliderRotation = sprite.RotationAt(sliderCurrentTime);
+                        Vector2 newScale = new Vector2(0.7f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).X, 0.16f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).Y);
+
+                        SliderMovement.Add(sliderCurrentTime, currentSliderPositon, EasingFunctions.ToEasingFunction(easing));
+                        SliderScale.Add(sliderCurrentTime, newScale, EasingFunctions.ToEasingFunction(easing));
+                        SliderRotation.Add(sliderCurrentTime, sliderRotation, EasingFunctions.ToEasingFunction(easing));
 
                         do
                         {
+                            FadeEffect sliderFade = findFadeAtTime(sliderCurrentTime);
+                            if (sliderFade != null)
+                            {
+                                sprite.Fade(sliderFade.easing, sliderCurrentTime, sliderCurrentTime, sprite.OpacityAt(sliderCurrentTime), sliderFade.value);
+                            }
+
                             double timeleft = sliderStartime - sliderCurrentTime;
                             sliderProgress = Math.Min((float)(sliderIteratedTime / easetime), 1);
 
@@ -314,11 +329,12 @@ namespace StorybrewScripts
                             Vector2 receptorPosition = column.receptor.getCurrentPosition(sliderCurrentTime + sliderIterationLenght);
                             Vector2 newPosition = Vector2.Lerp(originPosition, receptorPosition, sliderProgress);
                             Vector2 receptorScale = column.receptor.getCurrentScale(sliderCurrentTime + sliderIterationLenght);
+                            Vector2 renderedReceptorPosition = column.receptor.renderedSprite.PositionAt(sliderCurrentTime);
 
                             double theta = 0;
-                            Vector2 delta = receptorPosition - currentSliderPositon;
+                            Vector2 delta = renderedReceptorPosition - currentSliderPositon;
 
-                            if (currentSliderPositon.Y > receptorPosition.Y)
+                            if (currentSliderPositon.Y > renderedReceptorPosition.Y)
                             {
                                 delta = -delta;
                             }
@@ -329,21 +345,42 @@ namespace StorybrewScripts
                             if (sliderCurrentTime > note.starttime)
                             {
                                 Vector2 newNotePosition = column.receptor.getCurrentPosition(sliderCurrentTime + sliderIterationLenght);
-                                note.Move(sliderCurrentTime, sliderIterationLenght, easing, currentPosition, newNotePosition);
-                                note.Scale(sliderCurrentTime, sliderIterationLenght, easing, receptorScale, receptorScale);
+                                movement.Add(sliderCurrentTime + sliderIterationLenght, newNotePosition, EasingFunctions.ToEasingFunction(easing));
+                                scale.Add(sliderCurrentTime + sliderIterationLenght, receptorScale, EasingFunctions.ToEasingFunction(easing));
+
                                 currentPosition = newNotePosition;
                             }
 
-                            sprite.Move(easing, sliderCurrentTime, sliderCurrentTime + sliderIterationLenght, currentSliderPositon, newPosition);
-                            sprite.ScaleVec(sliderCurrentTime, 0.7f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).X, 0.16f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).Y);
-                            sprite.Rotate(easing, sliderCurrentTime, sliderCurrentTime + sliderIterationLenght, sprite.RotationAt(sliderCurrentTime), sliderRotation - theta);
+                            newScale = new Vector2(0.7f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).X, 0.16f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).Y);
+
+                            SliderMovement.Add(sliderCurrentTime + sliderIterationLenght, newPosition, EasingFunctions.ToEasingFunction(easing));
+                            SliderScale.Add(sliderCurrentTime + sliderIterationLenght, newScale, EasingFunctions.ToEasingFunction(easing));
+                            SliderRotation.Add(sliderCurrentTime + sliderIterationLenght, sliderRotation - theta, EasingFunctions.ToEasingFunction(easing));
 
                             sliderIteratedTime += sliderIterationLenght;
                             sliderCurrentTime += sliderIterationLenght;
                             currentSliderPositon = newPosition;
 
                         } while (sliderProgress < 1);
+
+                        // Render out Slider keyframes
+                        SliderMovement.Simplify2dKeyframes(HoldMovementPrecision, v => v);
+                        SliderScale.Simplify2dKeyframes(HoldScalePrecision, v => v);
+                        SliderRotation.Simplify1dKeyframes(HoldRotationPrecision, v => (float)v);
+                        SliderMovement.ForEachPair((start, end) => sprite.Move(easing, start.Time, end.Time, start.Value, end.Value));
+                        SliderScale.ForEachPair((start, end) => sprite.ScaleVec(start.Time, end.Time, start.Value.X, start.Value.Y, end.Value.X, end.Value.Y));
+                        SliderRotation.ForEachPair((start, end) => sprite.Rotate(start.Time, start.Value));
+
                     }
+
+                    // Render out Note keyframes
+                    movement.Simplify2dKeyframes(NoteMovementPrecision, v => v);
+                    scale.Simplify2dKeyframes(NoteScalePrecision, v => v);
+                    rotation.Simplify1dKeyframes(NoteRotationPrecision, v => (float)v);
+                    movement.ForEachPair((start, end) => note.Move(start.Time, end.Time - start.Time, OsbEasing.None, start.Value, end.Value));
+                    scale.ForEachPair((start, end) => note.Scale(start.Time, end.Time - start.Time, OsbEasing.None, start.Value, end.Value));
+                    rotation.ForEachPair((start, end) => note.AbsoluteRotate(start.Time, end.Time - start.Time, OsbEasing.None, end.Value));
+
                 }
             }
 
@@ -362,17 +399,17 @@ namespace StorybrewScripts
                 List<Anchor> notePath = this.notePathByColumn[column.type];
                 Dictionary<double, Note> notes = playfieldInstance.columnNotes[column.type];
                 var keysInRange = notes.Keys.Where(hittime => hittime >= starttime && hittime - easetime <= endtime).ToList();
-                double localIterationRate = this.iterationLength;
 
                 foreach (var key in keysInRange)
                 {
+
+                    KeyframedValue<Vector2> movement = new KeyframedValue<Vector2>(null);
+                    KeyframedValue<Vector2> scale = new KeyframedValue<Vector2>(null);
+                    KeyframedValue<double> rotation = new KeyframedValue<double>(null);
+
                     Note note = notes[key];
                     double totalDuration = easetime;
-                    var updateRate = findCurrentUpdateRate(note.starttime - easetime);
-                    if (updateRate.Value != this.updatesPerSecond && updateRate.Value != 0)
-                    {
-                        localIterationRate = 1000 / updateRate.Value;
-                    }
+                    double localIterationRate = findCurrentUpdateRate(note.starttime - easetime);
 
                     double currentTime = note.starttime - easetime - localIterationRate;
                     double renderStartTime = Math.Max(currentTime, starttime);
@@ -410,7 +447,40 @@ namespace StorybrewScripts
                                 {
 
                                     progress = (float)(iteratedTime / timePerAnchor);
-                                    Vector2 newPosition = MoveNoteForAnchor(column, notePath, localIterationRate, note, currentTime, currentPosition, progress, n, startRotation);
+
+                                    currentEffect = findEffectByReferenceTime(currentTime);
+                                    if (currentEffect.Value != null)
+                                    {
+                                        note.UpdateTransformed(currentTime, currentTime + localIterationRate, currentEffect.Value.reference, 10);
+                                    }
+
+                                    Vector2 startPos = notePath[n].sprite.PositionAt(currentTime + localIterationRate);
+                                    Vector2 endPos = notePath[n + 1].sprite.PositionAt(currentTime + localIterationRate);
+
+                                    Vector2 newPosition = Vector2.Lerp(startPos, endPos, progress);
+                                    Vector2 receptorPosition = column.receptor.getCurrentPosition(currentTime + localIterationRate);
+                                    Vector2 originScale = column.origin.getCurrentScale(currentTime + localIterationRate);
+                                    Vector2 receptorScale = column.receptor.getCurrentScale(currentTime + localIterationRate);
+                                    Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, progress);
+
+                                    double theta = 0;
+                                    if (rotateToFaceReceptor)
+                                    {
+                                        Vector2 delta = receptorPosition - currentPosition;
+                                        if (currentPosition.Y > receptorPosition.Y)
+                                        {
+                                            delta = -delta;
+                                        }
+                                        theta = Math.Atan2(delta.X, delta.Y);
+                                    }
+
+                                    /*note.Move(currentTime, localIterationRate, easing, currentPosition, newPosition);
+                                    note.Scale(currentTime, localIterationRate, easing, column.origin.getCurrentScale(currentTime), scaleProgress);
+                                    note.AbsoluteRotate(currentTime, localIterationRate, easing, startRotation - theta);*/
+
+                                    movement.Add(currentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
+                                    scale.Add(currentTime + localIterationRate, scaleProgress, EasingFunctions.ToEasingFunction(easing));
+                                    rotation.Add(currentTime + localIterationRate, startRotation - theta, EasingFunctions.ToEasingFunction(easing));
 
                                     iteratedTime += localIterationRate;
                                     currentTime += localIterationRate;
@@ -421,7 +491,40 @@ namespace StorybrewScripts
                                 {
 
                                     progress = Math.Min((float)(iteratedTime / timePerAnchor), 1);
-                                    Vector2 newPosition = MoveNoteForAnchor(column, notePath, localIterationRate, note, currentTime, currentPosition, progress, n, startRotation);
+
+                                    currentEffect = findEffectByReferenceTime(currentTime);
+                                    if (currentEffect.Value != null)
+                                    {
+                                        note.UpdateTransformed(currentTime, currentTime + localIterationRate, currentEffect.Value.reference, 10);
+                                    }
+
+                                    Vector2 startPos = notePath[n].sprite.PositionAt(currentTime + localIterationRate);
+                                    Vector2 endPos = notePath[n + 1].sprite.PositionAt(currentTime + localIterationRate);
+
+                                    Vector2 newPosition = Vector2.Lerp(startPos, endPos, progress);
+                                    Vector2 receptorPosition = column.receptor.getCurrentPosition(currentTime + localIterationRate);
+                                    Vector2 originScale = column.origin.getCurrentScale(currentTime + localIterationRate);
+                                    Vector2 receptorScale = column.receptor.getCurrentScale(currentTime + localIterationRate);
+                                    Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, progress);
+
+                                    double theta = 0;
+                                    if (rotateToFaceReceptor)
+                                    {
+                                        Vector2 delta = receptorPosition - currentPosition;
+                                        if (currentPosition.Y > receptorPosition.Y)
+                                        {
+                                            delta = -delta;
+                                        }
+                                        theta = Math.Atan2(delta.X, delta.Y);
+                                    }
+
+                                    movement.Add(currentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
+                                    scale.Add(currentTime + localIterationRate, scaleProgress, EasingFunctions.ToEasingFunction(easing));
+                                    rotation.Add(currentTime + localIterationRate, startRotation - theta, EasingFunctions.ToEasingFunction(easing));
+
+                                    /*note.Move(currentTime, localIterationRate, easing, currentPosition, newPosition);
+                                    note.Scale(currentTime, localIterationRate, easing, column.origin.getCurrentScale(currentTime), scaleProgress);
+                                    note.AbsoluteRotate(currentTime, localIterationRate, easing, startRotation - theta);*/
 
                                 }
                             }
@@ -444,9 +547,10 @@ namespace StorybrewScripts
                                 if (rotateToFaceReceptor)
                                     theta = Math.Atan2(delta.X, delta.Y);
 
-                                note.Move(currentTime, localIterationRate, easing, currentPosition, newPosition);
-                                note.Scale(currentTime, localIterationRate, easing, column.origin.getCurrentScale(currentTime), scaleProgress);
-                                note.AbsoluteRotate(currentTime, localIterationRate, easing, startRotation - theta);
+
+                                movement.Add(currentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
+                                scale.Add(currentTime + localIterationRate, scaleProgress, EasingFunctions.ToEasingFunction(easing));
+                                rotation.Add(currentTime + localIterationRate, startRotation - theta, EasingFunctions.ToEasingFunction(easing));
 
                                 iteratedTime += localIterationRate;
                                 currentTime += localIterationRate;
@@ -461,6 +565,10 @@ namespace StorybrewScripts
                     foreach (SliderParts parts in note.sliderPositions)
                     {
 
+                        KeyframedValue<Vector2> SliderMovement = new KeyframedValue<Vector2>(null);
+                        KeyframedValue<Vector2> SliderScale = new KeyframedValue<Vector2>(null);
+                        KeyframedValue<double> SliderRotation = new KeyframedValue<double>(null);
+
                         double sliderStartime = parts.Timestamp;
                         OsbSprite sprite = parts.Sprite;
                         double sliderCurrentTime = sliderStartime - easetime - localIterationRate;
@@ -468,7 +576,7 @@ namespace StorybrewScripts
                         double sliderRenderStartTime = Math.Max(sliderCurrentTime, sliderStartime);
                         double sliderRenderEndTime = Math.Min(sliderStartime + 0.1f, endtime);
 
-                        sprite.Fade(sliderRenderStartTime, 1);
+                        sprite.Fade(sliderCurrentTime, 1);
                         sprite.Fade(sliderRenderEndTime, 0);
                         double sliderRotation = sprite.RotationAt(sliderCurrentTime);
 
@@ -491,8 +599,52 @@ namespace StorybrewScripts
                                     while (sliderIteratedTime < timePerAnchor)
                                     {
                                         sliderProgress = (float)(sliderIteratedTime / timePerAnchor);
-                                        Vector2 newPosition;
-                                        currentPosition = MoveSliderForAnchor(column, notePath, note, currentPosition, out currentEffect, localIterationRate, sprite, sliderCurrentTime, currentSliderPositon, sliderRotation, n, sliderProgress, out newPosition, startRotation);
+
+                                        currentEffect = findEffectByReferenceTime(sliderCurrentTime);
+                                        if (currentEffect.Value != null)
+                                        {
+                                            //sprite.UpdateTransformed(sliderCurrentTime, sliderCurrentTime + movementTime, currentEffect.Value.reference, 10);
+                                        }
+
+                                        Vector2 startPos = notePath[n].sprite.PositionAt(sliderCurrentTime + localIterationRate);
+                                        Vector2 endPos = notePath[n + 1].sprite.PositionAt(sliderCurrentTime + localIterationRate);
+
+                                        Vector2 newPosition = Vector2.Lerp(startPos, endPos, sliderProgress);
+                                        Vector2 receptorPosition = column.receptor.getCurrentPosition(sliderCurrentTime + localIterationRate);
+                                        Vector2 originScale = column.origin.getCurrentScale(sliderCurrentTime + localIterationRate);
+                                        Vector2 receptorScale = column.receptor.getCurrentScale(sliderCurrentTime + localIterationRate);
+                                        Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, sliderProgress);
+
+                                        double theta = 0;
+                                        Vector2 delta = currentSliderPositon - newPosition;
+                                        if (delta.LengthSquared > 0 && rotateToFaceReceptor)
+                                        {
+                                            theta = Math.Atan2(delta.X, delta.Y);
+                                        }
+
+                                        // If the note is already done
+                                        if (sliderCurrentTime > note.starttime)
+                                        {
+                                            Vector2 newNotePosition = column.receptor.getCurrentPosition(sliderCurrentTime + localIterationRate);
+
+                                            double noteTheta = 0;
+                                            Vector2 noteDelta = newNotePosition - currentPosition;
+                                            if (rotateToFaceReceptor)
+                                            {
+                                                noteTheta = Math.Atan2(noteDelta.X, noteDelta.Y);
+                                            }
+
+                                            movement.Add(sliderCurrentTime + localIterationRate, newNotePosition, EasingFunctions.ToEasingFunction(easing));
+                                            scale.Add(sliderCurrentTime + localIterationRate, receptorScale, EasingFunctions.ToEasingFunction(easing));
+                                            rotation.Add(sliderCurrentTime + localIterationRate, startRotation - noteTheta, EasingFunctions.ToEasingFunction(easing));
+                                            currentPosition = newNotePosition;
+                                        }
+
+                                        Vector2 newScale = new Vector2(0.7f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).X, 0.16f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).Y);
+
+                                        SliderMovement.Add(sliderCurrentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
+                                        SliderScale.Add(sliderCurrentTime + localIterationRate, newScale, EasingFunctions.ToEasingFunction(easing));
+                                        SliderRotation.Add(sliderCurrentTime + localIterationRate, sliderRotation - theta, EasingFunctions.ToEasingFunction(easing));
 
                                         sliderIteratedTime += localIterationRate;
                                         sliderCurrentTime += localIterationRate;
@@ -502,8 +654,53 @@ namespace StorybrewScripts
                                     if (n == notePath.Count - 2)
                                     {
                                         sliderProgress = Math.Min((float)(sliderIteratedTime / timePerAnchor), 1);
-                                        Vector2 newPosition;
-                                        currentPosition = MoveSliderForAnchor(column, notePath, note, currentPosition, out currentEffect, localIterationRate, sprite, sliderCurrentTime, currentSliderPositon, sliderRotation, n, sliderProgress, out newPosition, startRotation);
+
+                                        currentEffect = findEffectByReferenceTime(sliderCurrentTime);
+                                        if (currentEffect.Value != null)
+                                        {
+                                            //sprite.UpdateTransformed(sliderCurrentTime, sliderCurrentTime + movementTime, currentEffect.Value.reference, 10);
+                                        }
+
+                                        Vector2 startPos = notePath[n].sprite.PositionAt(sliderCurrentTime + localIterationRate);
+                                        Vector2 endPos = notePath[n + 1].sprite.PositionAt(sliderCurrentTime + localIterationRate);
+
+                                        Vector2 newPosition = Vector2.Lerp(startPos, endPos, sliderProgress);
+                                        Vector2 receptorPosition = column.receptor.getCurrentPosition(sliderCurrentTime + localIterationRate);
+                                        Vector2 originScale = column.origin.getCurrentScale(sliderCurrentTime + localIterationRate);
+                                        Vector2 receptorScale = column.receptor.getCurrentScale(sliderCurrentTime + localIterationRate);
+                                        Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, sliderProgress);
+
+                                        double theta = 0;
+                                        Vector2 delta = currentSliderPositon - newPosition;
+                                        if (delta.LengthSquared > 0 && rotateToFaceReceptor)
+                                        {
+                                            theta = Math.Atan2(delta.X, delta.Y);
+                                        }
+
+                                        // If the note is already done
+                                        if (sliderCurrentTime > note.starttime)
+                                        {
+                                            Vector2 newNotePosition = column.receptor.getCurrentPosition(sliderCurrentTime + localIterationRate);
+
+                                            double noteTheta = 0;
+                                            Vector2 noteDelta = newNotePosition - currentPosition;
+                                            if (rotateToFaceReceptor)
+                                            {
+                                                noteTheta = Math.Atan2(noteDelta.X, noteDelta.Y);
+                                            }
+
+                                            movement.Add(sliderCurrentTime + localIterationRate, newNotePosition, EasingFunctions.ToEasingFunction(easing));
+                                            scale.Add(sliderCurrentTime + localIterationRate, receptorScale, EasingFunctions.ToEasingFunction(easing));
+                                            rotation.Add(sliderCurrentTime + localIterationRate, startRotation - noteTheta, EasingFunctions.ToEasingFunction(easing));
+                                            currentPosition = newNotePosition;
+                                        }
+
+                                        Vector2 newScale = new Vector2(0.7f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).X, 0.16f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).Y);
+
+                                        SliderMovement.Add(sliderCurrentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
+                                        SliderScale.Add(sliderCurrentTime + localIterationRate, newScale, EasingFunctions.ToEasingFunction(easing));
+                                        SliderRotation.Add(sliderCurrentTime + localIterationRate, sliderRotation - theta, EasingFunctions.ToEasingFunction(easing));
+
                                     }
                                 }
                                 break;
@@ -529,7 +726,6 @@ namespace StorybrewScripts
                                     // If the note is already done
                                     if (sliderCurrentTime > note.starttime)
                                     {
-
                                         Vector2 newNotePosition = column.receptor.getCurrentPosition(sliderCurrentTime + localIterationRate);
 
                                         double noteTheta = 0;
@@ -539,15 +735,17 @@ namespace StorybrewScripts
                                             noteTheta = Math.Atan2(noteDelta.X, noteDelta.Y);
                                         }
 
-                                        note.Move(sliderCurrentTime, localIterationRate, easing, currentPosition, newNotePosition);
-                                        note.Scale(sliderCurrentTime, localIterationRate, easing, receptorScale, receptorScale);
-                                        note.AbsoluteRotate(sliderCurrentTime, localIterationRate, easing, startRotation - noteTheta);
+                                        movement.Add(sliderCurrentTime + localIterationRate, newNotePosition, EasingFunctions.ToEasingFunction(easing));
+                                        scale.Add(sliderCurrentTime + localIterationRate, receptorScale, EasingFunctions.ToEasingFunction(easing));
+                                        rotation.Add(sliderCurrentTime + localIterationRate, startRotation - noteTheta, EasingFunctions.ToEasingFunction(easing));
                                         currentPosition = newNotePosition;
                                     }
 
-                                    sprite.Move(easing, sliderCurrentTime, sliderCurrentTime + localIterationRate, currentSliderPositon, newPosition);
-                                    sprite.ScaleVec(sliderCurrentTime, 0.7f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).X, 0.16f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).Y);
-                                    sprite.Rotate(sliderCurrentTime, -theta);
+                                    Vector2 newScale = new Vector2(0.7f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).X, 0.16f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).Y);
+
+                                    SliderMovement.Add(sliderCurrentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
+                                    SliderScale.Add(sliderCurrentTime + localIterationRate, newScale, EasingFunctions.ToEasingFunction(easing));
+                                    SliderRotation.Add(sliderCurrentTime + localIterationRate, sliderRotation - theta, EasingFunctions.ToEasingFunction(easing));
 
                                     sliderIteratedTime += localIterationRate;
                                     sliderCurrentTime += localIterationRate;
@@ -555,7 +753,23 @@ namespace StorybrewScripts
                                 }
                                 break;
                         }
+                        // Render out Slider keyframes
+                        SliderMovement.Simplify2dKeyframes(HoldMovementPrecision, v => v);
+                        SliderScale.Simplify2dKeyframes(HoldScalePrecision, v => v);
+                        // SliderRotation.Simplify1dKeyframes(0f, v => (float)v);
+                        SliderMovement.ForEachPair((start, end) => sprite.Move(easing, start.Time, end.Time, start.Value, end.Value));
+                        SliderScale.ForEachPair((start, end) => sprite.ScaleVec(start.Time, end.Time, start.Value.X, start.Value.Y, end.Value.X, end.Value.Y));
+                        SliderRotation.ForEachPair((start, end) => sprite.Rotate(start.Time, end.Value));
+
                     }
+
+                    // Render out Note keyframes
+                    movement.Simplify2dKeyframes(NoteMovementPrecision, v => v);
+                    scale.Simplify2dKeyframes(NoteScalePrecision, v => v);
+                    rotation.Simplify1dKeyframes(NoteRotationPrecision, v => (float)v);
+                    movement.ForEachPair((start, end) => note.Move(start.Time, end.Time - start.Time, OsbEasing.None, start.Value, end.Value));
+                    scale.ForEachPair((start, end) => note.Scale(start.Time, end.Time - start.Time, OsbEasing.None, start.Value, end.Value));
+                    rotation.ForEachPair((start, end) => note.AbsoluteRotate(start.Time, end.Time - start.Time, OsbEasing.None, end.Value));
                 }
             }
 
@@ -571,90 +785,6 @@ namespace StorybrewScripts
             }
 
             return points;
-        }
-
-        private Vector2 MoveSliderForAnchor(Column column, List<Anchor> notePath, Note note, Vector2 currentPosition, out KeyValuePair<double, EffectInfo> currentEffect, double movementTime, OsbSprite sprite, double sliderCurrentTime, Vector2 currentSliderPositon, double sliderRotation, int n, float sliderProgress, out Vector2 newPosition, double noteStartRotation)
-        {
-            currentEffect = findEffectByReferenceTime(sliderCurrentTime);
-            if (currentEffect.Value != null)
-            {
-                //sprite.UpdateTransformed(sliderCurrentTime, sliderCurrentTime + movementTime, currentEffect.Value.reference, 10);
-            }
-
-            Vector2 startPos = notePath[n].sprite.PositionAt(sliderCurrentTime + movementTime);
-            Vector2 endPos = notePath[n + 1].sprite.PositionAt(sliderCurrentTime + movementTime);
-
-            newPosition = Vector2.Lerp(startPos, endPos, sliderProgress);
-            Vector2 receptorPosition = column.receptor.getCurrentPosition(sliderCurrentTime + movementTime);
-            Vector2 originScale = column.origin.getCurrentScale(sliderCurrentTime + movementTime);
-            Vector2 receptorScale = column.receptor.getCurrentScale(sliderCurrentTime + movementTime);
-            Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, sliderProgress);
-
-            double theta = 0;
-            Vector2 delta = currentSliderPositon - newPosition;
-            if (delta.LengthSquared > 0 && rotateToFaceReceptor)
-            {
-                theta = Math.Atan2(delta.X, delta.Y);
-            }
-
-            // If the note is already done
-            if (sliderCurrentTime > note.starttime)
-            {
-                Vector2 newNotePosition = column.receptor.getCurrentPosition(sliderCurrentTime + movementTime);
-
-                double noteTheta = 0;
-                Vector2 noteDelta = newNotePosition - currentPosition;
-                if (rotateToFaceReceptor)
-                {
-                    noteTheta = Math.Atan2(noteDelta.X, noteDelta.Y);
-                }
-
-                note.Move(sliderCurrentTime, movementTime, easing, currentPosition, newNotePosition);
-                note.Scale(sliderCurrentTime, movementTime, easing, receptorScale, receptorScale);
-                note.AbsoluteRotate(sliderCurrentTime, movementTime, easing, noteStartRotation - noteTheta);
-                currentPosition = newNotePosition;
-            }
-
-            sprite.Move(easing, sliderCurrentTime, sliderCurrentTime + movementTime, currentSliderPositon, newPosition);
-            sprite.ScaleVec(sliderCurrentTime, 0.7f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).X, 0.16f / 0.5f * column.origin.getCurrentScale(sliderCurrentTime).Y);
-            sprite.Rotate(easing, sliderCurrentTime, sliderCurrentTime + movementTime, sprite.RotationAt(sliderCurrentTime), sliderRotation - theta);
-            return currentPosition;
-        }
-
-        private Vector2 MoveNoteForAnchor(Column column, List<Anchor> notePath, double movementTime, Note note, double currentTime, Vector2 currentPosition, float progress, int n, double startRotation)
-        {
-
-            KeyValuePair<double, EffectInfo> currentEffect = findEffectByReferenceTime(currentTime);
-            if (currentEffect.Value != null)
-            {
-                note.UpdateTransformed(currentTime, currentTime + movementTime, currentEffect.Value.reference, 10);
-            }
-
-            Vector2 startPos = notePath[n].sprite.PositionAt(currentTime + movementTime);
-            Vector2 endPos = notePath[n + 1].sprite.PositionAt(currentTime + movementTime);
-
-            Vector2 newPosition = Vector2.Lerp(startPos, endPos, progress);
-            Vector2 receptorPosition = column.receptor.getCurrentPosition(currentTime + movementTime);
-            Vector2 originScale = column.origin.getCurrentScale(currentTime + movementTime);
-            Vector2 receptorScale = column.receptor.getCurrentScale(currentTime + movementTime);
-            Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, progress);
-
-            double theta = 0;
-            if (rotateToFaceReceptor)
-            {
-                Vector2 delta = receptorPosition - currentPosition;
-                if (currentPosition.Y > receptorPosition.Y)
-                {
-                    delta = -delta;
-                }
-                theta = Math.Atan2(delta.X, delta.Y);
-            }
-
-            note.Move(currentTime, movementTime, easing, currentPosition, newPosition);
-            note.Scale(currentTime, movementTime, easing, column.origin.getCurrentScale(currentTime), scaleProgress);
-            note.AbsoluteRotate(currentTime, movementTime, easing, startRotation - theta);
-
-            return newPosition;
         }
 
         public void addAnchor(ColumnType column, Vector2 position, bool debug, StoryboardLayer debugLayer)
@@ -679,7 +809,7 @@ namespace StorybrewScripts
                     List<Anchor> notePath = notePathByColumn[currentColumn];
 
                     //if debug add a sprite for the position of the vector
-                    Anchor pathPoint = new Anchor(0, currentColumn, position, position, debug, debugLayer);
+                    Anchor pathPoint = new Anchor(0, starttime, currentColumn, position, position, debug, debugLayer);
                     notePath.Add(pathPoint);
 
                     notePathByColumn[currentColumn] = notePath;
@@ -699,7 +829,7 @@ namespace StorybrewScripts
                 List<Anchor> notePath = notePathByColumn[column];
 
                 //if debug add a sprite for the position of the vector
-                Anchor pathPoint = new Anchor(0, column, position, position, debug, debugLayer);
+                Anchor pathPoint = new Anchor(0, starttime, column, position, position, debug, debugLayer);
                 notePath.Add(pathPoint);
 
                 notePathByColumn[column] = notePath;
@@ -795,7 +925,7 @@ namespace StorybrewScripts
             Vector2 offsetPositionForNewAnchor = Vector2.Add(lerpPositionForNewAnchor, relativeOffset);
 
             //if debug add a sprite for the position of the vector
-            Anchor pathPoint = new Anchor(0, column, offsetPositionForNewAnchor, relativeOffset, debug, debugLayer);
+            Anchor pathPoint = new Anchor(0, starttime, column, offsetPositionForNewAnchor, relativeOffset, debug, debugLayer);
             notePath.Add(pathPoint);
 
             this.notePathByColumn[column] = notePath;
@@ -829,13 +959,11 @@ namespace StorybrewScripts
                 //debugString += $"{blend}, {index}, {currentBlend}, {notePath.Count}\n";
                 debugString += $"{currentColumn}, {originPosition}, {receptorPosition}, {notePath.Count}\n";
 
-
                 Vector2 offsetPosition = noteAnchor.position;
                 Vector2 lerpPosition = Vector2.Lerp(originPosition, receptorPosition, currentBlend);
                 offsetPosition.Y = lerpPosition.Y;
 
                 index++;
-
                 noteAnchor.MoveAnchor(starttime, offsetPosition);
 
             }
@@ -850,7 +978,7 @@ namespace StorybrewScripts
                 debugString += $"{currentColumn}, {offsetPositionForNewAnchor}, {lerpPositionForNewAnchor}, {notePath.Count}\n";
 
                 //if debug add a sprite for the position of the vector
-                Anchor pathPoint = new Anchor(0, column, offsetPositionForNewAnchor, offset, debug, debugLayer);
+                Anchor pathPoint = new Anchor(0, starttime, column, offsetPositionForNewAnchor, offset, debug, debugLayer);
                 notePath.Add(pathPoint);
 
                 index++;
@@ -879,7 +1007,7 @@ namespace StorybrewScripts
 
                     Vector2 offset = Vector2.Add(pathPoint.getPositionAt(starttime), newPosition);
 
-                    pathPoint = pathPoint.ManipulatePosition(starttime, transitionTime, easing, offset);
+                    pathPoint.ManipulatePosition(starttime, transitionTime, easing, offset);
 
                     notePath[index] = pathPoint;
 
@@ -894,7 +1022,7 @@ namespace StorybrewScripts
 
                 Vector2 offset = Vector2.Add(pathPoint.getPositionAt(starttime), newPosition);
 
-                pathPoint = pathPoint.ManipulatePosition(starttime, transitionTime, easing, offset);
+                pathPoint.ManipulatePosition(starttime, transitionTime, easing, offset);
 
                 notePath[index] = pathPoint;
 
@@ -983,7 +1111,7 @@ namespace StorybrewScripts
 
                     Anchor pathPoint = notePath[index];
 
-                    pathPoint = pathPoint.ManipulatePosition(starttime, transitionTime, easing, newPosition);
+                    pathPoint.ManipulatePosition(starttime, transitionTime, easing, newPosition);
 
                     notePath[index] = pathPoint;
 
@@ -996,7 +1124,7 @@ namespace StorybrewScripts
 
                 Anchor pathPoint = notePath[index];
 
-                pathPoint = pathPoint.ManipulatePosition(starttime, transitionTime, easing, newPosition);
+                pathPoint.ManipulatePosition(starttime, transitionTime, easing, newPosition);
 
                 notePath[index] = pathPoint;
 
@@ -1004,14 +1132,78 @@ namespace StorybrewScripts
 
         }
 
-        public String DrawPath(double starttime, double endtime, StoryboardLayer layer, string spritePath, PathType type, int precision = 10)
+        // TODO figure this shit out!
+        public String UpdateAnchors(double starttime, double duration, ColumnType column)
+        {
+            String debug = "";
+
+            double endtime = starttime + duration;
+            double currentTime = starttime;
+
+            while (currentTime <= endtime)
+            {
+                double localIterationRate = findCurrentUpdateRate(currentTime);
+
+                debug += $"{currentTime}, {localIterationRate}\n";
+
+                if (column == ColumnType.all)
+                {
+
+                    foreach (ColumnType type in Enum.GetValues(typeof(ColumnType)))
+                    {
+
+                        if (type == ColumnType.all)
+                            continue;
+
+                        List<Anchor> notePath = this.notePathByColumn[type];
+                        Column currentColumn = this.playfieldInstance.columns[type];
+                        Vector2 originPosition = currentColumn.getOriginPosition(currentTime + localIterationRate);
+                        Vector2 receptorPosition = currentColumn.getReceptorPositionForNotes(currentTime + localIterationRate);
+
+                        int index = 0;
+                        float blend = 1.0f / (notePath.Count - 1);
+
+                        Vector2 direction = Vector2.Normalize(receptorPosition - originPosition); // Direction from origin to receptor
+                        Vector2 perpendicular = new Vector2(-direction.Y, direction.X); // Perpendicular to the direction
+
+                        foreach (Anchor noteAnchor in notePath)
+                        {
+                            float currentBlend = blend * index;
+
+                            // Determine the position along the path
+                            Vector2 pathPosition = Vector2.Lerp(originPosition, receptorPosition, currentBlend);
+
+                            // Apply the offset relative to the path's direction
+                            Vector2 offsetPosition = noteAnchor.offset;
+                            Vector2 adjustedPosition = pathPosition - (offsetPosition.X * perpendicular) + (offsetPosition.Y * direction);
+
+                            noteAnchor.ManipulatePosition(currentTime, localIterationRate, OsbEasing.None, adjustedPosition);
+
+                            index++;
+                        }
+                    }
+                }
+
+                currentTime += localIterationRate;
+                currentTime = Math.Round(currentTime);
+
+            }
+
+            return debug;
+
+        }
+
+        public String DrawPath(double starttime, double endtime, StoryboardLayer layer, string spritePath, PathType type, int precision, int updatesPerSecond = 3)
         {
             String debug = "";
 
             Dictionary<ColumnType, List<OsbSprite>> pathSprites = this.pathWaySprites;
-            Dictionary<ColumnType, List<Vector2>> priorTime = new Dictionary<ColumnType, List<Vector2>>();
+
+            Dictionary<ColumnType, List<KeyframedValue<Vector2>>> movementPerSpriteByColumn = new Dictionary<ColumnType, List<KeyframedValue<Vector2>>>();
+            Dictionary<ColumnType, List<KeyframedValue<Vector2>>> scalePerSpriteByColumn = new Dictionary<ColumnType, List<KeyframedValue<Vector2>>>();
+            Dictionary<ColumnType, List<KeyframedValue<double>>> rotationPerSpriteByColumn = new Dictionary<ColumnType, List<KeyframedValue<double>>>();
+
             double currentTime = starttime;
-            double localIterationRate = this.iterationLength;
 
             foreach (ColumnType currentColumn in Enum.GetValues(typeof(ColumnType)))
             {
@@ -1023,6 +1215,10 @@ namespace StorybrewScripts
                 List<Vector2> points = GetPathAnchorVectors(notePath, starttime);
                 List<OsbSprite> columnSprites = new List<OsbSprite>();
 
+                List<KeyframedValue<Vector2>> movementPerSprite = new List<KeyframedValue<Vector2>>();
+                List<KeyframedValue<Vector2>> scalePerSprite = new List<KeyframedValue<Vector2>>();
+                List<KeyframedValue<double>> rotationPerSprite = new List<KeyframedValue<double>>();
+
                 switch (type)
                 {
                     case PathType.bezier:
@@ -1031,6 +1227,11 @@ namespace StorybrewScripts
 
                         while (progress < 1f)
                         {
+
+                            KeyframedValue<Vector2> movement = new KeyframedValue<Vector2>(null);
+                            KeyframedValue<Vector2> scale = new KeyframedValue<Vector2>(null);
+                            KeyframedValue<double> rotation = new KeyframedValue<double>(null);
+
                             Vector2 firstPoint = BezierCurve.CalculatePoint(points, progress);
                             Vector2 secondPoint = BezierCurve.CalculatePoint(points, progress + increment);
 
@@ -1042,10 +1243,16 @@ namespace StorybrewScripts
                             double theta = Math.Atan2(delta.X, delta.Y);
 
                             OsbSprite sprite = layer.CreateSprite(spritePath, OsbOrigin.BottomCentre, firstPoint);
-                            sprite.Rotate(starttime, -theta);
-                            sprite.ScaleVec(starttime, new Vector2(4, distance));
                             sprite.Fade(endtime, 0);
                             columnSprites.Add(sprite);
+
+                            movement.Add(currentTime, firstPoint);
+                            scale.Add(currentTime, new Vector2(4, distance));
+                            rotation.Add(currentTime, -theta);
+
+                            movementPerSprite.Add(movement);
+                            scalePerSprite.Add(scale);
+                            rotationPerSprite.Add(rotation);
 
                             progress += increment;
                         }
@@ -1054,6 +1261,11 @@ namespace StorybrewScripts
                     case PathType.line:
                         for (int n = 0; n < notePath.Count - 1; n++)
                         {
+
+                            KeyframedValue<Vector2> movement = new KeyframedValue<Vector2>(null);
+                            KeyframedValue<Vector2> scale = new KeyframedValue<Vector2>(null);
+                            KeyframedValue<double> rotation = new KeyframedValue<double>(null);
+
                             Vector2 firstPoint = notePath[n].position;
                             Vector2 secondPoint = notePath[n + 1].position;
 
@@ -1065,27 +1277,35 @@ namespace StorybrewScripts
                             double theta = Math.Atan2(delta.X, delta.Y);
 
                             OsbSprite sprite = layer.CreateSprite(spritePath, OsbOrigin.BottomCentre, firstPoint);
-                            sprite.Rotate(starttime, -theta);
-                            sprite.ScaleVec(starttime, new Vector2(4, distance));
                             sprite.Fade(endtime, 0);
+
+                            movement.Add(currentTime, firstPoint);
+                            scale.Add(currentTime, new Vector2(4, distance));
+                            rotation.Add(currentTime, -theta);
+
                             columnSprites.Add(sprite);
+
+                            movementPerSprite.Add(movement);
+                            scalePerSprite.Add(scale);
+                            rotationPerSprite.Add(rotation);
 
                         }
                         break;
                 }
 
                 pathSprites.Add(currentColumn, columnSprites);
+
+                movementPerSpriteByColumn.Add(currentColumn, movementPerSprite);
+                scalePerSpriteByColumn.Add(currentColumn, scalePerSprite);
+                rotationPerSpriteByColumn.Add(currentColumn, rotationPerSprite);
             }
 
             this.pathWaySprites = pathSprites;
 
             while (currentTime <= endtime)
             {
-                var updateRate = findCurrentUpdateRate(currentTime);
-                if (updateRate.Value != this.updatesPerSecond && updateRate.Value != 0)
-                {
-                    localIterationRate = 1000 / updateRate.Value;
-                }
+                double localIterationRate = 1000 / updatesPerSecond;
+                currentTime += localIterationRate;
 
                 foreach (ColumnType currentColumn in Enum.GetValues(typeof(ColumnType)))
                 {
@@ -1095,26 +1315,12 @@ namespace StorybrewScripts
 
                     List<Anchor> notePath = notePathByColumn[currentColumn];
                     List<Vector2> points = GetPathAnchorVectors(notePath, currentTime);
-                    List<Vector2> lastPoints = new List<Vector2>();
 
-                    if (priorTime.ContainsKey(currentColumn))
-                    {
-                        lastPoints = priorTime[currentColumn];
-                    }
-                    else
-                    {
-                        priorTime.Add(currentColumn, points);
-                    }
-
-                    if (lastPoints.SequenceEqual(points))
-                    {
-                        continue;
-                    }
-
-                    priorTime[currentColumn] = points;
+                    List<KeyframedValue<Vector2>> movementPerSprite = movementPerSpriteByColumn[currentColumn];
+                    List<KeyframedValue<Vector2>> scalePerSprite = scalePerSpriteByColumn[currentColumn];
+                    List<KeyframedValue<double>> rotationPerSprite = rotationPerSpriteByColumn[currentColumn];
 
 
-                    List<OsbSprite> columnSprites = this.pathWaySprites[currentColumn];
                     int i = 0;
 
                     switch (type)
@@ -1135,17 +1341,9 @@ namespace StorybrewScripts
                                 Vector2 delta = firstPoint - secondPoint;
                                 double theta = Math.Atan2(delta.X, delta.Y);
 
-                                OsbSprite sprite = columnSprites[i];
-
-                                Vector2 currentPosition = sprite.PositionAt(currentTime);
-                                if (currentColumn == ColumnType.one && progress == 0)
-                                    debug += $"{currentPosition}, {firstPoint}, {currentPosition - firstPoint}, \n";
-
-
-                                sprite.Move(currentTime, currentTime + iterationLength, sprite.PositionAt(currentTime), firstPoint);
-                                sprite.Rotate(currentTime, currentTime + iterationLength, sprite.RotationAt(currentTime), -theta);
-                                sprite.ScaleVec(currentTime, currentTime + iterationLength, sprite.ScaleAt(currentTime), new Vector2(4, distance));
-
+                                rotationPerSprite[i].Add(currentTime, -theta);
+                                movementPerSprite[i].Add(currentTime + localIterationRate, firstPoint);
+                                scalePerSprite[i].Add(currentTime + localIterationRate, new Vector2(4, distance));
 
                                 progress += increment;
                                 i++;
@@ -1165,39 +1363,53 @@ namespace StorybrewScripts
                                 Vector2 delta = firstPoint - secondPoint;
                                 double theta = Math.Atan2(delta.X, delta.Y);
 
-                                OsbSprite sprite = columnSprites[i];
-
-                                Vector2 currentPosition = sprite.PositionAt(currentTime);
-
-                                debug += $"{currentPosition}, {firstPoint}, {currentPosition - firstPoint}, \n";
-
-
-                                sprite.Move(currentTime, currentTime + iterationLength, sprite.PositionAt(currentTime), firstPoint);
-                                sprite.Rotate(currentTime, currentTime + iterationLength, sprite.RotationAt(currentTime), -theta);
-                                sprite.ScaleVec(currentTime, currentTime + iterationLength, sprite.ScaleAt(currentTime), new Vector2(4, distance));
-
+                                rotationPerSprite[i].Add(currentTime, -theta);
+                                movementPerSprite[i].Add(currentTime + localIterationRate, firstPoint);
+                                scalePerSprite[i].Add(currentTime + localIterationRate, new Vector2(4, distance));
 
                                 i++;
                             }
                             break;
                     }
                 }
+            }
 
-                currentTime += localIterationRate;
+            foreach (ColumnType currentColumn in Enum.GetValues(typeof(ColumnType)))
+            {
+
+                if (currentColumn == ColumnType.all)
+                    continue;
+
+                List<KeyframedValue<Vector2>> movementPerSprite = movementPerSpriteByColumn[currentColumn];
+                List<KeyframedValue<Vector2>> scalePerSprite = scalePerSpriteByColumn[currentColumn];
+                List<KeyframedValue<double>> rotationPerSprite = rotationPerSpriteByColumn[currentColumn];
+
+                List<OsbSprite> sprites = pathSprites[currentColumn];
+
+                for (int i = 0; i < movementPerSprite.Count; i++)
+                {
+
+                    OsbSprite sprite = sprites[i];
+
+                    KeyframedValue<Vector2> movement = movementPerSprite[i];
+                    KeyframedValue<Vector2> scale = scalePerSprite[i];
+                    KeyframedValue<double> rotation = rotationPerSprite[i];
+
+                    movement.Simplify2dKeyframes(0.5f, v => v);
+                    scale.Simplify2dKeyframes(0.1f, v => v);
+
+                    movement.ForEachPair((start, end) => sprite.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
+                    scale.ForEachPair((start, end) => sprite.ScaleVec(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
+                    rotation.ForEachPair((start, end) => sprite.Rotate(end.Time, end.Value));
+
+                }
+
+
             }
 
             return debug;
 
         }
-
-        private bool AreVectorsCloseEnough(Vector2 v1, Vector2 v2, float threshold = 0.5f)
-        {
-            float dx = v1.X - v2.X;
-            float dy = v1.Y - v2.Y;
-            float distanceSquared = dx * dx + dy * dy;
-            return distanceSquared >= threshold * threshold;
-        }
-
 
         public double FadePath(double starttime, double duration, OsbEasing easing, float fade, ColumnType column = ColumnType.all)
         {
@@ -1266,13 +1478,12 @@ namespace StorybrewScripts
 
         }
 
-        public void changeUpdateRate(double time, int updatesPerSecond)
-        {
-            updatesPerSecondDictionary.Add(Math.Max(time - this.easetime, 0), updatesPerSecond);
-        }
-
         public void RenderReceptor(Column column, double duration)
         {
+
+            KeyframedValue<Vector2> movement = new KeyframedValue<Vector2>(null);
+            KeyframedValue<Vector2> scale = new KeyframedValue<Vector2>(null);
+            KeyframedValue<double> rotation = new KeyframedValue<double>(null);
 
             double currentTime = starttime;
             double endTime = starttime + duration;
@@ -1281,8 +1492,14 @@ namespace StorybrewScripts
             Receptor receptor = column.receptor;
             Vector2 currentPosition = receptor.getCurrentPosition(currentTime);
 
+            receptor.renderedSprite.Fade(starttime, 1);
+            receptor.renderedSprite.Fade(endTime, 0);
+
+            movement.Add(currentTime, currentPosition);
+
             while (currentTime < endTime)
             {
+
                 var foundEntry = findEffectByReferenceTime(currentTime);
 
                 if (foundEntry.Value != null)
@@ -1295,11 +1512,25 @@ namespace StorybrewScripts
                 }
 
                 OsbSprite renderedReceptor = receptor.renderedSprite;
+
+                FadeEffect receptorFade = findFadeAtTime(currentTime);
+                if (receptorFade != null)
+                {
+                    renderedReceptor.Fade(currentTime + 1, receptorFade.value);
+                }
+
                 Vector2 newPosition = receptor.getCurrentPosition(currentTime + iterationLenght);
-                renderedReceptor.Move(currentTime, currentTime + iterationLenght, currentPosition, newPosition);
-                currentPosition = newPosition;
+
+                movement.Add(currentTime + iterationLenght, newPosition);
+                //renderedReceptor.Move(currentTime, currentTime + iterationLenght, currentPosition, newPosition);
+                //currentPosition = newPosition;
                 currentTime += iterationLenght;
             }
+
+            movement.Simplify2dKeyframes(ReceptorMovementPrecision, v => v);
+            scale.Simplify2dKeyframes(ReceptorScalePrecision, v => v);
+            rotation.Simplify1dKeyframes(ReceptorRotationPrecision, v => (float)v);
+            movement.ForEachPair((start, end) => receptor.renderedSprite.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
 
         }
 
@@ -1313,14 +1544,37 @@ namespace StorybrewScripts
             return currentEffect;
         }
 
-        private KeyValuePair<double, double> findCurrentUpdateRate(double time)
+        private double findCurrentUpdateRate(double time)
         {
+            double iterationrate = this.iterationLength;
+
             KeyValuePair<double, double> currentUpdateRate = updatesPerSecondDictionary
                    .Where(kvp => kvp.Key <= time)
                    .OrderByDescending(kvp => kvp.Key)
                    .FirstOrDefault();
 
-            return currentUpdateRate;
+            if (currentUpdateRate.Value != 0)
+            {
+                iterationrate = 1000 / currentUpdateRate.Value;
+            }
+
+            return Math.Round(iterationrate);
+        }
+
+        private FadeEffect findFadeAtTime(double time)
+        {
+
+            KeyValuePair<double, FadeEffect> currentFadeEffect = this.playfieldInstance.fadeAtTime
+                   .Where(kvp => kvp.Key <= time)
+                   .OrderByDescending(kvp => kvp.Key)
+                   .FirstOrDefault();
+
+            return currentFadeEffect.Value;
+        }
+
+        public void changeUpdateRate(double time, double updatesPerSecond)
+        {
+            updatesPerSecondDictionary.Add(Math.Max(time - this.easetime, 0), updatesPerSecond);
         }
     }
 }

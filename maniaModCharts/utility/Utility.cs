@@ -35,6 +35,14 @@ namespace StorybrewScripts
             return amplitude * Math.Sin(2 * Math.PI * frequency * time + phase);
         }
 
+        public static float CalculateDistance(Vector2 firstPoint, Vector2 secondPoint)
+        {
+            float dx = firstPoint.X - secondPoint.X;
+            float dy = firstPoint.Y - secondPoint.Y;
+            return (float)Math.Sqrt(dx * dx + dy * dy) + 1f;
+        }
+
+
 
     }
 }

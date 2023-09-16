@@ -234,10 +234,7 @@ namespace StorybrewScripts
                     break;
             }
 
-
-            sprite.Fade(starttime, 1);
             sprite.ScaleVec(starttime, receptorSprite.ScaleAt(starttime));
-            sprite.Fade(endtime, 0);
 
         }
 

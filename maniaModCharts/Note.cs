@@ -14,7 +14,6 @@ namespace StorybrewScripts
 
     public class Note
     {
-
         public int noteType = 0;
         public StoryboardLayer layer;
         public OsbSprite noteSprite;
@@ -40,14 +39,6 @@ namespace StorybrewScripts
 
             // calculate duration of one beat
             double beatDuration = 60000f / bpm;
-            double whole = beatDuration; // 1/1
-            double half = beatDuration / 2f; // 1/2
-            double third = beatDuration / 3f; // 1/3
-            double quarter = beatDuration / 4f; // 1/4
-            double twelfth = beatDuration / 12f; // 1/12
-            double sixteenth = beatDuration / 16f; // 1/16
-            double twentyfourth = beatDuration / 24f; // 1/16
-            double thirthytwoth = beatDuration / 32f; // 1/16
 
             Column currentColumn = column;
 
@@ -347,6 +338,11 @@ namespace StorybrewScripts
             return false;
         }
 
+        public void Fade(double starttime, double endtime, OsbEasing easing, float value)
+        {
+            this.noteSprite.Fade(easing, starttime, endtime, this.noteSprite.OpacityAt(starttime), value);
+        }
+
 
         public void invisible(double time)
         {
@@ -399,6 +395,14 @@ namespace StorybrewScripts
             OsbSprite note = this.noteSprite;
 
             return note.RotationAt(starttime);
+        }
+
+        public float OpacityAt(double currentTime)
+        {
+            OsbSprite note = this.noteSprite;
+
+
+            return note.OpacityAt(currentTime);
         }
 
     }

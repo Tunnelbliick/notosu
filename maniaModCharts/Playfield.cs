@@ -41,6 +41,8 @@ namespace StorybrewScripts
         // Notes Per Column
         public Dictionary<ColumnType, Dictionary<double, Note>> columnNotes = new Dictionary<ColumnType, Dictionary<double, Note>>();
 
+        public Dictionary<double, FadeEffect> fadeAtTime = new Dictionary<double, FadeEffect>();
+
         private bool disposed = false;
 
         public void Dispose()
@@ -293,102 +295,244 @@ namespace StorybrewScripts
             return starttime + duration;
         }
 
-        public double Zoom(double starttime, double duration, OsbEasing easing, double zoomAmount, Boolean keepPosition)
+        public double Zoom(double starttime, double duration, OsbEasing easing, Vector2 newScale, bool keepPosition, string centerType = "playfield")
         {
             double endtime = starttime + duration;
 
-            bg.ScaleVec(easing, starttime, starttime + duration, bg.ScaleAt(starttime), Vector2.Multiply(bg.ScaleAt(starttime), (float)zoomAmount));
-            Vector2 center = bg.PositionAt(starttime);
-            Vector2 newScale = bg.ScaleAt(starttime + duration);
+            Vector2 center = calculatePlayFieldCenter(starttime);
+
+            if (centerType == "playfield")
+            {
+                center = calculatePlayFieldCenter(starttime);
+            }
+            else if (centerType == "middle")
+            {
+                center = new Vector2(320, 240);
+            }
+            else if (centerType == "receptor")
+            {
+
+                Vector2 mostLeft = new Vector2(0, 0);
+                Vector2 mostRight = new Vector2(0, 0);
+
+                foreach (Column column in columns.Values)
+                {
+                    Vector2 receptorPosition = column.receptor.getCurrentPosition(starttime);
+
+                    // Check for most left position based on x-coordinate
+                    if (receptorPosition.X < mostLeft.X)
+                    {
+                        mostLeft = receptorPosition;
+                    }
+
+                    // Check for most right position based on x-coordinate
+                    if (receptorPosition.X > mostRight.X)
+                    {
+                        mostRight = receptorPosition;
+                    }
+
+                    // Optional: If you want to also consider y-coordinate for vertical positioning, you can add similar checks for y-coordinate here.
+                }
+
+                // Calculate center between most left and most right receptors
+                center = new Vector2(
+                    320,
+                    (mostLeft.Y + mostRight.Y) / 2
+                );
+            }
 
             foreach (Column column in columns.Values)
             {
                 Receptor receptor = column.receptor;
                 NoteOrigin origin = column.origin;
 
-                Vector2 receptorScale = receptor.getCurrentScale(starttime);
-                Vector2 originScale = origin.getCurrentScale(starttime);
-
                 Vector2 receptorPosition = receptor.getCurrentPosition(starttime);
                 Vector2 originPosition = origin.getCurrentPosition(starttime);
 
-                Vector2 scaledReceptorScale = Vector2.Multiply(receptorScale, (float)zoomAmount);
-                Vector2 scaledOriginScale = Vector2.Multiply(originScale, (float)zoomAmount);
+                Vector2 receptorScale = receptor.getCurrentScale(starttime);
+                Vector2 originScale = origin.getCurrentScale(starttime);
 
-                receptor.ScaleReceptor(starttime, scaledReceptorScale, easing, duration);
-                origin.ScaleReceptor(starttime, scaledOriginScale, easing, duration);
-
-                Vector2 receptorTarget = receptorPosition;
-                Vector2 originTarget = originPosition;
+                receptor.ScaleReceptor(starttime, newScale, easing, duration);
+                origin.ScaleReceptor(starttime, newScale, easing, duration);
 
                 if (!keepPosition)
                 {
-                    Vector2 relativeReceptorPosition = Vector2.Subtract(receptorPosition, center);
-                    Vector2 relativeOriginPosition = Vector2.Subtract(originPosition, center);
+                    // Directional vectors for the new coordinate system.
+                    Vector2 newBaseX = new Vector2(1, 0); // always horizontal
+                    Vector2 newBaseY = new Vector2(0, 1); // always vertical
 
-                    Vector2 zoomedReceptorPosition = Vector2.Multiply(relativeReceptorPosition, (float)zoomAmount);
-                    Vector2 zoomedOriginPosition = Vector2.Multiply(relativeOriginPosition, (float)zoomAmount);
+                    // Calculate the change in distance for receptor based on scale difference.
+                    float receptorDistanceChangeX = (receptorPosition.X - center.X) * (newScale.X / receptorScale.X - 1);
+                    float receptorDistanceChangeY = (receptorPosition.Y - center.Y) * (newScale.Y / receptorScale.Y - 1);
 
-                    receptorTarget = Vector2.Add(zoomedReceptorPosition, center);
-                    originTarget = Vector2.Add(zoomedOriginPosition, center);
+                    // Adjust using the new coordinate system's basis.
+                    Vector2 receptorMovement = receptorDistanceChangeX * newBaseX + receptorDistanceChangeY * newBaseY;
 
-                    receptor.MoveReceptor(starttime, receptorTarget, easing, duration);
-                    origin.MoveOrigin(starttime, originTarget, easing, duration);
+                    // Calculate the change in distance for origin based on scale difference.
+                    float originDistanceChangeX = (originPosition.X - center.X) * (newScale.X / originScale.X - 1);
+                    float originDistanceChangeY = (originPosition.Y - center.Y) * (newScale.Y / originScale.Y - 1);
+
+                    Vector2 originMovement = new Vector2(originDistanceChangeX, originDistanceChangeY);
+
+                    // Apply this movement to get the new position.
+                    Vector2 zoomedReceptorPosition = receptorPosition + receptorMovement;
+                    Vector2 zoomedOriginPosition = originPosition + originMovement;
+
+                    receptor.MoveReceptor(starttime, zoomedReceptorPosition, easing, duration);
+                    origin.MoveOrigin(starttime, zoomedOriginPosition, easing, duration);
                 }
 
             }
 
             return endtime;
         }
-        public String ZoomAndMove(double starttime, double duration, OsbEasing easing, Vector2 absoluteScale, Vector2 newPosition)
+
+        public string ZoomAndMove(double starttime, double duration, OsbEasing easing, Vector2 newScale, Vector2 offset, string centerType = "playfeld")
         {
             double endtime = starttime + duration;
-
-            String debug = "";
+            string debug = "";
 
             Vector2 center = calculatePlayFieldCenter(starttime);
+
+            if (centerType == "playfield")
+            {
+                center = calculatePlayFieldCenter(starttime);
+            }
+            else if (centerType == "middle")
+            {
+                center = new Vector2(320, 240);
+            }
+            else if (centerType == "receptor")
+            {
+
+                Vector2 mostLeft = new Vector2(0, 0);
+                Vector2 mostRight = new Vector2(0, 0);
+
+                foreach (Column column in columns.Values)
+                {
+                    Vector2 receptorPosition = column.receptor.getCurrentPosition(starttime);
+
+                    // Check for most left position based on x-coordinate
+                    if (receptorPosition.X < mostLeft.X)
+                    {
+                        mostLeft = receptorPosition;
+                    }
+
+                    // Check for most right position based on x-coordinate
+                    if (receptorPosition.X > mostRight.X)
+                    {
+                        mostRight = receptorPosition;
+                    }
+
+                    // Optional: If you want to also consider y-coordinate for vertical positioning, you can add similar checks for y-coordinate here.
+                }
+
+                // Calculate center between most left and most right receptors
+                center = new Vector2(
+                    320,
+                    (mostLeft.Y + mostRight.Y) / 2
+                );
+            }
+
 
             foreach (Column column in columns.Values)
             {
                 Receptor receptor = column.receptor;
                 NoteOrigin origin = column.origin;
-                float xOffset = 0;
-                float yOffset = 0;
 
                 Vector2 receptorPosition = receptor.getCurrentPosition(starttime);
                 Vector2 originPosition = origin.getCurrentPosition(starttime);
 
+                Vector2 receptorScale = receptor.getCurrentScale(starttime);
+                Vector2 originScale = origin.getCurrentScale(starttime);
+
+                receptor.ScaleReceptor(starttime, newScale, easing, duration);
+                origin.ScaleReceptor(starttime, newScale, easing, duration);
+
+                // Directional vectors for the new coordinate system.
+                Vector2 newBaseX = new Vector2(1, 0); // always horizontal
+                Vector2 newBaseY = new Vector2(0, 1); // always vertical
+
+                // Calculate the change in distance for receptor based on scale difference.
+                float receptorDistanceChangeX = (receptorPosition.X - center.X) * (newScale.X / receptorScale.X - 1);
+                float receptorDistanceChangeY = (receptorPosition.Y - center.Y) * (newScale.Y / receptorScale.Y - 1);
+
+                // Adjust using the new coordinate system's basis.
+                Vector2 receptorMovement = receptorDistanceChangeX * newBaseX + receptorDistanceChangeY * newBaseY;
+
+                // Calculate the change in distance for origin based on scale difference.
+                float originDistanceChangeX = (originPosition.X - center.X) * (newScale.X / originScale.X - 1);
+                float originDistanceChangeY = (originPosition.Y - center.Y) * (newScale.Y / originScale.Y - 1);
+
+                Vector2 originMovement = originDistanceChangeX * newBaseX + originDistanceChangeY * newBaseY;
+
+                // Apply this movement to get the new position.
+                Vector2 zoomedReceptorPosition = receptorPosition + receptorMovement; // Apply the offset here
+                Vector2 zoomedOriginPosition = originPosition + originMovement; // Apply the offset here
+
+                receptor.MoveReceptor(starttime, zoomedReceptorPosition + offset, easing, duration);
+                origin.MoveOrigin(starttime, zoomedOriginPosition + offset, easing, duration);
+            }
+
+            return debug;
+        }
+
+
+        public String ZoomMoveAndRotate(double starttime, double duration, OsbEasing easing, Vector2 absoluteScale, Vector2 newPosition, double radians, int stepSize)
+        {
+            double endtime = starttime + duration;
+            String debug = "";
+
+            Vector2 center = calculatePlayFieldCenter(starttime);
+            double stepRadians = radians / stepSize;
+            double stepDuration = duration / stepSize;
+
+            foreach (Column column in columns.Values)
+            {
+                Receptor receptor = column.receptor;
+                NoteOrigin origin = column.origin;
+
                 Vector2 currentScale = receptor.getCurrentScale(starttime);
+                Vector2 priorScale = currentScale;
 
-                Vector2 scaleDifference = new Vector2(absoluteScale.X / currentScale.X, absoluteScale.Y / currentScale.Y);
+                Vector2 currentReceptorPosition = receptor.getCurrentPosition(starttime);
+                Vector2 currentOriginPosition = origin.getCurrentPosition(starttime);
 
-                if (absoluteScale != currentScale)
+                for (int i = 0; i <= stepSize; i++)
                 {
-                    // This needs to be calculated differently to match scale changes above 1 since 1 doesnt change anything but the sprite scale changes with 1
-                    xOffset = (receptorPosition.X - center.X) * scaleDifference.X - (receptorPosition.X - center.X);
-                    yOffset = (receptorPosition.Y - center.Y) * scaleDifference.Y - (receptorPosition.Y - center.Y);
+                    double currentTime = starttime + i * stepDuration;
+                    double lerpFactor = (double)i / (stepSize - 1); // calculate how much of the movement we've completed
+                    float xOffset = 0;
+                    float yOffset = 0;
+
+                    Vector2 moveCenter = Vector2.Lerp(center, newPosition, (float)lerpFactor);
+                    Vector2 scaleProgress = Vector2.Lerp(currentScale, absoluteScale, (float)lerpFactor);
+                    Vector2 scaleDifference = new Vector2(scaleProgress.X / priorScale.X, scaleProgress.Y / priorScale.Y);
+
+                    if (absoluteScale != currentScale)
+                    {
+                        // This needs to be calculated differently to match scale changes above 1 since 1 doesnt change anything but the sprite scale changes with 1
+                        xOffset = (currentReceptorPosition.X - moveCenter.X) * scaleDifference.X - (currentReceptorPosition.X - moveCenter.X);
+                        yOffset = (currentOriginPosition.Y - moveCenter.Y) * scaleDifference.Y - (currentOriginPosition.Y - moveCenter.Y);
+                    }
+
+                    currentReceptorPosition.X += xOffset;
+                    currentOriginPosition.X += xOffset;
+
+                    currentReceptorPosition.Y += yOffset;
+                    currentOriginPosition.Y += yOffset;
+
+                    Vector2 rotatedReceptorPosition = Utility.PivotPoint(currentReceptorPosition, moveCenter, stepRadians);
+                    Vector2 rotatedOriginPosition = Utility.PivotPoint(currentOriginPosition, moveCenter, stepRadians);
+
+                    receptor.MoveReceptor(currentTime, rotatedReceptorPosition, easing, stepDuration);
+                    origin.MoveOrigin(currentTime, rotatedOriginPosition, easing, stepDuration);
+
+                    priorScale = scaleProgress;
+                    currentReceptorPosition = rotatedReceptorPosition;
+                    currentOriginPosition = rotatedOriginPosition;
+
                 }
-
-                receptorPosition.X += xOffset;
-                originPosition.X += xOffset;
-
-                receptorPosition.Y += yOffset;
-                originPosition.Y += -yOffset;
-
-                // Apparently subtract returns a whole number
-                Vector2 movement = new Vector2(newPosition.X - center.X, newPosition.Y - center.Y);
-
-                receptorPosition = Vector2.Add(receptorPosition, movement);
-                originPosition = Vector2.Add(originPosition, movement);
-
-                // debug += $"({receptorPosition.X} - {center.X}) * {scaleDifference.X} - ({receptorPosition.X} - {center.X})\n";
-                // debug += $"{movement} = {newPosition} - {center}\n";
-                // debug += $"({receptorPosition} = {receptorPosition} + {movement}\n";
-                // debug += "\n";
-
-                // Move and scale the receptors and origins
-                receptor.MoveReceptor(starttime, receptorPosition, easing, duration);
-                origin.MoveOrigin(starttime, originPosition, easing, duration);
 
                 receptor.ScaleReceptor(starttime, absoluteScale, easing, duration);
                 origin.ScaleReceptor(starttime, absoluteScale, easing, duration);
@@ -396,6 +540,7 @@ namespace StorybrewScripts
 
             return debug;
         }
+
         public Vector2 calculatePlayFieldCenter(double currentTime)
         {
             Vector2 center;
@@ -697,6 +842,23 @@ namespace StorybrewScripts
 
         }
 
+        public void fadeAt(double time, float fade)
+        {
+            FadeEffect effect = new FadeEffect(time, time, OsbEasing.None, fade);
+            this.fadeAtTime.Add(time, effect);
+        }
+
+        public void fadeAt(double time, double endtime, float fade)
+        {
+            FadeEffect effect = new FadeEffect(time, endtime, OsbEasing.None, fade);
+            this.fadeAtTime.Add(time, effect);
+        }
+
+        public void fadeAt(double time, double endtime, OsbEasing easing, float fade)
+        {
+            FadeEffect effect = new FadeEffect(time, endtime, easing, fade);
+            this.fadeAtTime.Add(time, effect);
+        }
 
         public float getColumnWidth()
         {

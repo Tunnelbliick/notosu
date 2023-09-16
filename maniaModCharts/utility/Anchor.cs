@@ -18,18 +18,18 @@ namespace StorybrewScripts
         public ColumnType column;
         public Dictionary<double, Vector2> positions = new Dictionary<double, Vector2>();
 
-        public Anchor(int type, ColumnType column, Vector2 initialPosition, Vector2 offset, bool debug, StoryboardLayer layer)
+        public Anchor(int type, double starttime, ColumnType column, Vector2 initialPosition, Vector2 offset, bool debug, StoryboardLayer layer)
         {
 
             OsbSprite debugSprite = layer.CreateSprite("sb/white.png", OsbOrigin.Centre, initialPosition);
             if (debug)
             {
-                debugSprite.Fade(0, 1);
+                debugSprite.Fade(starttime, 1);
                 debugSprite.Fade(300000, 0);
             }
             else
             {
-                debugSprite.Fade(0, 0);
+                debugSprite.Fade(starttime, 0);
             }
 
             this.sprite = debugSprite;
@@ -43,22 +43,11 @@ namespace StorybrewScripts
 
         }
 
-        public Anchor ManipulatePosition(double starttime, double transitionTime, OsbEasing easing, Vector2 newPosition)
+        public void ManipulatePosition(double starttime, double transitionTime, OsbEasing easing, Vector2 newPosition)
         {
 
             OsbSprite sprite = this.sprite;
-            sprite.Move(easing, starttime, starttime + transitionTime, this.position, newPosition);
-
-            /*if (positions.ContainsKey(starttime) == false)
-                this.positions.Add(starttime, this.position);
-
-            if (positions.ContainsKey(starttime + transitionTime) == false)
-                this.positions.Add(starttime + transitionTime, newPosition);*/
-
-            this.position = newPosition;
-
-
-            return this;
+            sprite.Move(easing, starttime, starttime + transitionTime, sprite.PositionAt(starttime), newPosition);
 
         }
 
@@ -66,16 +55,11 @@ namespace StorybrewScripts
         {
             OsbSprite sprite = this.sprite;
             sprite.Move(time, newPosition);
-
-            /*if (positions.ContainsKey(time) == false)
-                this.positions.Add(time, newPosition);*/
         }
 
         public Vector2 getPositionAt(double targetTime)
         {
             return sprite.PositionAt(targetTime);
-            /*var closestKey = positions.Keys.Aggregate((x, y) => Math.Abs(x - targetTime) < Math.Abs(y - targetTime) ? x : y);
-            return positions[closestKey];*/
         }
     }
 }
