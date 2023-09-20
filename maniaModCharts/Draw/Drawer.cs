@@ -8,7 +8,7 @@ namespace storyboard.scriptslibrary.maniaModCharts.Draw
     public class Drawer
     {
         
-        public float NoteMovementPrecision = 10f;
+        public float NoteMovementPrecision = 2f;
         public float NoteScalePrecision = .01f;
         public float NoteRotationPrecision = 1f;
 
@@ -16,8 +16,8 @@ namespace storyboard.scriptslibrary.maniaModCharts.Draw
         public float ReceptorScalePrecision = .2f;
         public float ReceptorRotationPrecision = 1f;
 
-        public float HoldMovementPrecision = 0.25f;
-        public float HoldScalePrecision = .1f;
+        public float HoldMovementPrecision = 2f;
+        public float HoldScalePrecision = 0f;
         public float HoldRotationPrecision = 1f;
 
         public void setReceptorPrecision(float movement, float scale, float rotation)
