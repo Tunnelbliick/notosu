@@ -59,6 +59,16 @@ namespace StorybrewScripts
 
         }
 
+        public void MoveOriginInstant(double starttime, Vector2 newPosition, OsbEasing ease, double duration)
+        {
+            OsbSprite receptor = this.originSprite;
+
+            receptor.Move(starttime, newPosition);
+
+            this.position = newPosition;
+
+        }
+
         public void MoveOriginRelative(double starttime, Vector2 offset, OsbEasing ease, double duration)
         {
             OsbSprite receptor = this.originSprite;
@@ -69,6 +79,26 @@ namespace StorybrewScripts
             receptor.Move(ease, starttime, starttime + duration, originalPosition, newPosition);
 
             this.position = newPosition;
+
+        }
+
+        public void MoveOriginRelativeX(double starttime, double value, OsbEasing ease, double duration)
+        {
+            OsbSprite receptor = this.originSprite;
+
+            Vector2 originalPosition = getCurrentPosition(starttime);
+
+            receptor.MoveX(ease, starttime, starttime + duration, originalPosition.X, originalPosition.X + value);
+
+        }
+
+        public void MoveOriginRelativeY(double starttime, double value, OsbEasing ease, double duration)
+        {
+            OsbSprite receptor = this.originSprite;
+
+            Vector2 originalPosition = getCurrentPosition(starttime);
+
+            receptor.MoveY(ease, starttime, starttime + duration, originalPosition.Y, originalPosition.Y + value);
 
         }
 
@@ -97,15 +127,15 @@ namespace StorybrewScripts
 
             this.RotateReceptor(starttime, rotation, ease, duration);
 
-            Vector2 point = this.position;
+            Vector2 point = originSprite.PositionAt(starttime);
 
             double totalTime = starttime + duration; // Total duration in milliseconds
             double stepTime = duration / stepcount; // Step duration in milliseconds
 
             double endRadians = rotation; // Set the desired end radians here, 2*PI radians is a full circle
-            double rotationPerIteration = endRadians / stepcount; // Rotation per iteration
+            double rotationPerIteration = endRadians / (stepcount - 1); // Rotation per iteration
 
-            for (int i = 0; i <= stepcount; i++)
+            for (int i = 0; i < stepcount; i++)
             {
                 var currentTime = starttime + stepTime * i;
 
@@ -113,6 +143,38 @@ namespace StorybrewScripts
                 this.MoveOrigin(currentTime, rotatedPoint, ease, stepTime);
             }
         }
+
+        public void PivotAndRescaleReceptor(double starttime, double rotation, OsbEasing ease, double duration, int stepcount, Vector2 center, double targetDistance)
+        {
+            Vector2 initialPoint = originSprite.PositionAt(starttime);
+
+            double stepTime = duration / stepcount;
+            double rotationPerIteration = rotation / (stepcount - 1);
+
+            // Calculate initial distance
+            double initialDistance = (initialPoint - center).Length;
+
+            for (int i = 0; i < stepcount; i++)
+            {
+                var currentTime = starttime + stepTime * i;
+
+                // Rotate the point
+                Vector2 rotatedPoint = Utility.PivotPoint(initialPoint, center, rotationPerIteration * i);
+
+                // Get the direction in which we're moving (based on rotation around the center).
+                Vector2 directionFromCenter = rotatedPoint - center;
+                directionFromCenter.Normalize(); // Normalize to get a unit vector
+
+                // Interpolate between initialDistance and targetDistance based on the progress
+                double desiredDistance = initialDistance + (targetDistance - initialDistance) * ((double)i / stepcount);
+
+                // Compute the new position based on the desired distance
+                Vector2 newPoint = center + directionFromCenter * (float)desiredDistance;
+
+                MoveOrigin(currentTime, newPoint, ease, stepTime);
+            }
+        }
+
 
         public static Vector2 PivotPoint(Vector2 point, Vector2 center, double radians)
         {

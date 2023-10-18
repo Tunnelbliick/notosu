@@ -33,6 +33,9 @@ namespace StorybrewScripts
         public double starttime;
         public double endtime;
 
+        public double noteStart;
+        public double noteEnd;
+
         // Reference for active Columns;
         public Dictionary<ColumnType, Column> columns = new Dictionary<ColumnType, Column>();
         public Dictionary<double, EffectInfo> effectReferenceByStartTime = new Dictionary<double, EffectInfo>();
@@ -77,6 +80,9 @@ namespace StorybrewScripts
         {
             this.starttime = starttime;
             this.endtime = endtime;
+
+            this.noteStart = starttime;
+            this.noteEnd = endtime;
 
             Column one = new Column(128, ColumnType.one, receptorSpritePath, receptors, receptorScale, starttime);
             Column two = new Column(256, ColumnType.two, receptorSpritePath, receptors, receptorScale, starttime);
@@ -141,7 +147,7 @@ namespace StorybrewScripts
                         continue;
 
                     // Check for overlapping times
-                    if (hitobject.StartTime <= this.endtime && hitobject.EndTime >= this.starttime)
+                    if (hitobject.StartTime <= noteEnd && hitobject.EndTime >= noteStart)
                     {
                         Note currentNote = new Note(noteLayer, hitobject, column, bpm, offset, msPerPart);
                         notes.Add(hitobject.StartTime, currentNote);
@@ -260,6 +266,41 @@ namespace StorybrewScripts
 
         }
 
+        public double ScaleOrigin(double starttime, double duration, OsbEasing easing, Vector2 scale, ColumnType type)
+        {
+
+            if (type == ColumnType.all)
+            {
+                foreach (Column column in columns.Values)
+                {
+                    column.origin.ScaleReceptor(starttime, scale, easing, duration);
+                }
+            }
+            else
+            {
+                columns[type].origin.ScaleReceptor(starttime, scale, easing, duration);
+            }
+            return starttime + duration;
+        }
+
+        public double ScaleReceptor(double starttime, double duration, OsbEasing easing, Vector2 scale, ColumnType type)
+        {
+
+            if (type == ColumnType.all)
+            {
+                foreach (Column column in columns.Values)
+                {
+                    column.receptor.ScaleReceptor(starttime, scale, easing, duration);
+                }
+            }
+            else
+            {
+                columns[type].receptor.ScaleReceptor(starttime, scale, easing, duration);
+            }
+            return starttime + duration;
+        }
+
+
         public double MoveColumnRelative(double starttime, double duration, OsbEasing easing, Vector2 offset, ColumnType type)
         {
 
@@ -277,21 +318,55 @@ namespace StorybrewScripts
             return starttime + duration;
         }
 
-        public double Zoom(double starttime, double duration, OsbEasing easing, Vector2 newScale, bool keepPosition, centerType centerType = centerType.playfield)
+        public double MoveColumnRelativeX(double starttime, double duration, OsbEasing easing, double value, ColumnType type)
+        {
+
+            if (type == ColumnType.all)
+            {
+                foreach (Column column in columns.Values)
+                {
+                    column.MoveColumnRelativeX(starttime, duration, value, easing);
+                }
+            }
+            else
+            {
+                columns[type].MoveColumnRelativeX(starttime, duration, value, easing);
+            }
+            return starttime + duration;
+        }
+
+        public double MoveColumnRelativeY(double starttime, double duration, OsbEasing easing, double value, ColumnType type)
+        {
+
+            if (type == ColumnType.all)
+            {
+                foreach (Column column in columns.Values)
+                {
+                    column.MoveColumnRelativeY(starttime, duration, value, easing);
+                }
+            }
+            else
+            {
+                columns[type].MoveColumnRelativeY(starttime, duration, value, easing);
+            }
+            return starttime + duration;
+        }
+
+        public double Zoom(double starttime, double duration, OsbEasing easing, Vector2 newScale, bool keepPosition, CenterType centerType = CenterType.playfield)
         {
             double endtime = starttime + duration;
 
             Vector2 center = calculatePlayFieldCenter(starttime);
 
-            if (centerType == centerType.playfield)
+            if (centerType == CenterType.playfield)
             {
                 center = calculatePlayFieldCenter(starttime);
             }
-            else if (centerType == centerType.middle)
+            else if (centerType == CenterType.middle)
             {
                 center = new Vector2(320, 240);
             }
-            else if (centerType == centerType.receptor)
+            else if (centerType == CenterType.receptor)
             {
 
                 Vector2 mostLeft = new Vector2(0, 0);
@@ -368,29 +443,29 @@ namespace StorybrewScripts
             return endtime;
         }
 
-        public enum centerType
+        public enum CenterType
         {
             receptor,
             middle,
             playfield
         }
 
-        public string ZoomAndMove(double starttime, double duration, OsbEasing easing, Vector2 newScale, Vector2 offset, centerType centerType = centerType.playfield)
+        public string ZoomAndMove(double starttime, double duration, OsbEasing easing, Vector2 newScale, Vector2 offset, CenterType centerType = CenterType.playfield)
         {
             double endtime = starttime + duration;
             string debug = "";
 
             Vector2 center = calculatePlayFieldCenter(starttime);
 
-            if (centerType == centerType.playfield)
+            if (centerType == CenterType.playfield)
             {
                 center = calculatePlayFieldCenter(starttime);
             }
-            else if (centerType == centerType.middle)
+            else if (centerType == CenterType.middle)
             {
                 center = new Vector2(320, 240);
             }
-            else if (centerType == centerType.receptor)
+            else if (centerType == CenterType.receptor)
             {
 
                 Vector2 mostLeft = new Vector2(0, 0);
@@ -592,12 +667,21 @@ namespace StorybrewScripts
             return center;
         }
 
-        public double MoveReceptorAbsolute(double starttime, double duration, OsbEasing easing, ColumnType column, Vector2 position)
+        public double MoveReceptorAbsolute(double starttime, double duration, OsbEasing easing, Vector2 position, ColumnType column)
         {
+            if (column == ColumnType.all)
+            {
+                foreach (Column currentColumn in columns.Values)
+                {
+                    currentColumn.MoveReceptor(starttime, duration, position, easing);
+                }
+            }
+            else
+            {
+                Column currentColumn = columns[column];
 
-            Column currentColumn = columns[column];
-
-            currentColumn.MoveReceptor(starttime, duration, position, easing);
+                currentColumn.MoveReceptor(starttime, duration, position, easing);
+            }
 
             return starttime + duration;
 
@@ -695,13 +779,23 @@ namespace StorybrewScripts
 
         }
 
-        public double MoveOriginAbsolute(double starttime, double duration, OsbEasing easing, ColumnType column, Vector2 position)
+        public double MoveOriginAbsolute(double starttime, double duration, OsbEasing easing, Vector2 position, ColumnType column)
         {
 
-            Column currentColumn = columns[column];
+            if (column == ColumnType.all)
+            {
+                foreach (Column currentColumn in columns.Values)
+                {
+                    currentColumn.MoveOrigin(starttime, duration, position, easing);
+                }
+            }
+            else
+            {
 
-            currentColumn.MoveOrigin(starttime, duration, position, easing);
+                Column currentColumn = columns[column];
 
+                currentColumn.MoveOrigin(starttime, duration, position, easing);
+            }
             return starttime + duration;
 
         }
@@ -723,8 +817,15 @@ namespace StorybrewScripts
         }
 
         // This will rotate the Playfield but move the Receptors dynamically to adjust for the position
-        public void RotatePlayField(double starttime, double duration, OsbEasing easing, double radians, int sampleCount)
+        public void RotatePlayField(double starttime, double duration, OsbEasing easing, double radians, int sampleCount, CenterType centerType = CenterType.middle)
         {
+
+            var center = new Vector2(320, 240);
+
+            if (centerType == CenterType.playfield)
+            {
+                center = calculatePlayFieldCenter(starttime);
+            }
 
             double newRotation = this.rotation + radians;
 
@@ -735,10 +836,34 @@ namespace StorybrewScripts
                 Receptor receptor = column.receptor;
                 NoteOrigin origin = column.origin;
 
-                receptor.PivotReceptor(starttime, radians, easing, duration, sampleCount, calculatePlayFieldCenter(starttime));
-                origin.PivotReceptor(starttime, radians, easing, duration, sampleCount, calculatePlayFieldCenter(starttime));
+                receptor.PivotReceptor(starttime, radians, easing, duration, sampleCount, center);
+                origin.PivotReceptor(starttime, radians, easing, duration, sampleCount, center);
             }
 
+        }
+
+        public void RotateAndRescalePlayField(double starttime, double duration, OsbEasing easing, double radians, int sampleCount, double targetDistanceReceptor, CenterType centerType = CenterType.middle)
+        {
+            var center = new Vector2(320, 240);
+
+            if (centerType == CenterType.playfield)
+            {
+                center = calculatePlayFieldCenter(starttime);
+            }
+
+            double newRotation = this.rotation + radians;
+
+            this.rotation = newRotation;
+
+            foreach (Column column in columns.Values)
+            {
+                Receptor receptor = column.receptor;
+                NoteOrigin origin = column.origin;
+
+                // Pivot and Rescale receptor and origin
+                receptor.PivotAndRescaleReceptor(starttime, radians, easing, duration, sampleCount, center, targetDistanceReceptor);
+                origin.PivotAndRescaleReceptor(starttime, radians, easing, duration, sampleCount, center, targetDistanceReceptor);
+            }
         }
 
         public void bounceLeftRight(int starttime, int duration, OsbEasing easing, float amount)

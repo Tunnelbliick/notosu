@@ -176,8 +176,8 @@ namespace StorybrewScripts
                 }*/
 
                 note.Fade(starttime, starttime + fadeInTime, 0, initialFade);
-                note.Fade(this.endtime, 0);
-                renderEnd = this.endtime;
+                note.Fade(endtime, 0);
+                renderEnd = endtime;
             }
             else
             {

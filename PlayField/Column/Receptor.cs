@@ -118,13 +118,31 @@ namespace StorybrewScripts
 
             Vector2 originalPostion = getCurrentPosition(starttime);
 
-            Vector2 value = movmenetKeyFrames.ValueAt(endtime);
+            //  Vector2 value = movmenetKeyFrames.ValueAt(endtime);
 
             //movmenetKeyFrames.Add(endtime, Vector2.Add(value, newPosition));
 
-            Operation op = new Operation(starttime, starttime + duration, OperationType.MOVE, (CommandPosition)newPosition);
-            addOperation(op);
+            // Operation op = new Operation(starttime, starttime + duration, OperationType.MOVE, (CommandPosition)newPosition);
+            // addOperation(op);
             receptor.Move(ease, starttime, starttime + duration, originalPostion, newPosition);
+
+            this.position = newPosition;
+
+        }
+
+        public void MoveReceptorEndTime(double starttime, Vector2 newPosition, OsbEasing ease, double endtime)
+        {
+            OsbSprite receptor = this.receptorSprite;
+
+            Vector2 originalPostion = getCurrentPosition(starttime);
+
+            //  Vector2 value = movmenetKeyFrames.ValueAt(endtime);
+
+            //movmenetKeyFrames.Add(endtime, Vector2.Add(value, newPosition));
+
+            // Operation op = new Operation(starttime, starttime + duration, OperationType.MOVE, (CommandPosition)newPosition);
+            // addOperation(op);
+            receptor.Move(ease, starttime, endtime, originalPostion, newPosition);
 
             this.position = newPosition;
 
@@ -145,6 +163,40 @@ namespace StorybrewScripts
             Operation op = new Operation(starttime, starttime + duration, OperationType.MOVERELATIVE, (CommandPosition)offset);
             addOperation(op);
             receptor.Move(ease, starttime, starttime + duration, originalPostion, newPosition);
+
+            // this.position = newPosition;
+
+        }
+
+        public void MoveReceptorRelativeX(double starttime, double value, OsbEasing ease, double duration)
+        {
+            OsbSprite receptor = this.receptorSprite;
+            double endtime = starttime + duration;
+
+            Vector2 originalPostion = receptor.PositionAt(starttime);
+
+            //Vector2 value = movmenetKeyFrames.ValueAt(endtime);
+
+            //movmenetKeyFrames.Add(endtime, Vector2.Add(value, newPosition));
+
+            receptor.MoveX(ease, starttime, starttime + duration, originalPostion.X, originalPostion.X + value);
+
+            // this.position = newPosition;
+
+        }
+
+        public void MoveReceptorRelativeY(double starttime, double value, OsbEasing ease, double duration)
+        {
+            OsbSprite receptor = this.receptorSprite;
+            double endtime = starttime + duration;
+
+            Vector2 originalPostion = receptor.PositionAt(starttime);
+
+            //Vector2 value = movmenetKeyFrames.ValueAt(endtime);
+
+            //movmenetKeyFrames.Add(endtime, Vector2.Add(value, newPosition));
+
+            receptor.MoveY(ease, starttime, starttime + duration, originalPostion.Y, originalPostion.Y + value);
 
             // this.position = newPosition;
 
@@ -193,15 +245,15 @@ namespace StorybrewScripts
 
             //this.RotateReceptor(starttime, rotation, ease, duration);
 
-            Vector2 point = this.position;
+            Vector2 point = receptorSprite.PositionAt(starttime);
 
             double totalTime = starttime + duration; // Total duration in milliseconds
             double stepTime = duration / stepcount; // Step duration in milliseconds
 
             double endRadians = rotation; // Set the desired end radians here, 2*PI radians is a full circle
-            double rotationPerIteration = endRadians / stepcount; // Rotation per iteration
+            double rotationPerIteration = endRadians / (stepcount - 1); // Rotation per iteration
 
-            for (int i = 0; i <= stepcount; i++)
+            for (int i = 0; i < stepcount; i++)
             {
                 var currentTime = starttime + stepTime * i;
 
@@ -209,6 +261,39 @@ namespace StorybrewScripts
                 this.MoveReceptor(currentTime, rotatedPoint, ease, stepTime);
             }
         }
+
+        public void PivotAndRescaleReceptor(double starttime, double rotation, OsbEasing ease, double duration, int stepcount, Vector2 center, double targetDistance)
+        {
+            Vector2 initialPoint = receptorSprite.PositionAt(starttime);
+
+            double stepTime = duration / stepcount;
+            double rotationPerIteration = rotation / (stepcount - 1);
+
+            // Calculate initial distance
+            double initialDistance = (initialPoint - center).Length;
+
+            for (int i = 0; i < stepcount; i++)
+            {
+                var currentTime = starttime + stepTime * i;
+
+                // Rotate the point
+                Vector2 rotatedPoint = Utility.PivotPoint(initialPoint, center, rotationPerIteration * i);
+
+                // Get the direction in which we're moving (based on rotation around the center).
+                Vector2 directionFromCenter = rotatedPoint - center;
+                directionFromCenter.Normalize(); // Normalize to get a unit vector
+
+                // Interpolate between initialDistance and targetDistance based on the progress
+                double desiredDistance = initialDistance + (targetDistance - initialDistance) * ((double)i / stepcount);
+
+                // Compute the new position based on the desired distance
+                Vector2 newPoint = center + directionFromCenter * (float)desiredDistance;
+
+                MoveReceptor(currentTime, newPoint, ease, stepTime);
+            }
+        }
+
+
 
         public Vector2 getCurrentScale(double currentTime)
         {

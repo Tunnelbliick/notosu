@@ -48,8 +48,8 @@ namespace StorybrewScripts
             Vector2 originPosition = currentColumn.getOriginPosition(starttime);
             Vector2 receptorPosition = currentColumn.getReceptorPosition(starttime);
 
-            field.MoveOriginAbsolute(starttime, duration, easing, column, Vector2.Add(originPosition, relativeMovement));
-            field.MoveReceptorAbsolute(starttime, duration, easing, column, Vector2.Add(receptorPosition, relativeMovement));
+            field.MoveOriginAbsolute(starttime, duration, easing, Vector2.Add(originPosition, relativeMovement), column);
+            field.MoveReceptorAbsolute(starttime, duration, easing, Vector2.Add(receptorPosition, relativeMovement), column);
 
             return starttime + duration;
 

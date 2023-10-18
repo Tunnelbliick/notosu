@@ -404,6 +404,8 @@ namespace StorybrewScripts
                 foreach (var key in keysInRange)
                 {
 
+
+
                     KeyframedValue<Vector2> movement = new KeyframedValue<Vector2>(null);
                     KeyframedValue<Vector2> scale = new KeyframedValue<Vector2>(null);
                     KeyframedValue<double> rotation = new KeyframedValue<double>(null);
@@ -454,6 +456,11 @@ namespace StorybrewScripts
 
                     do
                     {
+
+                        if (currentTime > endtime)
+                        {
+                            break;
+                        }
 
                         noteFade = findFadeAtTime(currentTime);
                         if (noteFade != null)
@@ -513,7 +520,7 @@ namespace StorybrewScripts
                         double sliderCurrentTime = sliderStartime - easetime - sliderIterationLenght;
                         Vector2 currentSliderPositon = column.origin.getCurrentPosition(sliderCurrentTime);
                         double sliderRenderStartTime = Math.Max(sliderStartime - easetime, starttime);
-                        double sliderRenderEndTime = Math.Min(sliderStartime + 0.1f, endtime);
+                        double sliderRenderEndTime = Math.Min(sliderStartime, endtime);
                         float sliderProgress = 0;
                         double sliderIteratedTime = 0;
                         sprite.Fade(sliderCurrentTime, 0);
@@ -543,6 +550,12 @@ namespace StorybrewScripts
 
                         do
                         {
+
+                            if (sliderCurrentTime > endtime)
+                            {
+                                break;
+                            }
+
                             sliderFade = findFadeAtTime(sliderCurrentTime);
                             if (sliderFade != null)
                             {
@@ -708,7 +721,7 @@ namespace StorybrewScripts
                                     Vector2 receptorPosition = column.receptor.getCurrentPosition(currentTime + localIterationRate);
                                     Vector2 originScale = column.origin.getCurrentScale(currentTime + localIterationRate);
                                     Vector2 receptorScale = column.receptor.getCurrentScale(currentTime + localIterationRate);
-                                    Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, progress);
+                                    Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, progress);
 
                                     double theta = 0;
                                     if (rotateToFaceReceptor)
@@ -749,7 +762,7 @@ namespace StorybrewScripts
                                     Vector2 receptorPosition = column.receptor.getCurrentPosition(currentTime + localIterationRate);
                                     Vector2 originScale = column.origin.getCurrentScale(currentTime + localIterationRate);
                                     Vector2 receptorScale = column.receptor.getCurrentScale(currentTime + localIterationRate);
-                                    Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, progress);
+                                    Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, progress);
 
                                     double theta = 0;
                                     if (rotateToFaceReceptor)
@@ -778,7 +791,7 @@ namespace StorybrewScripts
                                 Vector2 receptorPosition = column.getReceptorPositionForNotes(currentTime);
                                 Vector2 originScale = column.origin.getCurrentScale(currentTime);
                                 Vector2 receptorScale = column.receptor.getCurrentScale(currentTime);
-                                Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, progress);
+                                Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, progress);
                                 List<Vector2> points = GetPathAnchorVectors(notePath, currentTime);
                                 Vector2 newPosition = BezierCurve.CalculatePoint(points, progress);
 
@@ -817,7 +830,9 @@ namespace StorybrewScripts
                         double sliderRenderStartTime = Math.Max(sliderCurrentTime, sliderStartime);
                         double sliderRenderEndTime = Math.Min(sliderStartime + 0.1f, endtime);
 
-                        sprite.Fade(sliderCurrentTime, 1);
+                        sprite.Fade(sliderCurrentTime - 1000, 0);
+
+                        sprite.Fade(Math.Max(sliderCurrentTime, renderStartTime), 1);
                         sprite.Fade(sliderRenderEndTime, 0);
                         double sliderRotation = sprite.RotationAt(sliderCurrentTime);
 
@@ -860,7 +875,7 @@ namespace StorybrewScripts
                                         Vector2 receptorPosition = column.receptor.getCurrentPosition(sliderCurrentTime + localIterationRate);
                                         Vector2 originScale = column.origin.getCurrentScale(sliderCurrentTime + localIterationRate);
                                         Vector2 receptorScale = column.receptor.getCurrentScale(sliderCurrentTime + localIterationRate);
-                                        Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, sliderProgress);
+                                        Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, sliderProgress);
 
                                         double theta = 0;
                                         Vector2 delta = currentSliderPositon - newPosition;
@@ -887,7 +902,7 @@ namespace StorybrewScripts
                                             currentPosition = newNotePosition;
                                         }
 
-                                        newScale = new Vector2(defaultScaleX * column.origin.getCurrentScale(sliderCurrentTime).X, defaultScaleY * column.origin.getCurrentScale(sliderCurrentTime).Y);
+                                        newScale = new Vector2(defaultScaleX * scaleProgress.X, defaultScaleY * scaleProgress.Y);
 
                                         SliderMovement.Add(sliderCurrentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
                                         SliderScale.Add(sliderCurrentTime + localIterationRate, newScale, EasingFunctions.ToEasingFunction(easing));
@@ -915,7 +930,7 @@ namespace StorybrewScripts
                                         Vector2 receptorPosition = column.receptor.getCurrentPosition(sliderCurrentTime + localIterationRate);
                                         Vector2 originScale = column.origin.getCurrentScale(sliderCurrentTime + localIterationRate);
                                         Vector2 receptorScale = column.receptor.getCurrentScale(sliderCurrentTime + localIterationRate);
-                                        Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, sliderProgress);
+                                        Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, sliderProgress);
 
                                         double theta = 0;
                                         Vector2 delta = currentSliderPositon - newPosition;
@@ -942,7 +957,7 @@ namespace StorybrewScripts
                                             currentPosition = newNotePosition;
                                         }
 
-                                        newScale = new Vector2(defaultScaleX * column.origin.getCurrentScale(sliderCurrentTime).X, defaultScaleY * column.origin.getCurrentScale(sliderCurrentTime).Y);
+                                        newScale = new Vector2(defaultScaleX * scaleProgress.X, defaultScaleY * scaleProgress.Y);
 
                                         SliderMovement.Add(sliderCurrentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
                                         SliderScale.Add(sliderCurrentTime + localIterationRate, newScale, EasingFunctions.ToEasingFunction(easing));
@@ -961,7 +976,7 @@ namespace StorybrewScripts
                                     Vector2 receptorPosition = column.getReceptorPositionForNotes(sliderCurrentTime + localIterationRate);
                                     Vector2 originScale = column.origin.getCurrentScale(sliderCurrentTime + localIterationRate);
                                     Vector2 receptorScale = column.receptor.getCurrentScale(sliderCurrentTime + localIterationRate);
-                                    Vector2 scaleProgress = Vector2.Lerp(receptorScale, originScale, sliderProgress);
+                                    Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, sliderProgress);
                                     List<Vector2> points = GetPathAnchorVectors(notePath, sliderCurrentTime);
 
                                     Vector2 newPosition = BezierCurve.CalculatePoint(points, sliderProgress);
@@ -994,7 +1009,7 @@ namespace StorybrewScripts
                                     }
 
 
-                                    newScale = new Vector2(defaultScaleX * column.origin.getCurrentScale(sliderCurrentTime + localIterationRate).X, defaultScaleY * column.origin.getCurrentScale(sliderCurrentTime + localIterationRate).Y);
+                                    newScale = new Vector2(defaultScaleX * scaleProgress.X, defaultScaleY * scaleProgress.Y);
 
                                     SliderMovement.Add(sliderCurrentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
                                     SliderScale.Add(sliderCurrentTime + localIterationRate, newScale, EasingFunctions.ToEasingFunction(easing));
@@ -1353,7 +1368,7 @@ namespace StorybrewScripts
         }
 
 
-        public void ManipulateAnchorAbsolute(int index, ColumnType column, double starttime, double transitionTime, Vector2 newPosition, OsbEasing easing)
+        public void ManipulateAnchorAbsolute(int index, double starttime, double transitionTime, Vector2 newPosition, OsbEasing easing, ColumnType column)
         {
 
             if (column == ColumnType.all)
