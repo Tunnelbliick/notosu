@@ -50,6 +50,9 @@ field.ScalePlayField(starttime + 1, 1, OsbEasing.None, width, height); // Its im
 field.initializeNotes(Beatmap.HitObjects.ToList(), notes, bpm, offset, sliderAccuracy);
 
 DrawInstance draw = new DrawInstance(field, starttime, scrollSpeed, updatesPerSecond, OsbEasing.None, rotateNotesToFaceReceptor, fadeTime, fadeTime);
+
+// All effekts have to be executed before calling the draw Function.
+// Anything that is done after the draw Function call will not be rendered out.
 draw.drawNotesByOriginToReceptor(duration);
 ```
 
