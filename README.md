@@ -45,7 +45,7 @@ var recepotrBitmap = GetMapsetBitmap("sb/sprites/receiver.png"); // The receptor
 var receportWidth = recepotrBitmap.Width;
 
 Playfield field = new Playfield();
-field.initilizePlayField(receptors, notes, startime, endtime, receportWidth, receptorOffset / 60, noteOFfset);
+field.initilizePlayField(receptors, notes, startime, endtime, receportWidth, 60, 0);
 field.ScalePlayField(starttime + 1, 1, OsbEasing.None, width, height); // Its important that this gets executed AFTER the Playfield is initialized otherwise this will run into "overlapped commands" and break
 field.initializeNotes(Beatmap.HitObjects.ToList(), notes, bpm, offset, sliderAccuracy);
 
