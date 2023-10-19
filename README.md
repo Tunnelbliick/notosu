@@ -1,4 +1,4 @@
-# Storybrew mania Modcharts
+# Storybrew osu!Mania Modcharts
 ## How do i use this?
 
 ### Initial Setup
