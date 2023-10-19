@@ -61,3 +61,5 @@ draw.drawNotesByOriginToReceptor(duration);
 - Swapping individual Playfield columns
 - Drawing Notes over a Path via Anchor points
 - Fulltransformation of Playfield (skew, tilt, etc) *this implementation is pretty bad atm and needs to be redone*
+
+The drawinstace will handle all the Notes the only thing you have to manipulate is the origin and the receptors. The notes will follow automatically.
