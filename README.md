@@ -52,3 +52,12 @@ field.initializeNotes(Beatmap.HitObjects.ToList(), notes, bpm, offset, sliderAcc
 DrawInstance draw = new DrawInstance(field, starttime, scrollSpeed, updatesPerSecond, OsbEasing.None, rotateNotesToFaceReceptor, fadeTime, fadeTime);
 draw.drawNotesByOriginToReceptor(duration);
 ```
+
+# What is currently supported?
+- Moving of note origin and receptors
+- Rotation of note and receptors
+- Rotation of the Playfield
+- Moving the Playfield
+- Swapping individual Playfield columns
+- Drawing Notes over a Path via Anchor points
+- Fulltransformation of Playfield (skew, tilt, etc) *this implementation is pretty bad atm and needs to be redone*
