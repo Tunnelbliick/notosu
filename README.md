@@ -1,4 +1,54 @@
-# maniaModCharts
-classes for modcharting in storybrew for mania
+# Storybrew mania Modcharts
+## How do i use this?
 
-I might document this in the future cause theres gonna be alot....
+### Initial Setup
+
+1. Download all files
+2. Drag and drop the Folders into your `/scriptLibrary` Directory
+3. Drag and drop `AForge.dll` and `AForge.Imaging.dll` into the Main Storybrew Directory
+4. Add `AForge.dll` and `AForge.Imaging.dll` to Assembly References *they are an Image editing library that is used for some Full Transformation effekts*
+5. Initial setup complete!
+
+### Setting up a Playfield
+
+To get a Playfield and Notes we need 3 Things. 
+1. Layers for our Receptor and Notes
+2. A Playfield Instance
+3. A DrawInstance
+
+Here is a short example to get it up and running
+```csharp
+var receptors = GetLayer("r");
+var notes = GetLayer("n");
+
+// General values
+var starttime = 0;
+var endtime = 10000;
+var duration = 10000;
+
+// Playfield Scale
+var width = 250f;
+var height = 500f;
+
+// Note initilization Values
+var bpm = 69f;
+var offset = 69f;
+var sliderAccuracy = 40;
+
+// Drawinstance Values
+var updatesPerSecond = 30;
+var scrollSpeed = 900f;
+var rotateNotesToFaceReceptor = false;
+var fadeTime = 50;
+
+var recepotrBitmap = GetMapsetBitmap("sb/sprites/receiver.png"); // The receptor sprite
+var receportWidth = recepotrBitmap.Width;
+
+Playfield field = new Playfield();
+field.initilizePlayField(receptors, notes, startime, endtime, receportWidth, receptorOffset / 60, noteOFfset);
+field.ScalePlayField(starttime + 1, 1, OsbEasing.None, width, height); // Its important that this gets executed AFTER the Playfield is initialized otherwise this will run into "overlapped commands" and break
+field.initializeNotes(Beatmap.HitObjects.ToList(), notes, bpm, offset, sliderAccuracy);
+
+DrawInstance draw = new DrawInstance(field, starttime, scrollSpeed, updatesPerSecond, OsbEasing.None, rotateNotesToFaceReceptor, fadeTime, fadeTime);
+draw.drawNotesByOriginToReceptor(duration);
+```
