@@ -118,13 +118,6 @@ namespace StorybrewScripts
 
             Vector2 originalPostion = getCurrentPosition(starttime);
 
-            //  Vector2 value = movmenetKeyFrames.ValueAt(endtime);
-
-            //movmenetKeyFrames.Add(endtime, Vector2.Add(value, newPosition));
-
-            // Operation op = new Operation(starttime, starttime + duration, OperationType.MOVE, (CommandPosition)newPosition);
-            // addOperation(op);
-
             if (duration == 0)
             {
                 receptor.Move(starttime, newPosition);
@@ -141,13 +134,6 @@ namespace StorybrewScripts
             OsbSprite receptor = this.receptorSprite;
 
             Vector2 originalPostion = getCurrentPosition(starttime);
-
-            //  Vector2 value = movmenetKeyFrames.ValueAt(endtime);
-
-            //movmenetKeyFrames.Add(endtime, Vector2.Add(value, newPosition));
-
-            // Operation op = new Operation(starttime, starttime + duration, OperationType.MOVE, (CommandPosition)newPosition);
-            // addOperation(op);
 
             if (endtime == starttime)
             {
@@ -219,20 +205,29 @@ namespace StorybrewScripts
 
             Vector2 originalScale = getCurrentScale(starttime);
 
-            receptor.ScaleVec(ease, starttime, starttime + duration, originalScale, newScale);
-
-            //Operation op = new Operation(starttime, starttime + duration, OperationType.SCALEVEC, (CommandPosition)newScale);
-            //addOperation(op);
+            if (duration == 0)
+            {
+                receptor.ScaleVec(starttime, newScale);
+            }
+            else
+            {
+                receptor.ScaleVec(ease, starttime, starttime + duration, originalScale, newScale);
+            }
         }
 
         public void RotateReceptorAbsolute(double starttime, double duration, OsbEasing ease, double rotation)
         {
             OsbSprite receptor = this.receptorSprite;
 
-            receptor.Rotate(ease, starttime, starttime + duration, getCurrentRotaion(starttime), rotation);
 
-            //Operation op = new Operation(starttime, starttime + duration, OperationType.ROTATEABSOLUTE, (CommandDecimal)rotation);
-            //addOperation(op);
+            if (duration == 0)
+            {
+                receptor.Rotate(starttime, rotation);
+            }
+            else
+            {
+                receptor.Rotate(ease, starttime, starttime + duration, getCurrentRotaion(starttime), rotation);
+            }
 
             this.rotation = rotation;
 
@@ -244,17 +239,21 @@ namespace StorybrewScripts
 
             var newRotation = getCurrentRotaion(starttime) + rotation;
 
-            receptor.Rotate(ease, starttime, starttime + duration, getCurrentRotaion(starttime), newRotation);
-            //Operation op = new Operation(starttime, starttime + duration, OperationType.ROTATE, (CommandDecimal)rotation);
-            //addOperation(op);
+            if (duration == 0)
+            {
+                receptor.Rotate(starttime, newRotation);
+            }
+            else
+            {
+                receptor.Rotate(ease, starttime, starttime + duration, getCurrentRotaion(starttime), newRotation);
+            }
+
             this.rotation = newRotation;
 
         }
 
         public void PivotReceptor(double starttime, double rotation, OsbEasing ease, double duration, int stepcount, Vector2 center)
         {
-
-            //this.RotateReceptor(starttime, rotation, ease, duration);
 
             Vector2 point = receptorSprite.PositionAt(starttime);
 

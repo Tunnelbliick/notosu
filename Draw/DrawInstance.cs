@@ -107,6 +107,9 @@ namespace StorybrewScripts
             PathWay.DrawPath(this, starttime, endtime, layer, spritePath, type, precision, updatesPerSecond);
         }
 
+        public void drawViaEquation(double duration, EquationFunction noteFunction, bool renderReceptor = true) {
+            ByEquation.drawViaEquation(this, duration, noteFunction, renderReceptor);
+        }
 
         public List<Vector2> GetPathAnchorVectors(List<Anchor> notePath, double currentTime)
         {
