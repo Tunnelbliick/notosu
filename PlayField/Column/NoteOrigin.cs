@@ -53,7 +53,14 @@ namespace StorybrewScripts
         {
             OsbSprite receptor = this.originSprite;
 
-            receptor.Move(ease, starttime, starttime + duration, getCurrentPosition(starttime - 1), newPosition);
+            if (duration == 0)
+            {
+                receptor.Move(starttime, newPosition);
+            }
+            else
+            {
+                receptor.Move(ease, starttime, starttime + duration, getCurrentPosition(starttime - 1), newPosition);
+            }
 
             this.position = newPosition;
 
@@ -106,7 +113,14 @@ namespace StorybrewScripts
         {
             OsbSprite receptor = this.originSprite;
 
-            receptor.ScaleVec(ease, starttime, starttime + duration, getCurrentScale(starttime), newPosition);
+            if (duration == 0)
+            {
+                receptor.ScaleVec(starttime, newPosition);
+            }
+            else
+            {
+                receptor.ScaleVec(ease, starttime, starttime + duration, getCurrentScale(starttime), newPosition);
+            }
 
         }
 

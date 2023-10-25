@@ -124,9 +124,15 @@ namespace StorybrewScripts
 
             // Operation op = new Operation(starttime, starttime + duration, OperationType.MOVE, (CommandPosition)newPosition);
             // addOperation(op);
-            receptor.Move(ease, starttime, starttime + duration, originalPostion, newPosition);
 
-            this.position = newPosition;
+            if (duration == 0)
+            {
+                receptor.Move(starttime, newPosition);
+            }
+            else
+            {
+                receptor.Move(ease, starttime, starttime + duration, originalPostion, newPosition);
+            }
 
         }
 
@@ -142,63 +148,68 @@ namespace StorybrewScripts
 
             // Operation op = new Operation(starttime, starttime + duration, OperationType.MOVE, (CommandPosition)newPosition);
             // addOperation(op);
-            receptor.Move(ease, starttime, endtime, originalPostion, newPosition);
 
-            this.position = newPosition;
+            if (endtime == starttime)
+            {
+                receptor.Move(endtime, newPosition);
+            }
+            else
+            {
+                receptor.Move(ease, starttime, endtime, originalPostion, newPosition);
+            }
 
         }
 
         public void MoveReceptorRelative(double starttime, Vector2 offset, OsbEasing ease, double duration)
         {
             OsbSprite receptor = this.receptorSprite;
-            double endtime = starttime + duration;
 
             Vector2 originalPostion = receptor.PositionAt(starttime);
             Vector2 newPosition = Vector2.Add(originalPostion, offset);
 
-            //Vector2 value = movmenetKeyFrames.ValueAt(endtime);
-
-            //movmenetKeyFrames.Add(endtime, Vector2.Add(value, newPosition));
-
-            Operation op = new Operation(starttime, starttime + duration, OperationType.MOVERELATIVE, (CommandPosition)offset);
-            addOperation(op);
-            receptor.Move(ease, starttime, starttime + duration, originalPostion, newPosition);
-
-            // this.position = newPosition;
+            if (duration == 0)
+            {
+                receptor.Move(starttime, newPosition);
+            }
+            else
+            {
+                receptor.Move(ease, starttime, starttime + duration, originalPostion, newPosition);
+            }
 
         }
 
         public void MoveReceptorRelativeX(double starttime, double value, OsbEasing ease, double duration)
         {
             OsbSprite receptor = this.receptorSprite;
-            double endtime = starttime + duration;
 
             Vector2 originalPostion = receptor.PositionAt(starttime);
 
-            //Vector2 value = movmenetKeyFrames.ValueAt(endtime);
+            if (duration == 0)
+            {
+                receptor.MoveX(starttime, originalPostion.X + value);
+            }
+            else
+            {
+                receptor.MoveX(ease, starttime, starttime + duration, originalPostion.X, originalPostion.X + value);
+            }
 
-            //movmenetKeyFrames.Add(endtime, Vector2.Add(value, newPosition));
-
-            receptor.MoveX(ease, starttime, starttime + duration, originalPostion.X, originalPostion.X + value);
-
-            // this.position = newPosition;
 
         }
 
         public void MoveReceptorRelativeY(double starttime, double value, OsbEasing ease, double duration)
         {
             OsbSprite receptor = this.receptorSprite;
-            double endtime = starttime + duration;
 
             Vector2 originalPostion = receptor.PositionAt(starttime);
 
-            //Vector2 value = movmenetKeyFrames.ValueAt(endtime);
-
-            //movmenetKeyFrames.Add(endtime, Vector2.Add(value, newPosition));
-
-            receptor.MoveY(ease, starttime, starttime + duration, originalPostion.Y, originalPostion.Y + value);
-
-            // this.position = newPosition;
+            if (duration == 0)
+            {
+                receptor.MoveY(starttime, originalPostion.Y + value);
+            }
+            else
+            {
+                receptor.MoveY(ease, starttime, starttime + duration, originalPostion.Y, originalPostion.Y + value);
+            }
 
         }
 

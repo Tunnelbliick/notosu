@@ -110,10 +110,10 @@ namespace StorybrewScripts
 
                 receptor.Render(starttime, endtime);
                 origin.Render(starttime, endtime);
-                receptor.MoveReceptor(starttime, new Vector2(x, height - receptorHeightOffset), OsbEasing.None, 0);
-                origin.MoveOrigin(starttime, new Vector2(x, 240 + (240 - height + noteHeightOffset)), OsbEasing.None, 0);
+                //receptor.MoveReceptor(starttime, new Vector2(x, height - receptorHeightOffset), OsbEasing.None, 0);
+                //origin.MoveOrigin(starttime, new Vector2(x, 240 + (240 - height + noteHeightOffset)), OsbEasing.None, 0);
 
-                position += getColumnWidth();
+                //position += getColumnWidth();
             }
 
             this.noteHeightOffset = noteHeightOffset;
