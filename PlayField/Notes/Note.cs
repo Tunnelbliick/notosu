@@ -491,6 +491,13 @@ namespace StorybrewScripts
             note.Rotate(easing, starttime, starttime + duration, getRotation(starttime), getRotation(starttime) + rotation);
         }
 
+        public void Rotate(double starttime, double duration, OsbEasing easing, double from, double too)
+        {
+            OsbSprite note = this.noteSprite;
+
+            note.Rotate(easing, starttime, starttime + duration, from, too);
+        }
+
         public void AbsoluteRotate(double starttime, double duration, OsbEasing easing, double rotation)
         {
             OsbSprite note = this.noteSprite;

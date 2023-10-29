@@ -118,15 +118,14 @@ namespace StorybrewScripts
 
             Vector2 originalPostion = getCurrentPosition(starttime);
 
-            //  Vector2 value = movmenetKeyFrames.ValueAt(endtime);
-
-            //movmenetKeyFrames.Add(endtime, Vector2.Add(value, newPosition));
-
-            // Operation op = new Operation(starttime, starttime + duration, OperationType.MOVE, (CommandPosition)newPosition);
-            // addOperation(op);
-            receptor.Move(ease, starttime, starttime + duration, originalPostion, newPosition);
-
-            this.position = newPosition;
+            if (duration == 0)
+            {
+                receptor.Move(starttime, newPosition);
+            }
+            else
+            {
+                receptor.Move(ease, starttime, starttime + duration, originalPostion, newPosition);
+            }
 
         }
 
@@ -136,69 +135,67 @@ namespace StorybrewScripts
 
             Vector2 originalPostion = getCurrentPosition(starttime);
 
-            //  Vector2 value = movmenetKeyFrames.ValueAt(endtime);
-
-            //movmenetKeyFrames.Add(endtime, Vector2.Add(value, newPosition));
-
-            // Operation op = new Operation(starttime, starttime + duration, OperationType.MOVE, (CommandPosition)newPosition);
-            // addOperation(op);
-            receptor.Move(ease, starttime, endtime, originalPostion, newPosition);
-
-            this.position = newPosition;
+            if (endtime == starttime)
+            {
+                receptor.Move(endtime, newPosition);
+            }
+            else
+            {
+                receptor.Move(ease, starttime, endtime, originalPostion, newPosition);
+            }
 
         }
 
         public void MoveReceptorRelative(double starttime, Vector2 offset, OsbEasing ease, double duration)
         {
             OsbSprite receptor = this.receptorSprite;
-            double endtime = starttime + duration;
 
             Vector2 originalPostion = receptor.PositionAt(starttime);
             Vector2 newPosition = Vector2.Add(originalPostion, offset);
 
-            //Vector2 value = movmenetKeyFrames.ValueAt(endtime);
-
-            //movmenetKeyFrames.Add(endtime, Vector2.Add(value, newPosition));
-
-            Operation op = new Operation(starttime, starttime + duration, OperationType.MOVERELATIVE, (CommandPosition)offset);
-            addOperation(op);
-            receptor.Move(ease, starttime, starttime + duration, originalPostion, newPosition);
-
-            // this.position = newPosition;
+            if (duration == 0)
+            {
+                receptor.Move(starttime, newPosition);
+            }
+            else
+            {
+                receptor.Move(ease, starttime, starttime + duration, originalPostion, newPosition);
+            }
 
         }
 
         public void MoveReceptorRelativeX(double starttime, double value, OsbEasing ease, double duration)
         {
             OsbSprite receptor = this.receptorSprite;
-            double endtime = starttime + duration;
 
             Vector2 originalPostion = receptor.PositionAt(starttime);
 
-            //Vector2 value = movmenetKeyFrames.ValueAt(endtime);
+            if (duration == 0)
+            {
+                receptor.MoveX(starttime, originalPostion.X + value);
+            }
+            else
+            {
+                receptor.MoveX(ease, starttime, starttime + duration, originalPostion.X, originalPostion.X + value);
+            }
 
-            //movmenetKeyFrames.Add(endtime, Vector2.Add(value, newPosition));
-
-            receptor.MoveX(ease, starttime, starttime + duration, originalPostion.X, originalPostion.X + value);
-
-            // this.position = newPosition;
 
         }
 
         public void MoveReceptorRelativeY(double starttime, double value, OsbEasing ease, double duration)
         {
             OsbSprite receptor = this.receptorSprite;
-            double endtime = starttime + duration;
 
             Vector2 originalPostion = receptor.PositionAt(starttime);
 
-            //Vector2 value = movmenetKeyFrames.ValueAt(endtime);
-
-            //movmenetKeyFrames.Add(endtime, Vector2.Add(value, newPosition));
-
-            receptor.MoveY(ease, starttime, starttime + duration, originalPostion.Y, originalPostion.Y + value);
-
-            // this.position = newPosition;
+            if (duration == 0)
+            {
+                receptor.MoveY(starttime, originalPostion.Y + value);
+            }
+            else
+            {
+                receptor.MoveY(ease, starttime, starttime + duration, originalPostion.Y, originalPostion.Y + value);
+            }
 
         }
 
@@ -208,20 +205,29 @@ namespace StorybrewScripts
 
             Vector2 originalScale = getCurrentScale(starttime);
 
-            receptor.ScaleVec(ease, starttime, starttime + duration, originalScale, newScale);
-
-            //Operation op = new Operation(starttime, starttime + duration, OperationType.SCALEVEC, (CommandPosition)newScale);
-            //addOperation(op);
+            if (duration == 0)
+            {
+                receptor.ScaleVec(starttime, newScale);
+            }
+            else
+            {
+                receptor.ScaleVec(ease, starttime, starttime + duration, originalScale, newScale);
+            }
         }
 
         public void RotateReceptorAbsolute(double starttime, double duration, OsbEasing ease, double rotation)
         {
             OsbSprite receptor = this.receptorSprite;
 
-            receptor.Rotate(ease, starttime, starttime + duration, getCurrentRotaion(starttime), rotation);
 
-            //Operation op = new Operation(starttime, starttime + duration, OperationType.ROTATEABSOLUTE, (CommandDecimal)rotation);
-            //addOperation(op);
+            if (duration == 0)
+            {
+                receptor.Rotate(starttime, rotation);
+            }
+            else
+            {
+                receptor.Rotate(ease, starttime, starttime + duration, getCurrentRotaion(starttime), rotation);
+            }
 
             this.rotation = rotation;
 
@@ -233,17 +239,21 @@ namespace StorybrewScripts
 
             var newRotation = getCurrentRotaion(starttime) + rotation;
 
-            receptor.Rotate(ease, starttime, starttime + duration, getCurrentRotaion(starttime), newRotation);
-            //Operation op = new Operation(starttime, starttime + duration, OperationType.ROTATE, (CommandDecimal)rotation);
-            //addOperation(op);
+            if (duration == 0)
+            {
+                receptor.Rotate(starttime, newRotation);
+            }
+            else
+            {
+                receptor.Rotate(ease, starttime, starttime + duration, getCurrentRotaion(starttime), newRotation);
+            }
+
             this.rotation = newRotation;
 
         }
 
         public void PivotReceptor(double starttime, double rotation, OsbEasing ease, double duration, int stepcount, Vector2 center)
         {
-
-            //this.RotateReceptor(starttime, rotation, ease, duration);
 
             Vector2 point = receptorSprite.PositionAt(starttime);
 

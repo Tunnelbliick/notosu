@@ -53,17 +53,14 @@ namespace StorybrewScripts
         {
             OsbSprite receptor = this.originSprite;
 
-            receptor.Move(ease, starttime, starttime + duration, getCurrentPosition(starttime - 1), newPosition);
-
-            this.position = newPosition;
-
-        }
-
-        public void MoveOriginInstant(double starttime, Vector2 newPosition, OsbEasing ease, double duration)
-        {
-            OsbSprite receptor = this.originSprite;
-
-            receptor.Move(starttime, newPosition);
+            if (duration == 0)
+            {
+                receptor.Move(starttime, newPosition);
+            }
+            else
+            {
+                receptor.Move(ease, starttime, starttime + duration, getCurrentPosition(starttime - 1), newPosition);
+            }
 
             this.position = newPosition;
 
@@ -76,7 +73,14 @@ namespace StorybrewScripts
             Vector2 originalPosition = getCurrentPosition(starttime);
             Vector2 newPosition = Vector2.Add(originalPosition, offset);
 
-            receptor.Move(ease, starttime, starttime + duration, originalPosition, newPosition);
+            if (duration == 0)
+            {
+                receptor.Move(starttime, newPosition);
+            }
+            else
+            {
+                receptor.Move(ease, starttime, starttime + duration, originalPosition, newPosition);
+            }
 
             this.position = newPosition;
 
@@ -88,7 +92,14 @@ namespace StorybrewScripts
 
             Vector2 originalPosition = getCurrentPosition(starttime);
 
-            receptor.MoveX(ease, starttime, starttime + duration, originalPosition.X, originalPosition.X + value);
+            if (duration == 0)
+            {
+                receptor.MoveX(starttime, originalPosition.X + value);
+            }
+            else
+            {
+                receptor.MoveX(ease, starttime, starttime + duration, originalPosition.X, originalPosition.X + value);
+            }
 
         }
 
@@ -98,7 +109,14 @@ namespace StorybrewScripts
 
             Vector2 originalPosition = getCurrentPosition(starttime);
 
-            receptor.MoveY(ease, starttime, starttime + duration, originalPosition.Y, originalPosition.Y + value);
+            if (duration == 0)
+            {
+                receptor.MoveY(starttime, originalPosition.Y + value);
+            }
+            else
+            {
+                receptor.MoveY(ease, starttime, starttime + duration, originalPosition.Y, originalPosition.Y + value);
+            }
 
         }
 
@@ -106,7 +124,14 @@ namespace StorybrewScripts
         {
             OsbSprite receptor = this.originSprite;
 
-            receptor.ScaleVec(ease, starttime, starttime + duration, getCurrentScale(starttime), newPosition);
+            if (duration == 0)
+            {
+                receptor.ScaleVec(starttime, newPosition);
+            }
+            else
+            {
+                receptor.ScaleVec(ease, starttime, starttime + duration, getCurrentScale(starttime), newPosition);
+            }
 
         }
 
@@ -116,7 +141,14 @@ namespace StorybrewScripts
 
             var newRotation = this.rotation + rotation;
 
-            receptor.Rotate(ease, starttime, starttime + duration, this.rotation, newRotation);
+            if (duration == 0)
+            {
+                receptor.Rotate(starttime, newRotation);
+            }
+            else
+            {
+                receptor.Rotate(ease, starttime, starttime + duration, getCurrentRotaion(starttime), newRotation);
+            }
 
             this.rotation = newRotation;
 
@@ -201,6 +233,11 @@ namespace StorybrewScripts
         {
             CommandPosition position = this.originSprite.PositionAt(currentTime);
             return new Vector2(position.X, position.Y);
+        }
+
+        public float getCurrentRotaion(double currentTIme)
+        {
+            return this.originSprite.RotationAt(currentTIme);
         }
 
 
