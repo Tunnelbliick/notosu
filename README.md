@@ -6,7 +6,7 @@
 1. Download all files
 2. Drag and drop the Folders into your `/scriptLibrary` Directory
 3. Drag and drop `AForge.dll` and `AForge.Imaging.dll` into the Main Storybrew Directory
-4. Add `AForge.dll` and `AForge.Imaging.dll` to Assembly References *they are an Image editing library that is used for some Full Transformation effekts*
+4. Add `AForge.dll` and `AForge.Imaging.dll` to Assembly References *they are an Image editing library that are used for some Full Transformation effekts*
 5. Initial setup complete!
 
 ### Setting up a Playfield
@@ -45,13 +45,13 @@ var recepotrBitmap = GetMapsetBitmap("sb/sprites/receiver.png"); // The receptor
 var receportWidth = recepotrBitmap.Width;
 
 Playfield field = new Playfield();
-field.initilizePlayField(receptors, notes, startime, endtime, receportWidth, 60, 0);
+field.initilizePlayField(receptors, notes, starttime, endtime, receportWidth, 60, 0);
 field.ScalePlayField(starttime + 1, 1, OsbEasing.None, width, height); // Its important that this gets executed AFTER the Playfield is initialized otherwise this will run into "overlapped commands" and break
 field.initializeNotes(Beatmap.HitObjects.ToList(), notes, bpm, offset, sliderAccuracy);
 
 DrawInstance draw = new DrawInstance(field, starttime, scrollSpeed, updatesPerSecond, OsbEasing.None, rotateNotesToFaceReceptor, fadeTime, fadeTime);
 
-// All effekts have to be executed before calling the draw Function.
+// All effects have to be executed before calling the draw Function.
 // Anything that is done after the draw Function call will not be rendered out.
 draw.drawNotesByOriginToReceptor(duration);
 ```
