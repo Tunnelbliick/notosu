@@ -2,6 +2,8 @@
 ## How do i use this?
 Please give a smool link back to this if you use it for a beatmap!
 
+Requires normal [Storybrew](https://github.com/Damnae/storybrew)
+
 ### Initial Setup
 
 1. Download all files
