@@ -1,5 +1,6 @@
 # Storybrew osu!Mania Modcharts
 ## How do i use this?
+Please give a smool link back to this if you use it for a beatmap!
 
 ### Initial Setup
 
