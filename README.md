@@ -46,7 +46,7 @@ var receportWidth = recepotrBitmap.Width;
 
 Playfield field = new Playfield();
 field.initilizePlayField(receptors, notes, starttime, endtime, receportWidth, 60, 0);
-field.ScalePlayField(starttime + 1, 1, OsbEasing.None, width, height); // Its important that this gets executed AFTER the Playfield is initialized otherwise this will run into "overlapped commands" and break
+field.ScalePlayField(starttime, 0, OsbEasing.None, width, height);
 field.initializeNotes(Beatmap.HitObjects.ToList(), notes, bpm, offset, sliderAccuracy);
 
 DrawInstance draw = new DrawInstance(field, starttime, scrollSpeed, updatesPerSecond, OsbEasing.None, rotateNotesToFaceReceptor, fadeTime, fadeTime);
