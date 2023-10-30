@@ -9,7 +9,7 @@ Requires normal [Storybrew](https://github.com/Damnae/storybrew)
 1. Download all files
 2. Drag and drop the Folders into your `/scriptLibrary` Directory
 3. Drag and drop `AForge.dll` and `AForge.Imaging.dll` into the Main Storybrew Directory
-4. Add `AForge.dll` and `AForge.Imaging.dll` to Assembly References *they are an Image editing library that are used for some Full Transformation effekts*
+4. Add `AForge.dll` and `AForge.Imaging.dll` to Assembly References *they are an Image editing library that are used for some Full Transformation effects*
 5. Initial setup complete!
 
 ### Setting up a Playfield
