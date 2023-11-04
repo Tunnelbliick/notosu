@@ -10,6 +10,7 @@ Requires normal [Storybrew](https://github.com/Damnae/storybrew)
 2. Drag and drop the Folders into your `/scriptLibrary` Directory
 3. Drag and drop `AForge.dll` and `AForge.Imaging.dll` into the Main Storybrew Directory
 4. Add `AForge.dll` and `AForge.Imaging.dll` to Assembly References *they are an Image editing library that are used for some Full Transformation effects*
+![settings](https://github.com/Tunnelbliick/maniaModCharts/assets/38663241/fe64d4a3-428a-4b8e-af5f-13aa3d8f6608)![reference](https://github.com/Tunnelbliick/maniaModCharts/assets/38663241/d49af5e5-d037-4ba9-8937-1c9ec54867f5)
 5. Initial setup complete!
 
 ### Setting up a Playfield
