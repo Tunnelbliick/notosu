@@ -1,5 +1,8 @@
 # Storybrew osu!Mania Modcharts
 ## How do i use this?
+
+# Soon to be documented here [https://notosu.sh/](https://notosu.sh/)
+
 Please give a smool link back to this if you use it for a beatmap!
 
 Requires normal [Storybrew](https://github.com/Damnae/storybrew)
