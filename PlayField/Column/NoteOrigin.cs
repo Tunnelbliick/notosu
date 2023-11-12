@@ -214,16 +214,6 @@ namespace StorybrewScripts
             return rotatedPoint + center;
         }
 
-        public Vector2 ScaleAt(double currentTime)
-        {
-            return originSprite.ScaleAt(currentTime);
-        }
-
-        public float RotationAt(double currentTIme)
-        {
-            return originSprite.RotationAt(currentTIme);
-        }
-
         private void AddXValue(double time, float value, float progressed, bool absolute = false)
         {
             if (positionX.ContainsKey(time))
@@ -404,6 +394,16 @@ namespace StorybrewScripts
         public Vector2 PositionAt(double time)
         {
             return new Vector2(getLastX(time), getLastY(time));
+        }
+
+        public Vector2 ScaleAt(double currentTime)
+        {
+            return originSprite.ScaleAt(currentTime);
+        }
+
+        public float RotationAt(double currentTIme)
+        {
+            return originSprite.RotationAt(currentTIme);
         }
     }
 }

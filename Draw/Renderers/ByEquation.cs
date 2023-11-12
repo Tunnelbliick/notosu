@@ -94,12 +94,13 @@ namespace StorybrewScripts
                     }
 
                     var currentEffect = instance.findEffectByReferenceTime(currentTime);
-
-                    if (currentEffect.Value != null && currentEffect.Value.effektType == EffectType.TransformPlayfield3D)
+                    
+                    // currently defunc
+                    /*if (currentEffect.Value != null && currentEffect.Value.effektType == EffectType.TransformPlayfield3D)
                     {
                         note.RenderTransformed(renderStartTime, renderEndTime, currentEffect.Value.reference, fadeInTime, fadeOutTime);
-                    }
-                    else if (currentEffect.Value == null || (currentEffect.Value != null && currentEffect.Value.effektType != EffectType.RenderPlayFieldFrom))
+                    }*/
+                    if (currentEffect.Value == null || (currentEffect.Value != null && currentEffect.Value.effektType != EffectType.RenderPlayFieldFrom))
                     {
                         note.Render(renderStartTime, renderEndTime, easing, initialFade, fadeInTime, fadeOutTime);
                     }
@@ -126,10 +127,12 @@ namespace StorybrewScripts
                         double elapsedTime = currentTime - note.starttime;
 
                         currentEffect = instance.findEffectByReferenceTime(currentTime + localIterationRate);
-                        if (currentEffect.Value != null && currentEffect.Value.effektType == EffectType.TransformPlayfield3D)
+
+                        // currently defunc
+                        /*if (currentEffect.Value != null && currentEffect.Value.effektType == EffectType.TransformPlayfield3D)
                         {
                             note.UpdateTransformed(currentTime, currentTime + localIterationRate, currentEffect.Value.reference, 10);
-                        }
+                        }*/
 
                         progress = Math.Min((float)(iteratedTime / easetime), 1);
 
