@@ -12,6 +12,7 @@ namespace storyboard.scriptslibrary.maniaModCharts.effects
         public double duration { get; private set; }
         public EffectType effektType { get; private set; }
         public string reference { get; private set; }
+        public float value;
 
         public EffectInfo(double starttime, double endtime, EffectType type, string reference)
         {
@@ -20,6 +21,16 @@ namespace storyboard.scriptslibrary.maniaModCharts.effects
             this.duration = endtime - starttime;
             this.effektType = type;
             this.reference = reference;
+        }
+
+        public EffectInfo(double starttime, double endtime, EffectType type, string reference, float value)
+        {
+            this.starttime = starttime;
+            this.endtime = endtime;
+            this.duration = endtime - starttime;
+            this.effektType = type;
+            this.reference = reference;
+            this.value = value;
         }
     }
 }

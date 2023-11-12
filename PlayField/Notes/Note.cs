@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using OpenTK;
+using OpenTK.Graphics;
 using StorybrewCommon.Mapset;
 using StorybrewCommon.Storyboarding;
 
@@ -31,7 +32,7 @@ namespace StorybrewScripts
 
         static Random _random = new Random();
 
-        public Note(StoryboardLayer layer, OsuHitObject hitObject, Column column, double bpm, double offset, double msPerPart = 40)
+        public Note(StoryboardLayer layer, OsuHitObject hitObject, Column column, double bpm, double offset, bool isColored = false, double msPerPart = 40)
         {
 
             this.layer = layer;
@@ -102,31 +103,37 @@ namespace StorybrewScripts
 
             OsbSprite sprite = null;
 
-            switch (this.noteType)
+            if (isColored == false)
             {
-                case 1:
-                    sprite = layer.CreateSprite("sb/sprites/1.png");
-                    break;
-                case 2:
-                    sprite = layer.CreateSprite("sb/sprites/2.png");
-                    break;
-                case 3:
-                    sprite = layer.CreateSprite("sb/sprites/3.png");
-                    break;
-                case 4:
-                    sprite = layer.CreateSprite("sb/sprites/4.png");
-                    break;
-                case 12:
-                    sprite = layer.CreateSprite("sb/sprites/12.png");
-                    break;
-                case 16:
-                    sprite = layer.CreateSprite("sb/sprites/16.png");
-                    break;
-                default:
-                    this.noteType = 1;
-                    sprite = layer.CreateSprite("sb/sprites/1.png");
-                    break;
-
+                switch (this.noteType)
+                {
+                    case 1:
+                        sprite = layer.CreateSprite("sb/sprites/1.png");
+                        break;
+                    case 2:
+                        sprite = layer.CreateSprite("sb/sprites/2.png");
+                        break;
+                    case 3:
+                        sprite = layer.CreateSprite("sb/sprites/3.png");
+                        break;
+                    case 4:
+                        sprite = layer.CreateSprite("sb/sprites/4.png");
+                        break;
+                    case 12:
+                        sprite = layer.CreateSprite("sb/sprites/12.png");
+                        break;
+                    case 16:
+                        sprite = layer.CreateSprite("sb/sprites/16.png");
+                        break;
+                    default:
+                        this.noteType = 1;
+                        sprite = layer.CreateSprite("sb/sprites/1.png");
+                        break;
+                }
+            }
+            else
+            {
+                sprite = layer.CreateSprite("sb/sprites/arrow.png");
             }
 
             this.columnType = column.type;
@@ -182,8 +189,8 @@ namespace StorybrewScripts
             else
             {
                 note.Fade(starttime - 1, starttime + fadeInTime, 0, initialFade);
-                note.Fade(endtime + fadeOutTime + 1, 0);
-                renderEnd = endtime + fadeOutTime;
+                note.Fade(endtime, 0);
+                renderEnd = endtime;
             }
 
             renderStart = starttime;
@@ -352,7 +359,7 @@ namespace StorybrewScripts
             else
             {
                 note.Fade(starttime, starttime + fadeInTime, 0, 1);
-                note.Fade(endTime + fadeOutTime, 0);
+                note.Fade(endTime, 0);
             }
 
         }
@@ -505,16 +512,21 @@ namespace StorybrewScripts
             note.Rotate(easing, starttime, starttime + duration, getRotation(starttime), rotation);
         }
 
-        public void Scale(double starttime, double duration, OsbEasing easeing, Vector2 before, Vector2 after)
+        public void Scale(double starttime, double endtime, OsbEasing easeing, Vector2 before, Vector2 after)
         {
             OsbSprite note = this.noteSprite;
-            note.ScaleVec(easeing, starttime, starttime + duration, before, after);
+            note.ScaleVec(easeing, starttime, endtime, before, after);
         }
 
         public void ScaleDirect(double starttime, double duration, OsbEasing easeing, Vector2 before, Vector2 after)
         {
             OsbSprite note = this.noteSprite;
             note.ScaleVec(easeing, starttime, starttime + duration, before, after);
+        }
+
+        public void Color(double startime, Color4 color) {
+            OsbSprite note = this.noteSprite;
+            note.Color(starttime, color);
         }
 
         public double getRotation(double starttime)

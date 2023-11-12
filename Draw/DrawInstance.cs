@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.Remoting.Lifetime;
 using System.Threading.Tasks;
 using OpenTK;
+using OpenTK.Graphics;
 using storyboard.scriptslibrary.maniaModCharts.Draw;
 using storyboard.scriptslibrary.maniaModCharts.effects;
 using StorybrewCommon.Animations;
@@ -32,6 +33,8 @@ namespace StorybrewScripts
         public double fadeOutTime = 10;
         public bool rotateToFaceReceptor = true;
         public double iterationLength = 1000 / 2;
+
+        public Color4 color;
 
         public bool hideHolds = false;
         public bool hideNormalNotes = false;
@@ -107,8 +110,9 @@ namespace StorybrewScripts
             PathWay.DrawPath(this, starttime, endtime, layer, spritePath, type, precision, updatesPerSecond);
         }
 
-        public void drawViaEquation(double duration, EquationFunction noteFunction, bool renderReceptor = true) {
-            ByEquation.drawViaEquation(this, duration, noteFunction, renderReceptor);
+        public string drawViaEquation(double duration, EquationFunction noteFunction, bool renderReceptor = true)
+        {
+            return ByEquation.drawViaEquation(this, duration, noteFunction, renderReceptor);
         }
 
         public List<Vector2> GetPathAnchorVectors(List<Anchor> notePath, double currentTime)
@@ -234,8 +238,8 @@ namespace StorybrewScripts
 
             List<Anchor> notePath = this.notePathByColumn[column];
             Column currentColumn = this.playfieldInstance.columns[column];
-            Vector2 originPosition = currentColumn.getOriginPosition(starttime);
-            Vector2 receptorPosition = currentColumn.getReceptorPositionForNotes(starttime);
+            Vector2 originPosition = currentColumn.OriginPositionAt(starttime);
+            Vector2 receptorPosition = currentColumn.ReceptorPositionAt(starttime);
             int index = 0;
 
             float blend = 1.0f / (notePath.Count + 1);
@@ -280,8 +284,8 @@ namespace StorybrewScripts
 
             List<Anchor> notePath = this.notePathByColumn[column];
             Column currentColumn = this.playfieldInstance.columns[column];
-            Vector2 originPosition = currentColumn.getOriginPosition(starttime);
-            Vector2 receptorPosition = currentColumn.getReceptorPosition(starttime);
+            Vector2 originPosition = currentColumn.OriginPositionAt(starttime);
+            Vector2 receptorPosition = currentColumn.ReceptorPositionAt(starttime);
 
             int index = 0;
 
@@ -380,8 +384,8 @@ namespace StorybrewScripts
 
                     Column selectedColumn = this.playfieldInstance.columns[currentColumn];
 
-                    Vector2 originPosition = selectedColumn.getOriginPosition(starttime);
-                    Vector2 receptorPosition = selectedColumn.getReceptorPosition(starttime);
+                    Vector2 originPosition = selectedColumn.OriginPositionAt(starttime);
+                    Vector2 receptorPosition = selectedColumn.ReceptorPositionAt(starttime);
 
                     float blend = 1.0f / (notePath.Count - 1);
                     int index = 0;
@@ -407,8 +411,8 @@ namespace StorybrewScripts
                 List<Anchor> notePath = notePathByColumn[column];
 
                 Column selectedColumn = this.playfieldInstance.columns[column];
-                Vector2 originPosition = selectedColumn.getOriginPosition(starttime);
-                Vector2 receptorPosition = selectedColumn.getReceptorPosition(starttime);
+                Vector2 originPosition = selectedColumn.OriginPositionAt(starttime);
+                Vector2 receptorPosition = selectedColumn.ReceptorPositionAt(starttime);
 
                 float blend = 1.0f / (notePath.Count - 1);
                 int index = 0;
@@ -492,8 +496,8 @@ namespace StorybrewScripts
 
                         List<Anchor> notePath = this.notePathByColumn[type];
                         Column currentColumn = this.playfieldInstance.columns[type];
-                        Vector2 originPosition = currentColumn.getOriginPosition(currentTime + localIterationRate);
-                        Vector2 receptorPosition = currentColumn.getReceptorPositionForNotes(currentTime + localIterationRate);
+                        Vector2 originPosition = currentColumn.OriginPositionAt(currentTime + localIterationRate);
+                        Vector2 receptorPosition = currentColumn.ReceptorPositionAt(currentTime + localIterationRate);
 
                         int index = 0;
                         float blend = 1.0f / (notePath.Count - 1);
@@ -636,6 +640,11 @@ namespace StorybrewScripts
         public void changeUpdateRate(double time, double updatesPerSecond)
         {
             updatesPerSecondDictionary.Add(Math.Max(time - this.easetime, 0), updatesPerSecond);
+        }
+
+        public void SetColor(Color4 color)
+        {
+            this.color = color;
         }
     }
 }
