@@ -30,6 +30,8 @@ namespace StorybrewScripts
             foreach (Column column in playfieldInstance.columns.Values)
             {
                 RenderReceptor.Render(instance, column, duration);
+                RenderOrigin.Render(instance, column);
+
                 List<Anchor> notePath = instance.notePathByColumn[column.type];
                 Dictionary<double, Note> notes = playfieldInstance.columnNotes[column.type];
                 var keysInRange = notes.Keys.Where(hittime => hittime >= starttime && hittime - easetime <= endtime).ToList();
@@ -48,7 +50,7 @@ namespace StorybrewScripts
                     double currentTime = note.starttime - easetime - localIterationRate;
                     double renderStartTime = Math.Max(currentTime, starttime);
                     double renderEndTime = Math.Min(note.endtime, endtime);
-                    Vector2 currentPosition = column.origin.getCurrentPosition(currentTime);
+                    Vector2 currentPosition = column.origin.PositionAt(currentTime);
                     float progress = 0f;
                     double iteratedTime = 0;
                     float initialFade = 1f;
@@ -71,6 +73,7 @@ namespace StorybrewScripts
                     }
 
                     double startRotation = note.getRotation(currentTime);
+                    note.Scale(currentTime, currentTime, OsbEasing.None, column.origin.ScaleAt(currentTime), column.origin.ScaleAt(currentTime));
 
                     switch (type)
                     {
@@ -108,11 +111,11 @@ namespace StorybrewScripts
                                     Vector2 endPos = notePath[n + 1].sprite.PositionAt(currentTime + localIterationRate);
 
                                     Vector2 newPosition = Vector2.Lerp(startPos, endPos, easedProgress);
-                                    Vector2 receptorPosition = column.receptor.getCurrentPosition(currentTime + localIterationRate);
-                                    Vector2 originScale = column.origin.getCurrentScale(currentTime + localIterationRate);
-                                    Vector2 receptorScale = column.receptor.getCurrentScale(currentTime + localIterationRate);
+                                    Vector2 receptorPosition = column.receptor.PositionAt(currentTime + localIterationRate);
+                                    Vector2 originScale = column.origin.ScaleAt(currentTime + localIterationRate);
+                                    Vector2 receptorScale = column.receptor.ScaleAt(currentTime + localIterationRate);
                                     Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, easedProgress);
-                                    startRotation = column.receptor.getCurrentRotaion(currentTime + localIterationRate);
+                                    startRotation = column.receptor.RotationAt(currentTime + localIterationRate);
 
                                     double theta = 0;
                                     if (rotateToFaceReceptor)
@@ -153,9 +156,9 @@ namespace StorybrewScripts
                                     Vector2 endPos = notePath[n + 1].sprite.PositionAt(currentTime + localIterationRate);
 
                                     Vector2 newPosition = Vector2.Lerp(startPos, endPos, easedProgress);
-                                    Vector2 receptorPosition = column.receptor.getCurrentPosition(currentTime + localIterationRate);
-                                    Vector2 originScale = column.origin.getCurrentScale(currentTime + localIterationRate);
-                                    Vector2 receptorScale = column.receptor.getCurrentScale(currentTime + localIterationRate);
+                                    Vector2 receptorPosition = column.receptor.PositionAt(currentTime + localIterationRate);
+                                    Vector2 originScale = column.origin.ScaleAt(currentTime + localIterationRate);
+                                    Vector2 receptorScale = column.receptor.ScaleAt(currentTime + localIterationRate);
                                     Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, easedProgress);
 
                                     double theta = 0;
@@ -185,9 +188,9 @@ namespace StorybrewScripts
                                 // Apply easing to the progress
                                 float easedProgress = (float)easing.Ease(progress);
 
-                                Vector2 receptorPosition = column.getReceptorPositionForNotes(currentTime);
-                                Vector2 originScale = column.origin.getCurrentScale(currentTime);
-                                Vector2 receptorScale = column.receptor.getCurrentScale(currentTime);
+                                Vector2 receptorPosition = column.ReceptorPositionAt(currentTime);
+                                Vector2 originScale = column.origin.ScaleAt(currentTime);
+                                Vector2 receptorScale = column.receptor.ScaleAt(currentTime);
                                 Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, easedProgress);
                                 List<Vector2> points = instance.GetPathAnchorVectors(notePath, currentTime);
                                 Vector2 newPosition = BezierCurve.CalculatePoint(points, easedProgress);
@@ -223,7 +226,7 @@ namespace StorybrewScripts
                         double sliderStartime = part.Timestamp;
                         OsbSprite sprite = part.Sprite;
                         double sliderCurrentTime = sliderStartime - easetime - localIterationRate;
-                        Vector2 currentSliderPositon = column.origin.getCurrentPosition(sliderCurrentTime);
+                        Vector2 currentSliderPositon = column.origin.PositionAt(sliderCurrentTime);
                         double sliderRenderStartTime = Math.Max(sliderCurrentTime, sliderStartime);
                         double sliderRenderEndTime = Math.Min(sliderStartime + 0.1f, endtime);
 
@@ -236,7 +239,7 @@ namespace StorybrewScripts
                         float defaultScaleX = 0.7f / 0.5f;
                         float defaultScaleY = 0.14f / 0.5f * ((float)part.Duration / 20f); // This scaled was based on 20ms long sliderParts
 
-                        Vector2 newScale = new Vector2(defaultScaleX * column.origin.getCurrentScale(sliderCurrentTime).X, defaultScaleY * column.origin.getCurrentScale(sliderCurrentTime).Y);
+                        Vector2 newScale = new Vector2(defaultScaleX * column.origin.ScaleAt(sliderCurrentTime).X, defaultScaleY * column.origin.ScaleAt(sliderCurrentTime).Y);
                         SliderScale.Add(sliderCurrentTime, newScale, EasingFunctions.ToEasingFunction(easing));
 
                         float sliderProgress = 0;
@@ -272,9 +275,9 @@ namespace StorybrewScripts
                                         Vector2 endPos = notePath[n + 1].sprite.PositionAt(sliderCurrentTime + localIterationRate);
 
                                         Vector2 newPosition = Vector2.Lerp(startPos, endPos, easedProgress);
-                                        Vector2 receptorPosition = column.receptor.getCurrentPosition(sliderCurrentTime + localIterationRate);
-                                        Vector2 originScale = column.origin.getCurrentScale(sliderCurrentTime + localIterationRate);
-                                        Vector2 receptorScale = column.receptor.getCurrentScale(sliderCurrentTime + localIterationRate);
+                                        Vector2 receptorPosition = column.receptor.PositionAt(sliderCurrentTime + localIterationRate);
+                                        Vector2 originScale = column.origin.ScaleAt(sliderCurrentTime + localIterationRate);
+                                        Vector2 receptorScale = column.receptor.ScaleAt(sliderCurrentTime + localIterationRate);
                                         Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, easedProgress);
 
                                         double theta = 0;
@@ -287,7 +290,7 @@ namespace StorybrewScripts
                                         // If the note is already done
                                         if (sliderCurrentTime > note.starttime)
                                         {
-                                            Vector2 newNotePosition = column.receptor.getCurrentPosition(sliderCurrentTime + localIterationRate);
+                                            Vector2 newNotePosition = column.receptor.PositionAt(sliderCurrentTime + localIterationRate);
 
                                             double noteTheta = 0;
                                             Vector2 noteDelta = newNotePosition - currentPosition;
@@ -330,9 +333,9 @@ namespace StorybrewScripts
                                         Vector2 endPos = notePath[n + 1].sprite.PositionAt(sliderCurrentTime + localIterationRate);
 
                                         Vector2 newPosition = Vector2.Lerp(startPos, endPos, easedProgress);
-                                        Vector2 receptorPosition = column.receptor.getCurrentPosition(sliderCurrentTime + localIterationRate);
-                                        Vector2 originScale = column.origin.getCurrentScale(sliderCurrentTime + localIterationRate);
-                                        Vector2 receptorScale = column.receptor.getCurrentScale(sliderCurrentTime + localIterationRate);
+                                        Vector2 receptorPosition = column.receptor.PositionAt(sliderCurrentTime + localIterationRate);
+                                        Vector2 originScale = column.origin.ScaleAt(sliderCurrentTime + localIterationRate);
+                                        Vector2 receptorScale = column.receptor.ScaleAt(sliderCurrentTime + localIterationRate);
                                         Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, easedProgress);
 
                                         double theta = 0;
@@ -345,7 +348,7 @@ namespace StorybrewScripts
                                         // If the note is already done
                                         if (sliderCurrentTime > note.starttime)
                                         {
-                                            Vector2 newNotePosition = column.receptor.getCurrentPosition(sliderCurrentTime + localIterationRate);
+                                            Vector2 newNotePosition = column.receptor.PositionAt(sliderCurrentTime + localIterationRate);
 
                                             double noteTheta = 0;
                                             Vector2 noteDelta = newNotePosition - currentPosition;
@@ -379,9 +382,9 @@ namespace StorybrewScripts
                                     // Apply easing to the progress
                                     float easedProgress = (float)easing.Ease(sliderProgress);
 
-                                    Vector2 receptorPosition = column.getReceptorPositionForNotes(sliderCurrentTime + localIterationRate);
-                                    Vector2 originScale = column.origin.getCurrentScale(sliderCurrentTime + localIterationRate);
-                                    Vector2 receptorScale = column.receptor.getCurrentScale(sliderCurrentTime + localIterationRate);
+                                    Vector2 receptorPosition = column.ReceptorPositionAt(sliderCurrentTime + localIterationRate);
+                                    Vector2 originScale = column.origin.ScaleAt(sliderCurrentTime + localIterationRate);
+                                    Vector2 receptorScale = column.receptor.ScaleAt(sliderCurrentTime + localIterationRate);
                                     Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, easedProgress);
                                     List<Vector2> points = instance.GetPathAnchorVectors(notePath, sliderCurrentTime);
 
@@ -399,7 +402,7 @@ namespace StorybrewScripts
                                     // If the note is already done
                                     if (sliderCurrentTime > note.starttime)
                                     {
-                                        Vector2 newNotePosition = column.receptor.getCurrentPosition(sliderCurrentTime + localIterationRate);
+                                        Vector2 newNotePosition = column.receptor.PositionAt(sliderCurrentTime + localIterationRate);
 
                                         double noteTheta = 0;
                                         Vector2 noteDelta = newNotePosition - currentPosition;
@@ -442,7 +445,7 @@ namespace StorybrewScripts
                     scale.Simplify2dKeyframes(instance.NoteScalePrecision, v => v);
                     rotation.Simplify1dKeyframes(instance.NoteRotationPrecision, v => (float)v);
                     movement.ForEachPair((start, end) => note.Move(start.Time, end.Time - start.Time, OsbEasing.None, start.Value, end.Value));
-                    scale.ForEachPair((start, end) => note.Scale(start.Time, end.Time - start.Time, OsbEasing.None, start.Value, end.Value));
+                    scale.ForEachPair((start, end) => note.Scale(start.Time, end.Time, OsbEasing.None, start.Value, end.Value));
                     rotation.ForEachPair((start, end) => note.AbsoluteRotate(start.Time, end.Time - start.Time, OsbEasing.None, end.Value));
 
                     if (progress == 1)

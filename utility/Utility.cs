@@ -30,6 +30,21 @@ namespace StorybrewScripts
             return amplitude * Math.Sin(2 * Math.PI * frequency * t);
         }
 
+        public static double CosWaveValue(double amplitude, double frequency, double t)
+        {
+            return amplitude * Math.Cos(2 * Math.PI * frequency * t);
+        }
+
+        public static double CosWaveValueWithPhase(double amplitude, double frequency, double t, double phase)
+        {
+            return amplitude * Math.Cos(2 * Math.PI * frequency * t + phase);
+        }
+
+        public static double TanValue(double amplitude, double frequency, double t)
+        {
+            return amplitude * Math.Tan(2 * Math.PI * frequency * t);
+        }
+
         public static double SineWaveValueWithPhase(double amplitude, double frequency, double time, double phase)
         {
             return amplitude * Math.Sin(2 * Math.PI * frequency * time + phase);
@@ -40,6 +55,56 @@ namespace StorybrewScripts
             float dx = firstPoint.X - secondPoint.X;
             float dy = firstPoint.Y - secondPoint.Y;
             return (float)Math.Sqrt(dx * dx + dy * dy) + 1f;
+        }
+
+        public static float SmoothAmplitudeByTime(double currentTime, double starttime, double endtime, double startValue, double endValue, float defaultValue = 0)
+        {
+
+            float smoothedAmplitude = 0;
+
+            // If within the first time range
+            if (currentTime >= starttime && currentTime <= endtime)
+            {
+                double start = starttime;
+                double end = endtime;  // Ending before the second segment starts
+
+                // Calculate progress in the range of [0, 1]
+                double progress = (currentTime - start) / (end - start);
+
+                // Use a starting amplitude and an ending amplitude to calculate the current amplitude
+                double startAmplitude = startValue;
+                double endAmplitude = endValue;
+                smoothedAmplitude = (float)(startAmplitude + progress * (endAmplitude - startAmplitude));
+            }
+            else
+            {
+                smoothedAmplitude = defaultValue;
+            }
+
+            return smoothedAmplitude;
+        }
+
+        public static float SmoothAmplitudeByProgress(float progress, float start, float end, double startValue, double endValue, float defaultValue = 0)
+        {
+
+            float smoothedAmplitude = 0f;
+
+            // If within the first time range
+            if (progress >= start && progress <= end)
+            {
+                double remappedProgress = (progress - start) / (end - start);
+
+                // Use a starting amplitude and an ending amplitude to calculate the current amplitude
+                double starScale = startValue;
+                double endScale = endValue;
+                smoothedAmplitude = (float)(starScale + remappedProgress * (endScale - starScale));
+            }
+            else
+            {
+                smoothedAmplitude = defaultValue;
+            }
+
+            return smoothedAmplitude;
         }
 
 

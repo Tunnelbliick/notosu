@@ -65,7 +65,7 @@ namespace storyboard.scriptslibrary.maniaModCharts.Draw
 
         public void setNoteRotationPrecision(float value)
         {
-            this.NoteScalePrecision = value;
+            this.NoteRotationPrecision = value;
         }
 
         public void setNoteFadePrecision(float value)

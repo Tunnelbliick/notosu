@@ -1,19 +1,12 @@
 # Storybrew osu!Mania Modcharts
 ## How do i use this?
 
-# Soon to be documented here [https://notosu.sh/](https://notosu.sh/)
-
-Please give a smool link back to this if you use it for a beatmap!
-
-Requires normal [Storybrew](https://github.com/Damnae/storybrew)
-
 ### Initial Setup
 
 1. Download all files
 2. Drag and drop the Folders into your `/scriptLibrary` Directory
 3. Drag and drop `AForge.dll` and `AForge.Imaging.dll` into the Main Storybrew Directory
-4. Add `AForge.dll` and `AForge.Imaging.dll` to Assembly References *they are an Image editing library that are used for some Full Transformation effects*
-![settings](https://github.com/Tunnelbliick/maniaModCharts/assets/38663241/fe64d4a3-428a-4b8e-af5f-13aa3d8f6608)![reference](https://github.com/Tunnelbliick/maniaModCharts/assets/38663241/d49af5e5-d037-4ba9-8937-1c9ec54867f5)
+4. Add `AForge.dll` and `AForge.Imaging.dll` to Assembly References *they are an Image editing library that is used for some Full Transformation effekts*
 5. Initial setup complete!
 
 ### Setting up a Playfield
@@ -52,13 +45,13 @@ var recepotrBitmap = GetMapsetBitmap("sb/sprites/receiver.png"); // The receptor
 var receportWidth = recepotrBitmap.Width;
 
 Playfield field = new Playfield();
-field.initilizePlayField(receptors, notes, starttime, endtime, receportWidth, 60, 0);
-field.ScalePlayField(starttime, 0, OsbEasing.None, width, height);
+field.initilizePlayField(receptors, notes, startime, endtime, receportWidth, 60, 0);
+field.ScalePlayField(starttime + 1, 1, OsbEasing.None, width, height); // Its important that this gets executed AFTER the Playfield is initialized otherwise this will run into "overlapped commands" and break
 field.initializeNotes(Beatmap.HitObjects.ToList(), notes, bpm, offset, sliderAccuracy);
 
 DrawInstance draw = new DrawInstance(field, starttime, scrollSpeed, updatesPerSecond, OsbEasing.None, rotateNotesToFaceReceptor, fadeTime, fadeTime);
 
-// All effects have to be executed before calling the draw Function.
+// All effekts have to be executed before calling the draw Function.
 // Anything that is done after the draw Function call will not be rendered out.
 draw.drawNotesByOriginToReceptor(duration);
 ```

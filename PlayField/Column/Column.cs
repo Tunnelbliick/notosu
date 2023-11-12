@@ -11,8 +11,13 @@ namespace StorybrewScripts
 {
     public enum ColumnType
     {
-        one, two, three, four, all
+        all = 0,
+        one = 1,
+        two = 2,
+        three = 3,
+        four = 4
     };
+
 
     public class Column
     {
@@ -31,7 +36,7 @@ namespace StorybrewScripts
         public double bpm;
 
 
-        public Column(double offset, ColumnType type, String receptorSpritePath, StoryboardLayer columnLayer, CommandScale scale, double starttime)
+        public Column(double offset, ColumnType type, String receptorSpritePath, StoryboardLayer columnLayer, CommandScale scale, double starttime, double delta)
         {
             this.offset = offset;
             this.type = type;
@@ -55,15 +60,14 @@ namespace StorybrewScripts
                     break;
             }
 
-            this.receptor = new Receptor(receptorSpritePath, rotation, columnLayer, scale, starttime, this.type);
-            this.origin = new NoteOrigin(receptorSpritePath, rotation, columnLayer, scale, starttime);
+            receptor = new Receptor(receptorSpritePath, rotation, columnLayer, scale, starttime, this.type, delta);
+            origin = new NoteOrigin(receptorSpritePath, rotation, columnLayer, scale, starttime, delta);
 
         }
 
         // This methods sets the bpm for the receptor glint on full beats
         public void setBPM(double bpm, double bpmOffset)
         {
-
             this.bpm = bpm;
             this.bpmOffset = bpmOffset;
 
@@ -72,106 +76,105 @@ namespace StorybrewScripts
 
             origin.bpm = bpm;
             origin.bpmOffset = bpmOffset;
-
         }
 
-        public double MoveColumn(double starttime, double duration, Vector2 newColumnPosition, Vector2 newOriginPosition, OsbEasing easing)
+        public void MoveColumn(OsbEasing easing, double starttime, double endtime, Vector2 from, Vector2 to)
         {
-            this.receptor.MoveReceptor(starttime, newColumnPosition, easing, duration);
-            this.origin.MoveOrigin(starttime, newOriginPosition, easing, duration);
-
-            return starttime + duration;
+            receptor.MoveReceptorAbsolute(easing, starttime, endtime, from, to);
+            origin.MoveOriginAbsolute(easing, starttime, endtime, from, to);
         }
 
-        public double MoveColumnRelative(double starttime, double duration, Vector2 offset, OsbEasing easing)
+        public void MoveColumnRelative(OsbEasing easing, double starttime, double endtime, Vector2 offset)
         {
-            this.receptor.MoveReceptorRelative(starttime, offset, easing, duration);
-            this.origin.MoveOriginRelative(starttime, offset, easing, duration);
-
-            return starttime + duration;
+            receptor.MoveReceptorRelative(easing, starttime, endtime, offset);
+            origin.MoveOriginRelative(easing, starttime, endtime, offset);
         }
 
-        public double MoveColumnRelativeX(double starttime, double duration, double value, OsbEasing easing)
+        public void MoveColumnRelativeX(OsbEasing easing, double starttime, double endtime, float value)
         {
-            this.receptor.MoveReceptorRelativeX(starttime, value, easing, duration);
-            this.origin.MoveOriginRelativeX(starttime, value, easing, duration);
-
-            return starttime + duration;
+            receptor.MoveReceptorRelativeX(easing, starttime, endtime, value);
+            origin.MoveOriginRelativeX(easing, starttime, endtime, value);
         }
 
-        public double MoveColumnRelativeY(double starttime, double duration, double value, OsbEasing easing)
+        public void MoveColumnRelativeY(OsbEasing easing, double starttime, double endtime, float value)
         {
-            this.receptor.MoveReceptorRelativeY(starttime, value, easing, duration);
-            this.origin.MoveOriginRelativeY(starttime, value, easing, duration);
-
-            return starttime + duration;
+            receptor.MoveReceptorRelativeY(easing, starttime, endtime, value);
+            origin.MoveOriginRelativeY(easing, starttime, endtime, value);
         }
 
-        public double MoveReceptor(double starttime, double duration, Vector2 newReceptorPosition, OsbEasing easing)
+        public void MoveReceptorAbsolute(double starttime, Vector2 newReceptorPosition)
         {
-
-            this.receptor.MoveReceptor(starttime, newReceptorPosition, easing, duration);
-
-            return starttime + duration;
+            receptor.MoveReceptorAbsolute(starttime, newReceptorPosition);
         }
 
-        public double MoveReceptorRelative(double starttime, double duration, Vector2 offset, OsbEasing easing)
+        public void MoveReceptorAbsolute(OsbEasing ease, double starttime, double endtime, Vector2 startPos, Vector2 endPos)
         {
-
-            this.receptor.MoveReceptorRelative(starttime, offset, easing, duration);
-
-            return starttime + duration;
+            receptor.MoveReceptorAbsolute(ease, starttime, endtime, startPos, endPos);
         }
 
-
-        public double RotateReceptorRelative(double starttime, double duration, OsbEasing easing, double rotation)
+        public void MoveReceptorRelative(OsbEasing easing, double starttime, double endtime, Vector2 offset)
         {
-
-            this.receptor.RotateReceptor(starttime, duration, easing, rotation);
-
-            return starttime + duration;
+            receptor.MoveReceptorRelative(easing, starttime, endtime, offset);
         }
 
-        public double RotateReceptor(double starttime, double duration, OsbEasing easing, double rotation)
+        public void RotateReceptorRelative(OsbEasing easing, double starttime, double endtime, double rotation)
+        {
+            receptor.RotateReceptor(easing, starttime, endtime, rotation);
+        }
+
+        public void RotateReceptor(OsbEasing easing, double starttime, double endtime, double rotation)
+        {
+            receptor.RotateReceptorAbsolute(easing, starttime, endtime, rotation);
+        }
+
+        public void MoveOriginAbsoluite(double starttime, Vector2 newOriginPosition)
         {
 
-            this.receptor.RotateReceptorAbsolute(starttime, duration, easing, rotation);
-
-            return starttime + duration;
+            origin.MoveOriginAbsolute(starttime, newOriginPosition);
         }
 
-        public double MoveOrigin(double starttime, double duration, Vector2 newOriginPosition, OsbEasing easing)
+        public void MoveOriginAbsoluite(OsbEasing ease, double starttime, double endtime, Vector2 startPos, Vector2 endPos)
         {
 
-            this.origin.MoveOrigin(starttime, newOriginPosition, easing, duration);
-
-            return starttime + duration;
+            origin.MoveOriginAbsolute(ease, starttime, endtime, startPos, endPos);
         }
 
-        public Vector2 getOriginPosition(double starttime)
+        public void MoveOriginRelative(OsbEasing ease, double starttime, double endtime, Vector2 offset)
         {
-            return this.origin.getCurrentPosition(starttime);
+
+            origin.MoveOriginRelative(ease, starttime, endtime, offset);
         }
 
-        public Vector2 getReceptorPosition(double starttime)
+        public Vector2 OriginPositionAt(double starttime)
         {
-            return this.receptor.getCurrentPosition(starttime);
+            return origin.PositionAt(starttime);
         }
 
-        public Vector2 getReceptorPositionForNotes(double starttime)
+        public float OriginRotationAt(double starttime)
         {
-            return this.receptor.getCurrentPositionForNotes(starttime);
+            return origin.RotationAt(starttime);
         }
 
-        public double getReceptorRotation(double starttime)
+        public Vector2 OriginScaleAt(double starttime)
         {
-            return this.receptor.getCurrentRotaion(starttime);
+            return origin.ScaleAt(starttime);
         }
 
-        public List<Operation> executeKeyFrames()
+        public Vector2 ReceptorPositionAt(double starttime)
         {
-            return receptor.executeOperations();
+            return receptor.PositionAt(starttime);
         }
+
+        public double ReceptorRotationAt(double starttime)
+        {
+            return receptor.RotationAt(starttime);
+        }
+
+        public Vector2 ReceptorScaleAt(double starttime)
+        {
+            return receptor.ScaleAt(starttime);
+        }
+
 
     }
 }

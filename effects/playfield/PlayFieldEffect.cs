@@ -22,17 +22,19 @@ namespace StorybrewScripts
             this.field = field;
         }
 
+        // TODO Fix this
+        /*
         public double SwapColumn(ColumnType column1, ColumnType column2)
         {
 
             Column left = field.columns[column1];
             Column right = field.columns[column2];
 
-            Vector2 leftOrigin = left.getOriginPosition(this.starttime);
-            Vector2 leftReceptor = left.getReceptorPosition(this.starttime);
+            Vector2 leftOrigin = left.OriginPositionAt(this.starttime);
+            Vector2 leftReceptor = left.ReceptorPositionAt(this.starttime);
 
-            Vector2 rightOrigin = right.getOriginPosition(this.starttime);
-            Vector2 rightReceptor = right.getReceptorPosition(this.starttime);
+            Vector2 rightOrigin = right.OriginPositionAt(this.starttime);
+            Vector2 rightReceptor = right.ReceptorPositionAt(this.starttime);
 
             left.MoveColumn(starttime, duration, rightReceptor, rightOrigin, this.easing);
             right.MoveColumn(starttime, duration, leftReceptor, leftOrigin, this.easing);
@@ -45,8 +47,8 @@ namespace StorybrewScripts
 
             Column currentColumn = field.columns[column];
 
-            Vector2 originPosition = currentColumn.getOriginPosition(starttime);
-            Vector2 receptorPosition = currentColumn.getReceptorPosition(starttime);
+            Vector2 originPosition = currentColumn.OriginPositionAt(starttime);
+            Vector2 receptorPosition = currentColumn.ReceptorPositionAt(starttime);
 
             field.MoveOriginAbsolute(starttime, duration, easing, Vector2.Add(originPosition, relativeMovement), column);
             field.MoveReceptorAbsolute(starttime, duration, easing, Vector2.Add(receptorPosition, relativeMovement), column);
@@ -54,7 +56,10 @@ namespace StorybrewScripts
             return starttime + duration;
 
         }
+        */
 
+        // TODO
+        /*
         public void flipPlayField(float closeScale, float farScale)
         {
 
@@ -134,8 +139,9 @@ namespace StorybrewScripts
                 position += field.getColumnWidth();
             }
 
-        }
+        }*/
 
+        /*
         public string TransformPlayfield3D(string relativePath, Vector2 topLeft, Vector2 topRight, Vector2 bottomRight, Vector2 bottomLeft)
         {
 
@@ -214,6 +220,6 @@ namespace StorybrewScripts
                 }
             }
             return hash;
-        }
+        }*/
     }
 }
