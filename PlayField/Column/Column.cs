@@ -112,11 +112,6 @@ namespace StorybrewScripts
             receptor.MoveReceptorAbsolute(ease, starttime, endtime, startPos, endPos);
         }
 
-        public void MoveReceptor(OsbEasing ease, double starttime, double endtime, Vector2 from, Vector2 to)
-        {
-            receptor.MoveReceptorAbsolute(ease, starttime, endtime, from, to);
-        }
-
         public void MoveReceptorRelative(OsbEasing easing, double starttime, double endtime, Vector2 offset)
         {
             receptor.MoveReceptorRelative(easing, starttime, endtime, offset);
@@ -132,10 +127,22 @@ namespace StorybrewScripts
             receptor.RotateReceptorAbsolute(easing, starttime, endtime, rotation);
         }
 
-        public void MoveOrigin(double starttime, Vector2 newOriginPosition)
+        public void MoveOriginAbsoluite(double starttime, Vector2 newOriginPosition)
         {
 
             origin.MoveOriginAbsolute(starttime, newOriginPosition);
+        }
+
+        public void MoveOriginAbsoluite(OsbEasing ease, double starttime, double endtime, Vector2 startPos, Vector2 endPos)
+        {
+
+            origin.MoveOriginAbsolute(ease, starttime, endtime, startPos, endPos);
+        }
+
+        public void MoveOriginRelative(OsbEasing ease, double starttime, double endtime, Vector2 offset)
+        {
+
+            origin.MoveOriginRelative(ease, starttime, endtime, offset);
         }
 
         public Vector2 OriginPositionAt(double starttime)

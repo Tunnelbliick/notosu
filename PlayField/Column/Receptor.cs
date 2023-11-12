@@ -28,8 +28,8 @@ namespace StorybrewScripts
         public OsbSprite debug;
         public string appliedTransformation = "";
 
-        public Dictionary<double, float> positionX = new Dictionary<double, float>();
-        public Dictionary<double, float> positionY = new Dictionary<double, float>();
+        public SortedDictionary<double, float> positionX = new SortedDictionary<double, float>();
+        public SortedDictionary<double, float> positionY = new SortedDictionary<double, float>();
 
         // Rotation in radiants
         public double rotation = 0f;
@@ -246,13 +246,13 @@ namespace StorybrewScripts
         {
             Vector2 point = PositionAt(starttime);
 
-            double duration = Math.Max(endtime - starttime - 1, 1);
+            double duration = Math.Max(endtime - starttime, 1);
             double endRadians = rotation; // Total rotation in radians
 
             Vector2 currentPosition = point;
             double currentTime = starttime;
 
-            while (currentTime < endtime - 1)
+            while (currentTime <= endtime)
             {
                 currentTime += deltaIncrement;
                 double progress = Math.Max(currentTime - starttime, 1) / duration; // Calculate progress as a ratio
@@ -418,40 +418,61 @@ namespace StorybrewScripts
 
         private float getLastX(double currentTime)
         {
-            // Get all keys up to the current time, not including the current time
-            var earlierKeys = positionX.Keys.Where(t => t < currentTime).ToList();
+            if (positionX.Count == 0)
+            {
+                return 0; // Or your default value
+            }
 
-            // If there are any earlier keys, get the value of the largest (most recent) one
-            if (earlierKeys.Any())
+            var keys = positionX.Keys.ToList();
+            int left = 0;
+            int right = keys.Count - 1;
+            double lastKey = -1;
+
+            while (left <= right)
             {
-                double latestKey = earlierKeys.Max();
-                return positionX[latestKey];
+                int mid = left + (right - left) / 2;
+                if (keys[mid] < currentTime)
+                {
+                    lastKey = keys[mid];
+                    left = mid + 1;
+                }
+                else
+                {
+                    right = mid - 1;
+                }
             }
-            else
-            {
-                // If there are no earlier keys, return a default value (e.g., 0)
-                return 0;
-            }
+
+            return lastKey != -1 ? positionX[lastKey] : 0;
         }
-
-
 
 
         private float getLastY(double currentTime)
         {
-            // Filter the keys to find those that are smaller than the current time
-            var smallerKeys = positionY.Keys.Where(t => t < currentTime);
+            if (positionY.Count == 0)
+            {
+                return 0; // Or your default value
+            }
 
-            // If there are any keys that meet the condition, return the largest of them
-            if (smallerKeys.Any())
+            var keys = positionY.Keys.ToList();
+            int left = 0;
+            int right = keys.Count - 1;
+            double lastKey = -1;
+
+            while (left <= right)
             {
-                return positionY[smallerKeys.Max()];
+                int mid = left + (right - left) / 2;
+                if (keys[mid] < currentTime)
+                {
+                    lastKey = keys[mid];
+                    left = mid + 1;
+                }
+                else
+                {
+                    right = mid - 1;
+                }
             }
-            else
-            {
-                // If there are no keys smaller than the current time, return null or handle as needed
-                return 0; // or you could throw an exception or return a default value
-            }
+
+            return lastKey != -1 ? positionY[lastKey] : 0;
         }
 
         private void easeProgressAbsolute(OsbEasing ease, double start, double end, Vector2 startPos, Vector2 endPos)
@@ -488,7 +509,7 @@ namespace StorybrewScripts
             Vector2 startPos = new Vector2(0, 0); // Assuming starting at origin; replace with actual start if different
             Vector2 endPos = startPos + offset;   // The final desired position
 
-            double duration = Math.Max(end - start, 0); // Ensure non-negative duration
+            double duration = Math.Max(end - start + 1, 0); // Ensure non-negative duration
             double deltaTime = 0;
             Vector2 lastPos = startPos; // Keep track of the last position to calculate the delta
 

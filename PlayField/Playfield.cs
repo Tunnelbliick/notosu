@@ -18,7 +18,7 @@ namespace StorybrewScripts
 
         // Default SB height / width
 
-        public double delta = 1;
+        public double delta = 2;
 
         private float absoluteWidth = 640f;
         public float width = 250f;
@@ -210,11 +210,16 @@ namespace StorybrewScripts
 
         public void Resize(OsbEasing easing, double starttime, double endtime, float width, float height)
         {
-            this.width = width;
-            this.height = height;
+
+            float wDiff = width;
+
+            if (width > 0)
+                wDiff = width * 2 - this.width;
+            else
+                wDiff = width - this.width * 2;
 
             float position = 0;
-            Vector2 left = calculatePlayFieldCenter(starttime) + new Vector2(width / 2, 0);
+            Vector2 left = calculatePlayFieldCenter(starttime) + new Vector2(wDiff / 2, 0);
 
             foreach (Column column in columns.Values)
             {
@@ -222,7 +227,7 @@ namespace StorybrewScripts
                 Receptor receptor = column.receptor;
                 NoteOrigin origin = column.origin;
 
-                float x = position + getColumnWidth() / 2;
+                float x = position + getColumnWidth(wDiff) / 2;
 
                 Vector2 receptorPos = receptor.PositionAt(starttime);
                 Vector2 originPos = origin.PositionAt(starttime);
@@ -252,9 +257,11 @@ namespace StorybrewScripts
                 receptor.MoveReceptorRelative(easing, starttime, endtime, newPosition);
                 origin.MoveOriginRelative(easing, starttime, endtime, newOpposit);
 
-                position += getColumnWidth();
+                position += getColumnWidth(wDiff);
             }
 
+            this.width = width;
+            this.height = height;
         }
 
         public void ScaleOrigin(OsbEasing easing, double starttime, double endtime, Vector2 scale, ColumnType type)
@@ -455,6 +462,62 @@ namespace StorybrewScripts
 
         }
 
+        public void MoveOriginAbsolute(double starttime, Vector2 to, ColumnType column)
+        {
+            if (column == ColumnType.all)
+            {
+                foreach (Column currentColumn in columns.Values)
+                {
+                    currentColumn.MoveOriginAbsoluite(starttime, to);
+                }
+            }
+            else
+            {
+                Column currentColumn = columns[column];
+
+                currentColumn.MoveOriginAbsoluite(starttime, to);
+            }
+
+        }
+
+        public void MoveOriginAbsolute(OsbEasing easing, double starttime, double endtime, Vector2 from, Vector2 to, ColumnType column)
+        {
+            if (column == ColumnType.all)
+            {
+                foreach (Column currentColumn in columns.Values)
+                {
+                    currentColumn.MoveOriginAbsoluite(easing, starttime, endtime, from, to);
+                }
+            }
+            else
+            {
+                Column currentColumn = columns[column];
+
+                currentColumn.MoveOriginAbsoluite(easing, starttime, endtime, from, to);
+            }
+
+        }
+
+        public void MoveOriginRelative(OsbEasing easing, double starttime, double endtime, Vector2 position, ColumnType column)
+        {
+            if (column == ColumnType.all)
+            {
+                foreach (Column currentColumn in columns.Values)
+                {
+
+                    currentColumn.MoveOriginRelative(easing, starttime, endtime, position);
+                }
+            }
+            else
+            {
+                Column currentColumn = columns[column];
+
+                currentColumn.MoveReceptorRelative(easing, starttime, endtime, position);
+
+            }
+
+        }
+
         public void RotateReceptorRelative(OsbEasing easing, double starttime, double endtime, double rotation, ColumnType column = ColumnType.all)
         {
             if (column == ColumnType.all)
@@ -475,6 +538,8 @@ namespace StorybrewScripts
             }
 
         }
+
+
 
         public void RotateReceptorAbsolute(OsbEasing easing, double starttime, double endtime, double rotation, ColumnType column = ColumnType.all)
         {
@@ -735,6 +800,16 @@ namespace StorybrewScripts
         }
 
         public float calculateOffset()
+        {
+            return (absoluteWidth - width) / 2;
+        }
+
+        public float getColumnWidth(float width)
+        {
+            return width / 4;
+        }
+
+        public float calculateOffset(float width)
         {
             return (absoluteWidth - width) / 2;
         }

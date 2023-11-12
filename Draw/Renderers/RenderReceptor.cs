@@ -36,35 +36,25 @@ namespace StorybrewScripts
             double iterationLenght = 1000 / instance.updatesPerSecond;
 
             Receptor receptor = column.receptor;
-            Vector2 currentPosition = receptor.PositionAt(currentTime);
 
             receptor.renderedSprite.Fade(starttime - 2500, 0);
             receptor.renderedSprite.Fade(starttime, 1);
             receptor.renderedSprite.Fade(endTime, 0);
 
-            double relativeTime = currentTime;
+            double relativeTime = playfieldInstance.starttime;
 
-            Vector2 currentPos = receptor.PositionAt(currentTime);
+            var pos = receptor.PositionAt(relativeTime);
 
             while (relativeTime <= playfieldInstance.endtime)
             {
 
-                if (receptor.positionX.ContainsKey(relativeTime))
-                {
-                    float x = receptor.positionX[relativeTime];
-                    currentPos.X = x;
-                }
-
-                if (receptor.positionY.ContainsKey(relativeTime))
-                {
-                    float y = receptor.positionY[relativeTime];
-                    currentPos.Y = y;
-                }
-
-                movement.Add(relativeTime, currentPos);
+                movement.Add(relativeTime, receptor.PositionAt(relativeTime));
 
                 relativeTime += playfieldInstance.delta;
             }
+
+            movement.Simplify2dKeyframes(1, v => v);
+            movement.ForEachPair((start, end) => receptor.renderedSprite.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
 
 
             var foundEntry = instance.findEffectByReferenceTime(currentTime);
@@ -78,7 +68,7 @@ namespace StorybrewScripts
                 receptor.Render(currentTime, endTime);
             }
 
-            while (currentTime < endTime)
+            /*while (currentTime < endTime)
             {
 
                 foundEntry = instance.findEffectByReferenceTime(currentTime);
@@ -98,10 +88,7 @@ namespace StorybrewScripts
                 }
 
                 currentTime += iterationLenght;
-            }
-
-            movement.Simplify2dKeyframes(1, v => v);
-            movement.ForEachPair((start, end) => receptor.renderedSprite.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
+            }*/
 
 
         }

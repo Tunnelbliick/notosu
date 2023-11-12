@@ -1,10 +1,10 @@
 using System;
 using System.Drawing;
 using System.IO;
-using AForge.Imaging;
-using AForge.Imaging.Filters;
+//using AForge.Imaging;
+//using AForge.Imaging.Filters;
 using System.Collections.Generic;
-using AForge;
+//using AForge;
 using System.Linq;
 using System.Runtime.InteropServices;
 using OpenTK;
@@ -14,7 +14,7 @@ namespace StorybrewScripts
     public static class ImageManipulator
     {
 
-        public static Bitmap transformImage(Bitmap input, Vector2 topLeft, Vector2 topRight, Vector2 bottomRight, Vector2 bottomLeft)
+        /*public static Bitmap transformImage(Bitmap input, Vector2 topLeft, Vector2 topRight, Vector2 bottomRight, Vector2 bottomLeft)
         {
             Bitmap paddedImage = new Bitmap(input.Width * 2 + 100, input.Height * 2 + 100);
             using (Graphics g = Graphics.FromImage(paddedImage))
@@ -152,7 +152,7 @@ namespace StorybrewScripts
 
             return rotated;
 
-        }
+        }*/
 
 
     }

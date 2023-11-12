@@ -12,7 +12,7 @@ namespace StorybrewScripts
     public static class RenderOrigin
     {
 
-        public static void Render(DrawInstance instance, Column column) 
+        public static void Render(DrawInstance instance, Column column)
         {
 
             Playfield playfieldInstance = instance.playfieldInstance;
@@ -21,32 +21,13 @@ namespace StorybrewScripts
 
             NoteOrigin origin = column.origin;
 
-            double relativeTime = playfieldInstance.starttime + 1;
+            double relativeTime = playfieldInstance.starttime;
 
             var pos = origin.PositionAt(relativeTime);
-
-            float lastX = pos.X;
-            float lastY = pos.Y;
-
+            
             while (relativeTime <= playfieldInstance.endtime)
             {
-                float x = lastX;
-                float y = lastY;
-
-                if (origin.positionX.ContainsKey(relativeTime))
-                {
-                    x = origin.positionX[relativeTime];
-                    lastX = x;
-                }
-
-                if (origin.positionY.ContainsKey(relativeTime))
-                {
-                    y = origin.positionY[relativeTime];
-                    lastX = y;
-                }
-
-                movement.Add(relativeTime, new Vector2(x, y));
-
+                movement.Add(relativeTime, origin.PositionAt(relativeTime));
                 relativeTime += playfieldInstance.delta;
             }
 

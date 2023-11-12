@@ -141,6 +141,7 @@ namespace StorybrewScripts
 
         }*/
 
+        /*
         public string TransformPlayfield3D(string relativePath, Vector2 topLeft, Vector2 topRight, Vector2 bottomRight, Vector2 bottomLeft)
         {
 
@@ -219,6 +220,6 @@ namespace StorybrewScripts
                 }
             }
             return hash;
-        }
+        }*/
     }
 }
