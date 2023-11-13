@@ -24,7 +24,7 @@ namespace StorybrewScripts
             double relativeTime = playfieldInstance.starttime;
 
             var pos = origin.PositionAt(relativeTime);
-            
+
             while (relativeTime <= playfieldInstance.endtime)
             {
                 movement.Add(relativeTime, origin.PositionAt(relativeTime));

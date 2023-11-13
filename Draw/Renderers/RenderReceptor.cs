@@ -25,7 +25,6 @@ namespace StorybrewScripts
             OsbEasing easing = instance.easing;
             double fadeInTime = instance.fadeInTime;
             double fadeOutTime = instance.fadeOutTime;
-            string debug = "";
 
             KeyframedValue<Vector2> movement = new KeyframedValue<Vector2>(null);
             KeyframedValue<Vector2> scale = new KeyframedValue<Vector2>(null);
@@ -47,9 +46,7 @@ namespace StorybrewScripts
 
             while (relativeTime <= playfieldInstance.endtime)
             {
-
                 movement.Add(relativeTime, receptor.PositionAt(relativeTime));
-
                 relativeTime += playfieldInstance.delta;
             }
 

@@ -37,7 +37,7 @@ namespace StorybrewScripts
         public ColumnType columnType;
         public double bpmOffset;
         public double bpm;
-        public double deltaIncrement = 1;
+        private double deltaIncrement = 1;
 
         public Receptor(String receptorSpritePath, double rotation, StoryboardLayer layer, CommandScale scale, double starttime, ColumnType type, double delta)
         {
@@ -363,6 +363,18 @@ namespace StorybrewScripts
 
         private void AddXValue(double time, float value, float progressed, bool absolute = false)
         {
+
+            // Ensure time is a multiple of deltaTime
+            if (time % deltaIncrement != 0)
+            {
+                // Handle the case where time is not a multiple of deltaTime
+                // Option 1: Adjust time to the nearest multiple of deltaTime
+                time = Math.Ceiling(time / deltaIncrement) * deltaIncrement;
+
+                // Option 2: Throw an exception
+                // throw new ArgumentException("Time must be a multiple of deltaTime.");
+            }
+
             if (positionX.ContainsKey(time))
             {
 
@@ -391,6 +403,18 @@ namespace StorybrewScripts
 
         private void AddYValue(double time, float value, float progressed, bool absolute = false)
         {
+
+            // Ensure time is a multiple of deltaTime
+            if (time % deltaIncrement != 0)
+            {
+                // Handle the case where time is not a multiple of deltaTime
+                // Option 1: Adjust time to the nearest multiple of deltaTime
+                time = Math.Ceiling(time / deltaIncrement) * deltaIncrement;
+
+                // Option 2: Throw an exception
+                // throw new ArgumentException("Time must be a multiple of deltaTime.");
+            }
+
             if (positionY.ContainsKey(time))
             {
 

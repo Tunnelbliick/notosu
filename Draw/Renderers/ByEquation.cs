@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using OpenTK;
 using storyboard.scriptslibrary.maniaModCharts.effects;
@@ -43,8 +44,9 @@ namespace StorybrewScripts
             string debug = "";
 
 
-            foreach (Column column in playfieldInstance.columns.Values)
-            {
+            //foreach(var column in playfieldInstance.columns.Values) {
+            Parallel.ForEach(playfieldInstance.columns.Values, column => {
+                
                 if (renderReceptor)
                     RenderReceptor.Render(instance, column, duration);
 
@@ -53,9 +55,9 @@ namespace StorybrewScripts
                 Dictionary<double, Note> notes = playfieldInstance.columnNotes[column.type];
                 var keysInRange = notes.Keys.Where(hittime => hittime >= starttime && hittime - easetime <= endtime).ToList();
 
-                foreach (var key in keysInRange)
-                {
-
+                //foreach(var key in keysInRange) {
+                Parallel.ForEach(keysInRange, key => {
+                    
                     KeyframedValue<Vector2> movement = new KeyframedValue<Vector2>(null);
                     KeyframedValue<Vector2> scale = new KeyframedValue<Vector2>(null);
                     KeyframedValue<double> rotation = new KeyframedValue<double>(null);
@@ -64,12 +66,12 @@ namespace StorybrewScripts
 
                     if (note.isSlider == false && hideNormalNotes)
                     {
-                        continue;
+                        return;
                     }
 
                     if (note.isSlider == true && hideHolds)
                     {
-                        continue;
+                        return;
                     }
 
                     double totalDuration = easetime;
@@ -94,7 +96,7 @@ namespace StorybrewScripts
                     }
 
                     var currentEffect = instance.findEffectByReferenceTime(currentTime);
-                    
+
                     // currently defunc
                     /*if (currentEffect.Value != null && currentEffect.Value.effektType == EffectType.TransformPlayfield3D)
                     {
@@ -217,7 +219,7 @@ namespace StorybrewScripts
 
                     } while (progress < 1);
 
-                    foreach (SliderParts part in note.sliderPositions)
+                    foreach(var part in note.sliderPositions)
                     {
 
                         KeyframedValue<Vector2> SliderMovement = new KeyframedValue<Vector2>(null);
@@ -369,18 +371,7 @@ namespace StorybrewScripts
                             theta = newTheta;
                             prevTheta = newTheta;
 
-                            // If the note is already done
-                            if (sliderCurrentTime > note.starttime)
-                            {
-                                Vector2 newNotePosition = column.receptor.PositionAt(sliderCurrentTime + sliderIterationLenght);
-                                movement.Add(sliderCurrentTime + sliderIterationLenght, newNotePosition, EasingFunctions.ToEasingFunction(easing));
-                                scale.Add(sliderCurrentTime + sliderIterationLenght, receptorScale, EasingFunctions.ToEasingFunction(easing));
-
-                                currentPosition = newNotePosition;
-                            }
-
                             newScale = new Vector2(defaultScaleX * column.origin.ScaleAt(sliderCurrentTime).X, defaultScaleY * column.origin.ScaleAt(sliderCurrentTime).Y);
-
                             SliderMovement.Add(sliderCurrentTime + sliderIterationLenght, newPosition);
                             SliderScale.Add(sliderCurrentTime + sliderIterationLenght, newScale);
                             SliderRotation.Add(sliderCurrentTime + sliderIterationLenght, -theta);
@@ -398,7 +389,7 @@ namespace StorybrewScripts
                         SliderMovement.ForEachPair((start, end) => sprite.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
                         SliderScale.ForEachPair((start, end) => sprite.ScaleVec(start.Time, end.Time, start.Value.X, start.Value.Y, end.Value.X, end.Value.Y));
                         SliderRotation.ForEachPair((start, end) => sprite.Rotate(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
-                    }
+                    };
 
 
                     // Render out Note keyframes
@@ -413,9 +404,8 @@ namespace StorybrewScripts
                     {
                         note.ApplyHitLightingToNote(note.starttime, note.endtime, fadeOutTime, column.receptor, localIterationRate);
                     }
-
-                }
-            }
+                });
+            });
 
             return debug;
         }

@@ -27,8 +27,8 @@ namespace StorybrewScripts
             double fadeOutTime = instance.fadeOutTime;
             string debug = "";
 
-            foreach (Column column in playfieldInstance.columns.Values)
-            {
+            Parallel.ForEach(playfieldInstance.columns.Values, column => {
+
                 RenderReceptor.Render(instance, column, duration);
                 RenderOrigin.Render(instance, column);
 
@@ -36,8 +36,7 @@ namespace StorybrewScripts
                 Dictionary<double, Note> notes = playfieldInstance.columnNotes[column.type];
                 var keysInRange = notes.Keys.Where(hittime => hittime >= starttime && hittime - easetime <= endtime).ToList();
 
-                foreach (var key in keysInRange)
-                {
+                Parallel.ForEach(keysInRange, key => {
 
                     KeyframedValue<Vector2> movement = new KeyframedValue<Vector2>(null);
                     KeyframedValue<Vector2> scale = new KeyframedValue<Vector2>(null);
@@ -433,7 +432,7 @@ namespace StorybrewScripts
                         // Render out Slider keyframes
                         SliderMovement.Simplify2dKeyframes(instance.HoldMovementPrecision, v => v);
                         SliderScale.Simplify2dKeyframes(instance.HoldScalePrecision, v => v);
-                        // SliderRotation.Simplify1dKeyframes(0f, v => (float)v);
+                        SliderRotation.Simplify1dKeyframes(instance.HoldRotationPrecision, v => (float)v);
                         SliderMovement.ForEachPair((start, end) => sprite.Move(easing, start.Time, end.Time, start.Value, end.Value));
                         SliderScale.ForEachPair((start, end) => sprite.ScaleVec(start.Time, end.Time, start.Value.X, start.Value.Y, end.Value.X, end.Value.Y));
                         SliderRotation.ForEachPair((start, end) => sprite.Rotate(start.Time, end.Value));
@@ -452,8 +451,8 @@ namespace StorybrewScripts
                     {
                         note.ApplyHitLightingToNote(note.starttime, note.endtime, fadeOutTime, column.receptor, localIterationRate);
                     }
-                }
-            }
+                });
+            });
 
             return debug;
         }

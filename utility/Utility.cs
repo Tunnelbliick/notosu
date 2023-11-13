@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using OpenTK;
@@ -107,7 +108,22 @@ namespace StorybrewScripts
             return smoothedAmplitude;
         }
 
+        public static void Log(string text)
+        {
+            // Define the directory path for the logs
+            string logDirectoryPath = Path.Combine(Directory.GetCurrentDirectory(), "logs");
 
+            // Ensure that the log directory exists
+            Directory.CreateDirectory(logDirectoryPath);
 
+            // Define the full path for the log file
+            string logFilePath = Path.Combine(logDirectoryPath, "notosu.log");
+
+            // Append the text to the log file
+            File.AppendAllText(logFilePath, Environment.NewLine + "------------------" + Environment.NewLine + System.DateTime.Now.ToString() + Environment.NewLine + "------------------" + Environment.NewLine + text + Environment.NewLine);
+
+            // Optionally, display the text in the console
+            Console.WriteLine(text);
+        }
     }
 }

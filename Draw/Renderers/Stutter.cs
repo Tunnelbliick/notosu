@@ -28,8 +28,8 @@ namespace StorybrewScripts
             double fadeOutTime = instance.fadeOutTime;
             string debug = "";
 
-            foreach (Column column in playfieldInstance.columns.Values)
-            {
+            Parallel.ForEach(playfieldInstance.columns.Values, column => {
+
                 if (renderReceptor)
                     RenderReceptor.Render(instance, column, duration);
 
@@ -38,8 +38,7 @@ namespace StorybrewScripts
                 Dictionary<double, Note> notes = playfieldInstance.columnNotes[column.type];
                 var keysInRange = notes.Keys.Where(hittime => hittime >= starttime && hittime - easetime <= endtime).ToList();
 
-                foreach (var key in keysInRange)
-                {
+                Parallel.ForEach(keysInRange, key => {
 
                     KeyframedValue<Vector2> movement = new KeyframedValue<Vector2>(null);
                     KeyframedValue<Vector2> scale = new KeyframedValue<Vector2>(null);
@@ -49,12 +48,12 @@ namespace StorybrewScripts
 
                     if (note.isSlider == false && hideNormalNotes)
                     {
-                        continue;
+                        return;
                     }
 
                     if (note.isSlider == true && hideHolds)
                     {
-                        continue;
+                        return;
                     }
 
                     double totalDuration = easetime;
@@ -267,8 +266,8 @@ namespace StorybrewScripts
                         note.ApplyHitLightingToNote(note.starttime, note.endtime, fadeOutTime, column.receptor);
                     }
 
-                }
-            }
+                });
+            });
 
             return debug;
         }

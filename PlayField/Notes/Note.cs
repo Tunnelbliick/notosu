@@ -183,7 +183,7 @@ namespace StorybrewScripts
                 }*/
 
                 note.Fade(starttime, starttime + fadeInTime, 0, initialFade);
-                note.Fade(endtime, 0);
+                note.Fade(starttime, 0);
                 renderEnd = endtime;
             }
             else
@@ -354,7 +354,7 @@ namespace StorybrewScripts
                 }*/
 
                 note.Fade(starttime, starttime + fadeInTime, 0, 1);
-                note.Fade(endTime, 0);
+                note.Fade(starttime, 0);
             }
             else
             {
@@ -524,7 +524,8 @@ namespace StorybrewScripts
             note.ScaleVec(easeing, starttime, starttime + duration, before, after);
         }
 
-        public void Color(double startime, Color4 color) {
+        public void Color(double startime, Color4 color)
+        {
             OsbSprite note = this.noteSprite;
             note.Color(starttime, color);
         }
@@ -542,6 +543,14 @@ namespace StorybrewScripts
 
 
             return note.OpacityAt(currentTime);
+        }
+
+        public Vector2 ScaleAt(double currentTime)
+        {
+            OsbSprite note = this.noteSprite;
+
+
+            return note.ScaleAt(currentTime);
         }
 
         static string GetRandomJudgement()
