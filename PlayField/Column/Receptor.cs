@@ -115,8 +115,8 @@ namespace StorybrewScripts
         public void MoveReceptorAbsolute(double starttime, Vector2 endPos)
         {
 
-            AddXValue(starttime, endPos.X, endPos.Y, true);
-            AddYValue(starttime, endPos.Y, endPos.Y, true);
+            AddXValue(starttime, endPos.X, true);
+            AddYValue(starttime, endPos.Y, true);
 
 
         }
@@ -127,8 +127,8 @@ namespace StorybrewScripts
 
             if (starttime == endtime)
             {
-                AddXValue(starttime, endPos.X, endPos.X, true);
-                AddYValue(starttime, endPos.Y, endPos.Y, true);
+                AddXValue(starttime, endPos.X, true);
+                AddYValue(starttime, endPos.Y, true);
                 return;
             }
 
@@ -141,8 +141,8 @@ namespace StorybrewScripts
 
             if (starttime == endtime)
             {
-                AddXValue(starttime, offset.X, offset.X);
-                AddYValue(starttime, offset.Y, offset.Y);
+                AddXValue(starttime, offset.X);
+                AddYValue(starttime, offset.Y);
                 return;
             }
 
@@ -155,8 +155,8 @@ namespace StorybrewScripts
 
             if (starttime == endtime)
             {
-                AddXValue(starttime, offset.X, absolute.X);
-                AddYValue(starttime, offset.Y, absolute.Y);
+                AddXValue(starttime, offset.X);
+                AddYValue(starttime, offset.Y);
                 return;
             }
 
@@ -169,7 +169,7 @@ namespace StorybrewScripts
 
             if (starttime == endtime)
             {
-                AddXValue(starttime, value, value);
+                AddXValue(starttime, value);
                 return;
             }
 
@@ -181,7 +181,7 @@ namespace StorybrewScripts
         {
             if (starttime == endtime)
             {
-                AddYValue(starttime, value, value);
+                AddYValue(starttime, value);
                 return;
             }
 
@@ -252,7 +252,7 @@ namespace StorybrewScripts
             Vector2 currentPosition = point;
             double currentTime = starttime;
 
-            while (currentTime <= endtime)
+            while (currentTime < endtime)
             {
                 currentTime += deltaIncrement;
                 double progress = Math.Max(currentTime - starttime, 1) / duration; // Calculate progress as a ratio
@@ -361,83 +361,51 @@ namespace StorybrewScripts
             return new Color4(r, g, b, a);
         }
 
-        private void AddXValue(double time, float value, float progressed, bool absolute = false)
+        private void AddXValue(double time, float value, bool absolute = false)
         {
-
-            // Ensure time is a multiple of deltaTime
-            if (time % deltaIncrement != 0)
-            {
-                // Handle the case where time is not a multiple of deltaTime
-                // Option 1: Adjust time to the nearest multiple of deltaTime
-                time = Math.Ceiling(time / deltaIncrement) * deltaIncrement;
-
-                // Option 2: Throw an exception
-                // throw new ArgumentException("Time must be a multiple of deltaTime.");
-            }
-
+            // Update or add the value at the specified time
             if (positionX.ContainsKey(time))
             {
-
                 if (absolute)
                     positionX[time] = value;
                 else
-                {
-                    positionX[time] += progressed;
-                }
-
+                    positionX[time] += value;
             }
             else
             {
-
                 float lastValue = getLastX(time);
+                positionX.Add(time, lastValue + value);
+            }
 
-                if (absolute)
-                    positionX.Add(time, value);
-                else
-                    positionX.Add(time, lastValue + value);
-
+            // Adjust all subsequent values
+            foreach (var key in positionX.Keys.Where(k => k > time).ToList())
+            {
+                positionX[key] += value;
             }
         }
 
 
-
-        private void AddYValue(double time, float value, float progressed, bool absolute = false)
+        private void AddYValue(double time, float value, bool absolute = false)
         {
-
-            // Ensure time is a multiple of deltaTime
-            if (time % deltaIncrement != 0)
-            {
-                // Handle the case where time is not a multiple of deltaTime
-                // Option 1: Adjust time to the nearest multiple of deltaTime
-                time = Math.Ceiling(time / deltaIncrement) * deltaIncrement;
-
-                // Option 2: Throw an exception
-                // throw new ArgumentException("Time must be a multiple of deltaTime.");
-            }
-
+            // Update or add the value at the specified time
             if (positionY.ContainsKey(time))
             {
-
                 if (absolute)
                     positionY[time] = value;
                 else
-                {
-                    positionY[time] += progressed;
-                }
-
+                    positionY[time] += value;
             }
             else
             {
-
                 float lastValue = getLastY(time);
-
-                if (absolute)
-                    positionY.Add(time, value);
-                else
-                    positionY.Add(time, lastValue + value);
-
+                positionY.Add(time, lastValue + value);
             }
 
+            // Adjust all subsequent values
+            foreach (var key in positionY.Keys.Where(k => k > time).ToList())
+            {
+                positionY[key] += value;
+            }
         }
 
         private float getLastX(double currentTime)
@@ -519,8 +487,8 @@ namespace StorybrewScripts
                 Vector2 movement = newPos - lastPos;               // Delta movement
 
                 // Apply the delta movement
-                AddXValue(start + deltaTime, movement.X, newPos.X);
-                AddYValue(start + deltaTime, movement.Y, newPos.Y);
+                AddXValue(start + deltaTime, movement.X, true);
+                AddYValue(start + deltaTime, movement.Y, true);
 
 
                 lastPos = newPos;   // Update lastPos for the next iteration
@@ -551,9 +519,9 @@ namespace StorybrewScripts
 
                 // Apply the delta movement
                 if (offset.X != 0)
-                    AddXValue(start + deltaTime, movement.X, newPos.X);
+                    AddXValue(start + deltaTime, movement.X);
                 if (offset.Y != 0)
-                    AddYValue(start + deltaTime, movement.Y, newPos.Y);
+                    AddYValue(start + deltaTime, movement.Y);
 
 
                 lastPos = newPos;   // Update lastPos for the next iteration

@@ -18,7 +18,7 @@ namespace StorybrewScripts
 
         // Default SB height / width
 
-        public double delta = 2;
+        public double delta = 10;
 
         private float absoluteWidth = 640f;
         public float width = 250f;
@@ -211,15 +211,10 @@ namespace StorybrewScripts
         public void Resize(OsbEasing easing, double starttime, double endtime, float width, float height)
         {
 
-            float wDiff = width;
-
-            if (width > 0)
-                wDiff = width * 2 - this.width;
-            else
-                wDiff = width - this.width * 2;
+            float wDiff = width / 2 - this.width / 2;
 
             float position = 0;
-            Vector2 left = calculatePlayFieldCenter(starttime) + new Vector2(wDiff / 2, 0);
+            Vector2 left = calculatePlayFieldCenter(starttime) - new Vector2(wDiff / 2, 0);
 
             foreach (Column column in columns.Values)
             {
@@ -251,8 +246,8 @@ namespace StorybrewScripts
                 Vector2 receptorOffsetToLeft = receptorPos - left;
                 Vector2 originrOffsetToLeft = originPos - left;
 
-                Vector2 newPosition = new Vector2(receptorOffsetToLeft.X + x, 0);
-                Vector2 newOpposit = new Vector2(originrOffsetToLeft.X + x, y);
+                Vector2 newPosition = new Vector2(x - receptorOffsetToLeft.X, 0);
+                Vector2 newOpposit = new Vector2(x - originrOffsetToLeft.X, y);
 
                 receptor.MoveReceptorRelative(easing, starttime, endtime, newPosition);
                 origin.MoveOriginRelative(easing, starttime, endtime, newOpposit);

@@ -26,19 +26,19 @@ namespace StorybrewScripts
 
             var pos = origin.PositionAt(relativeTime);
 
-            float x = pos.X;
-            float y = pos.Y;
+            //float x = pos.X;
+            //float y = pos.Y;
 
             while (relativeTime <= playfieldInstance.endtime)
             {
                 Vector2 position = origin.PositionAt(relativeTime);
 
-                x = position.X;
-                y = position.Y;
+                float x = position.X;
+                float y = position.Y;
 
-                if (relativeTime >= 15157 && relativeTime <= 15473)
+                if (relativeTime >= 16342 && relativeTime <= 16578 && column.type == ColumnType.one)
                 {
-                    //Utility.Log($"{relativeTime} - {position} - {x}/{y}");
+                    Utility.Log($"Origin - {relativeTime} - {position} - {x}/{y}");
                 }
 
                 movementX.Add(relativeTime, x);
@@ -47,8 +47,8 @@ namespace StorybrewScripts
                 relativeTime += playfieldInstance.delta;
             }
 
-            movementX.Simplify1dKeyframes(1, v => v);
-            movementY.Simplify1dKeyframes(1, v => v);
+            //movementX.Simplify1dKeyframes(1, v => v);
+            //movementY.Simplify1dKeyframes(1, v => v);
             movementX.ForEachPair((start, end) => origin.originSprite.MoveX(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
             movementY.ForEachPair((start, end) => origin.originSprite.MoveY(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
 

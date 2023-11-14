@@ -55,14 +55,19 @@ namespace StorybrewScripts
                 x = position.X;
                 y = position.Y;
 
+                if (relativeTime >= 16342 && relativeTime <= 16578 && column.type == ColumnType.one)
+                {
+                    Utility.Log($"Receptor - {relativeTime} - {position} - {x}/{y}");
+                }
+
                 movementX.Add(relativeTime, x);
                 movementY.Add(relativeTime, y);
 
                 relativeTime += playfieldInstance.delta;
             }
 
-            movementX.Simplify1dKeyframes(1, v => v);
-            movementY.Simplify1dKeyframes(1, v => v);
+            //movementX.Simplify1dKeyframes(1, v => v);
+            //movementY.Simplify1dKeyframes(1, v => v);
             movementX.ForEachPair((start, end) => receptor.renderedSprite.MoveX(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
             movementY.ForEachPair((start, end) => receptor.renderedSprite.MoveY(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
 

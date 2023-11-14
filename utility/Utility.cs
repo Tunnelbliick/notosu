@@ -10,7 +10,7 @@ namespace StorybrewScripts
     public static class Utility
     {
 
-        public static Vector2 PivotPoint(Vector2 point, Vector2 center, double radians)
+        public static Vector2  PivotPoint(Vector2 point, Vector2 center, double radians)
         {
             // Translate point back to origin
             point -= center;
