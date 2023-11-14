@@ -405,8 +405,11 @@ namespace StorybrewScripts
                 Vector2 movement = newPos - lastPos;               // Delta movement
 
                 // Apply the delta movement
-                AddXValue(start + deltaTime, movement.X, newPos.X);
-                AddYValue(start + deltaTime, movement.Y, newPos.Y);
+                // This hack will probably have other issues that come from it
+                if (offset.X != 0)
+                    AddXValue(start + deltaTime, movement.X, newPos.X);
+                if (offset.Y != 0)
+                    AddYValue(start + deltaTime, movement.Y, newPos.Y);
 
 
                 lastPos = newPos;   // Update lastPos for the next iteration

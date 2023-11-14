@@ -120,7 +120,7 @@ namespace StorybrewScripts
             string logFilePath = Path.Combine(logDirectoryPath, "notosu.log");
 
             // Append the text to the log file
-            File.AppendAllText(logFilePath, Environment.NewLine + "------------------" + Environment.NewLine + System.DateTime.Now.ToString() + Environment.NewLine + "------------------" + Environment.NewLine + text + Environment.NewLine);
+            File.AppendAllText(logFilePath, text + Environment.NewLine);
 
             // Optionally, display the text in the console
             Console.WriteLine(text);

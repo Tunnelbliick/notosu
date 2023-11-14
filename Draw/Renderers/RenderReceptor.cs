@@ -26,7 +26,8 @@ namespace StorybrewScripts
             double fadeInTime = instance.fadeInTime;
             double fadeOutTime = instance.fadeOutTime;
 
-            KeyframedValue<Vector2> movement = new KeyframedValue<Vector2>(null);
+            KeyframedValue<float> movementX = new KeyframedValue<float>(null);
+            KeyframedValue<float> movementY = new KeyframedValue<float>(null);
             KeyframedValue<Vector2> scale = new KeyframedValue<Vector2>(null);
             KeyframedValue<double> rotation = new KeyframedValue<double>(null);
 
@@ -44,14 +45,27 @@ namespace StorybrewScripts
 
             var pos = receptor.PositionAt(relativeTime);
 
+            float x = pos.X;
+            float y = pos.Y;
+
             while (relativeTime <= playfieldInstance.endtime)
             {
-                movement.Add(relativeTime, receptor.PositionAt(relativeTime));
+                Vector2 position = receptor.PositionAt(relativeTime);
+
+                x = position.X;
+                y = position.Y;
+
+                movementX.Add(relativeTime, x);
+                movementY.Add(relativeTime, y);
+
                 relativeTime += playfieldInstance.delta;
             }
 
-            movement.Simplify2dKeyframes(1, v => v);
-            movement.ForEachPair((start, end) => receptor.renderedSprite.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
+            movementX.Simplify1dKeyframes(1, v => v);
+            movementY.Simplify1dKeyframes(1, v => v);
+            movementX.ForEachPair((start, end) => receptor.renderedSprite.MoveX(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
+            movementY.ForEachPair((start, end) => receptor.renderedSprite.MoveY(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
+
 
 
             var foundEntry = instance.findEffectByReferenceTime(currentTime);

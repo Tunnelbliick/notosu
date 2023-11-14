@@ -408,12 +408,14 @@ namespace StorybrewScripts
 
                     // Calculate the change in distance for receptor based on scale difference.
                     float receptorDistanceChangeX = (receptorPosition.X - center.X) * (newScale.X / receptorScale.X - 1);
+                    float receptorDistanceChangeY = (center.Y - receptorPosition.Y) * (newScale.Y / receptorScale.Y - 1);
 
                     // Adjust using the new coordinate system's basis.
                     Vector2 receptorMovement = new Vector2(receptorDistanceChangeX, 0);
 
                     // Calculate the change in distance for origin based on scale difference.
                     float originDistanceChangeX = (originPosition.X - center.X) * (newScale.X / originScale.X - 1);
+                    float originDistanceChangeY = (center.Y - originPosition.Y) * (newScale.Y / originPosition.Y - 1);
 
                     Vector2 originMovement = new Vector2(originDistanceChangeX, 0);
 
