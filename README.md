@@ -1,4 +1,5 @@
 # notOSU! - A Tool for Dynamic osu!mania Storyboarding
+![](https://repository-images.githubusercontent.com/669634772/939caa35-269b-44bb-92e0-4b0aa3d3ba1d)
 
 Welcome to notOSU!, an innovative tool designed to enhance your storyboarding experience in osu!mania. This README provides guidance on setting up and configuring notOSU! for your storyboard projects.
 
