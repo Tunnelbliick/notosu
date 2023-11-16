@@ -62,7 +62,6 @@ namespace StorybrewScripts
             }
 
             // Adjust the StartTime by the offset and calculate its position in the cycle
-            NoteDivisor.wholeTick.getNoteType()
             int cycle = (int)Math.Floor((hitObject.StartTime - offset) / beatDuration);
 
             int adjustedTime = (int)Math.Round(hitObject.StartTime - offset - (cycle * beatDuration));
