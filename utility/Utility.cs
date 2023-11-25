@@ -4,13 +4,14 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using OpenTK;
+using StorybrewCommon.Animations;
 
 namespace StorybrewScripts
 {
     public static class Utility
     {
 
-        public static Vector2  PivotPoint(Vector2 point, Vector2 center, double radians)
+        public static Vector2 PivotPoint(Vector2 point, Vector2 center, double radians)
         {
             // Translate point back to origin
             point -= center;
@@ -125,5 +126,7 @@ namespace StorybrewScripts
             // Optionally, display the text in the console
             Console.WriteLine(text);
         }
+
     }
+
 }

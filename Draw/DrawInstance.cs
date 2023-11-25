@@ -57,6 +57,10 @@ namespace StorybrewScripts
             this.iterationLength = 1000 / updatesPerSecond;
             this.changeUpdateRate(starttime, updatesPerSecond);
 
+            this.noteScaleEasing = easing;
+            this.holdScaleEasing = easing;
+
+
             return this;
 
         }

@@ -215,8 +215,8 @@ namespace StorybrewScripts
 
                     List<SliderParts> reversedSliderPoints = note.sliderPositions.ToList();
                     reversedSliderPoints.Reverse();
-                    foreach (SliderParts part in note.sliderPositions)
-                    {
+                         Parallel.ForEach(note.sliderPositions, part =>
+                              {
 
                         KeyframedValue<Vector2> SliderMovement = new KeyframedValue<Vector2>(null);
                         KeyframedValue<Vector2> SliderScale = new KeyframedValue<Vector2>(null);
@@ -430,19 +430,19 @@ namespace StorybrewScripts
                                 break;
                         }
                         // Render out Slider keyframes
-                        SliderMovement.Simplify2dKeyframes(instance.HoldMovementPrecision, v => v);
-                        SliderScale.Simplify2dKeyframes(instance.HoldScalePrecision, v => v);
-                        SliderRotation.Simplify1dKeyframes(instance.HoldRotationPrecision, v => (float)v);
+                        SliderMovement.Simplify(instance.HoldMovementPrecision);
+                        SliderScale.Simplify(instance.HoldScalePrecision);
+                        SliderRotation.Simplify(instance.HoldRotationPrecision);
                         SliderMovement.ForEachPair((start, end) => sprite.Move(easing, start.Time, end.Time, start.Value, end.Value));
                         SliderScale.ForEachPair((start, end) => sprite.ScaleVec(start.Time, end.Time, start.Value.X, start.Value.Y, end.Value.X, end.Value.Y));
                         SliderRotation.ForEachPair((start, end) => sprite.Rotate(start.Time, end.Value));
 
-                    }
+                    });
 
                     // Render out Note keyframes
-                    movement.Simplify2dKeyframes(instance.NoteMovementPrecision, v => v);
-                    scale.Simplify2dKeyframes(instance.NoteScalePrecision, v => v);
-                    rotation.Simplify1dKeyframes(instance.NoteRotationPrecision, v => (float)v);
+                    movement.Simplify(instance.NoteMovementPrecision);
+                    scale.Simplify(instance.NoteScalePrecision);
+                    rotation.Simplify(instance.NoteRotationPrecision);
                     movement.ForEachPair((start, end) => note.Move(start.Time, end.Time - start.Time, OsbEasing.None, start.Value, end.Value));
                     scale.ForEachPair((start, end) => note.Scale(start.Time, end.Time, OsbEasing.None, start.Value, end.Value));
                     rotation.ForEachPair((start, end) => note.AbsoluteRotate(start.Time, end.Time - start.Time, OsbEasing.None, end.Value));

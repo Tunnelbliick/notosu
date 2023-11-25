@@ -26,8 +26,7 @@ namespace StorybrewScripts
             double fadeInTime = instance.fadeInTime;
             double fadeOutTime = instance.fadeOutTime;
 
-            KeyframedValue<float> movementX = new KeyframedValue<float>(null);
-            KeyframedValue<float> movementY = new KeyframedValue<float>(null);
+            KeyframedValue<Vector2> movement = new KeyframedValue<Vector2>(null);
             KeyframedValue<Vector2> scale = new KeyframedValue<Vector2>(null);
             KeyframedValue<double> rotation = new KeyframedValue<double>(null);
 
@@ -52,24 +51,18 @@ namespace StorybrewScripts
             {
                 Vector2 position = receptor.PositionAt(relativeTime);
 
-                x = position.X;
-                y = position.Y;
-
                 if (relativeTime >= 16342 && relativeTime <= 16578 && column.type == ColumnType.one)
                 {
-                    Utility.Log($"Receptor - {relativeTime} - {position} - {x}/{y}");
+                    //Utility.Log($"Receptor - {relativeTime} - {position} - {x}/{y}");
                 }
 
-                movementX.Add(relativeTime, x);
-                movementY.Add(relativeTime, y);
+                movement.Add(relativeTime, position);
 
                 relativeTime += playfieldInstance.delta;
             }
 
-            //movementX.Simplify1dKeyframes(1, v => v);
-            //movementY.Simplify1dKeyframes(1, v => v);
-            movementX.ForEachPair((start, end) => receptor.renderedSprite.MoveX(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
-            movementY.ForEachPair((start, end) => receptor.renderedSprite.MoveY(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
+            movement.Simplify(1);
+            movement.ForEachPair((start, end) => receptor.renderedSprite.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
 
 
 

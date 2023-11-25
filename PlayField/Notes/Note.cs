@@ -47,7 +47,7 @@ namespace StorybrewScripts
             {
 
                 this.isSlider = true;
-                var sliderDuration = this.endtime - this.starttime;
+                var sliderDuration = this.endtime - this.starttime - 20;
 
                 for (double ellapsedTime = 0; sliderDuration > ellapsedTime; ellapsedTime += msPerPart)
                 {
@@ -56,7 +56,7 @@ namespace StorybrewScripts
 
                     OsbSprite body = this.layer.CreateSprite("sb/sprites/hold_body.png");
 
-                    SliderParts sliderPositon = new SliderParts(new Vector2(10, 10), this.starttime + ellapsedTime, duration, body);
+                    SliderParts sliderPositon = new SliderParts(new Vector2(10, 10), this.starttime + ellapsedTime + 20, duration, body);
                     this.sliderPositions.Add(sliderPositon);
 
                 }

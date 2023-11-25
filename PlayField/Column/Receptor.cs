@@ -31,6 +31,9 @@ namespace StorybrewScripts
         public SortedDictionary<double, float> positionX = new SortedDictionary<double, float>();
         public SortedDictionary<double, float> positionY = new SortedDictionary<double, float>();
 
+        private readonly object lockX = new object();
+        private readonly object lockY = new object();
+
         // Rotation in radiants
         public double rotation = 0f;
         public double startRotation = 0f;
@@ -244,7 +247,7 @@ namespace StorybrewScripts
 
         public void PivotReceptor(OsbEasing ease, double starttime, double endtime, double rotation, Vector2 center)
         {
-            Vector2 point = PositionAt(starttime);
+            Vector2 point = PositionAt(endtime);
 
             double duration = Math.Max(endtime - starttime, 1);
             double endRadians = rotation; // Total rotation in radians
@@ -252,16 +255,15 @@ namespace StorybrewScripts
             Vector2 currentPosition = point;
             double currentTime = starttime;
 
-            while (currentTime < endtime)
+            while (currentTime <= endtime)
             {
-                currentTime += deltaIncrement;
                 double progress = Math.Max(currentTime - starttime, 1) / duration; // Calculate progress as a ratio
 
                 // Adjust the rotation based on progress and easing
                 double easedProgress = ease.Ease(progress); // Assuming ease.Ease() applies the easing to the progress
                 double currentRotation = endRadians * easedProgress; // Total rotation adjusted by eased progress
 
-                Vector2 rotatedPoint = Utility.PivotPoint(point, center, currentRotation);
+                Vector2 rotatedPoint = Utility.PivotPoint(point, center, Math.Round(currentRotation, 5));
 
                 Vector2 relativeMovement = rotatedPoint - currentPosition;
                 Vector2 absoluteMovement = rotatedPoint - point;
@@ -269,6 +271,7 @@ namespace StorybrewScripts
                 MoveReceptorRelative(ease, currentTime, currentTime, relativeMovement, absoluteMovement);
 
                 currentPosition = rotatedPoint;
+                currentTime += deltaIncrement;
             }
         }
 
@@ -363,54 +366,70 @@ namespace StorybrewScripts
 
         private void AddXValue(double time, float value, bool absolute = false)
         {
-            // Update or add the value at the specified time
-            if (positionX.ContainsKey(time))
+            lock (lockX)
             {
-                if (absolute)
-                    positionX[time] = value;
-                else
-                    positionX[time] += value;
-            }
-            else
-            {
-                float lastValue = getLastX(time);
-                positionX.Add(time, lastValue + value);
-            }
+                if (positionX == null)
+                {
+                    positionX = new SortedDictionary<double, float>();
+                }
 
-            // Adjust all subsequent values
-            foreach (var key in positionX.Keys.Where(k => k > time).ToList())
-            {
-                positionX[key] += value;
+                // Update or add the value at the specified time
+                if (positionX.ContainsKey(time))
+                {
+                    if (absolute)
+                        positionX[time] = value;
+                    else
+                        positionX[time] += value;
+                }
+                else
+                {
+                    float lastValue = getLastX(time);
+                    positionX.Add(time, lastValue + value);
+                }
+
+                // Adjust all subsequent values
+                foreach (var key in positionX.Keys.Where(k => k > time).ToList())
+                {
+                    positionX[key] += value;
+                }
             }
         }
 
 
         private void AddYValue(double time, float value, bool absolute = false)
         {
-            // Update or add the value at the specified time
-            if (positionY.ContainsKey(time))
+            lock (lockY)
             {
-                if (absolute)
-                    positionY[time] = value;
-                else
-                    positionY[time] += value;
-            }
-            else
-            {
-                float lastValue = getLastY(time);
-                positionY.Add(time, lastValue + value);
-            }
+                if (positionY == null)
+                {
+                    positionY = new SortedDictionary<double, float>();
+                }
 
-            // Adjust all subsequent values
-            foreach (var key in positionY.Keys.Where(k => k > time).ToList())
-            {
-                positionY[key] += value;
+                // Update or add the value at the specified time
+                if (positionY.ContainsKey(time))
+                {
+                    if (absolute)
+                        positionY[time] = value;
+                    else
+                        positionY[time] += value;
+                }
+                else
+                {
+                    float lastValue = getLastY(time);
+                    positionY.Add(time, lastValue + value);
+                }
+
+                // Adjust all subsequent values
+                foreach (var key in positionY.Keys.Where(k => k > time).ToList())
+                {
+                    positionY[key] += value;
+                }
             }
         }
 
         private float getLastX(double currentTime)
         {
-            if (positionX.Count == 0)
+            if (positionX == null || positionX.Count == 0)
             {
                 return 0; // Or your default value
             }
@@ -440,7 +459,7 @@ namespace StorybrewScripts
 
         private float getLastY(double currentTime)
         {
-            if (positionY.Count == 0)
+            if (positionY == null || positionY.Count == 0)
             {
                 return 0; // Or your default value
             }
