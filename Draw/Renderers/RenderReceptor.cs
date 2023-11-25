@@ -51,11 +51,6 @@ namespace StorybrewScripts
             {
                 Vector2 position = receptor.PositionAt(relativeTime);
 
-                if (relativeTime >= 16342 && relativeTime <= 16578 && column.type == ColumnType.one)
-                {
-                    //Utility.Log($"Receptor - {relativeTime} - {position} - {x}/{y}");
-                }
-
                 movement.Add(relativeTime, position);
 
                 relativeTime += playfieldInstance.delta;

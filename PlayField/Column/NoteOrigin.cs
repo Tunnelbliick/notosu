@@ -189,7 +189,6 @@ namespace StorybrewScripts
 
                 // Adjust the rotation based on progress and easing
                 double easedProgress = ease.Ease(progress); // Assuming ease.Ease() applies the easing to the progress
-                //Utility.Log($"{progress}");
                 double currentRotation = endRadians * easedProgress; // Total rotation adjusted by eased progress
 
                 Vector2 rotatedPoint = Utility.PivotPoint(point, center, Math.Round(currentRotation, 5));
@@ -228,8 +227,6 @@ namespace StorybrewScripts
                     positionX.Add(time, lastValue + value);
                 }
 
-                //if (time <= 79421)
-                //{
                 // Adjust all subsequent values
                 Parallel.ForEach(positionX.Keys.Where(k => k > time).ToList(), key =>
                 {
@@ -237,7 +234,6 @@ namespace StorybrewScripts
                         positionX[key] += value;
                     }
                 });
-                //}
             }
         }
 
@@ -266,10 +262,10 @@ namespace StorybrewScripts
                 }
 
                 // Adjust all subsequent values
-                foreach (var key in positionY.Keys.Where(k => k > time).ToList())
+                Parallel.ForEach(positionY.Keys.Where(k => k > time).ToList(), key =>
                 {
                     positionY[key] += value;
-                }
+                });
             }
         }
 

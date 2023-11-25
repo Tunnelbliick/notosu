@@ -43,11 +43,6 @@ namespace StorybrewScripts
             movement.Simplify(1);
             movement.ForEachPair((start, end) =>
             {
-                if (start.Time >= 79421 && column.type == ColumnType.one)
-                {
-                    Utility.Log($"Origin - {start.Time}, {end.Time}, {start.Value}, {end.Value}");
-                }
-
                 origin.originSprite.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value);
             });
 

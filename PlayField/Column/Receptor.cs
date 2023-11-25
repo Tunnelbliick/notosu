@@ -366,6 +366,7 @@ namespace StorybrewScripts
 
         private void AddXValue(double time, float value, bool absolute = false)
         {
+
             lock (lockX)
             {
                 if (positionX == null)
@@ -388,10 +389,12 @@ namespace StorybrewScripts
                 }
 
                 // Adjust all subsequent values
-                foreach (var key in positionX.Keys.Where(k => k > time).ToList())
+                Parallel.ForEach(positionX.Keys.Where(k => k > time).ToList(), key =>
                 {
-                    positionX[key] += value;
-                }
+                    {
+                        positionX[key] += value;
+                    }
+                });
             }
         }
 
@@ -420,10 +423,10 @@ namespace StorybrewScripts
                 }
 
                 // Adjust all subsequent values
-                foreach (var key in positionY.Keys.Where(k => k > time).ToList())
+                Parallel.ForEach(positionY.Keys.Where(k => k > time).ToList(), key =>
                 {
                     positionY[key] += value;
-                }
+                });
             }
         }
 
