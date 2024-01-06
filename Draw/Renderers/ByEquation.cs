@@ -229,204 +229,204 @@ namespace StorybrewScripts
                                   //foreach (var part in note.sliderPositions)
                                   //{
 
-                                      KeyframedValue<Vector2> SliderMovement = new KeyframedValue<Vector2>(null);
-                                      KeyframedValue<Vector2> SliderScale = new KeyframedValue<Vector2>(null);
-                                      KeyframedValue<double> SliderRotation = new KeyframedValue<double>(null);
+                                  KeyframedValue<Vector2> SliderMovement = new KeyframedValue<Vector2>(null);
+                                  KeyframedValue<Vector2> SliderScale = new KeyframedValue<Vector2>(null);
+                                  KeyframedValue<double> SliderRotation = new KeyframedValue<double>(null);
 
-                                      double sliderIterationLenght = instance.findCurrentUpdateRate(part.Timestamp - easetime);
+                                  double sliderIterationLenght = instance.findCurrentUpdateRate(part.Timestamp - easetime);
 
-                                      double sliderStartime = part.Timestamp;
-                                      OsbSprite sprite = part.Sprite;
-                                      double sliderCurrentTime = sliderStartime - easetime - sliderIterationLenght;
-                                      Vector2 currentSliderPositon = column.origin.originSprite.PositionAt(sliderCurrentTime);
-                                      double sliderRenderStartTime = Math.Max(sliderStartime - easetime, starttime);
-                                      double sliderRenderEndTime = Math.Min(sliderStartime, endtime);
-                                      float sliderProgress = 0;
-                                      double sliderIteratedTime = 0;
-                                      sprite.Fade(sliderCurrentTime, 0);
+                                  double sliderStartime = part.Timestamp;
+                                  OsbSprite sprite = part.Sprite;
+                                  double sliderCurrentTime = sliderStartime - easetime - sliderIterationLenght;
+                                  Vector2 currentSliderPositon = column.origin.originSprite.PositionAt(sliderCurrentTime);
+                                  double sliderRenderStartTime = Math.Max(sliderStartime - easetime, starttime);
+                                  double sliderRenderEndTime = Math.Min(sliderStartime, endtime);
+                                  float sliderProgress = 0;
+                                  double sliderIteratedTime = 0;
+                                  sprite.Fade(sliderCurrentTime, 0);
 
-                                      FadeEffect sliderFade = instance.findFadeAtTime(sliderRenderStartTime);
+                                  FadeEffect sliderFade = instance.findFadeAtTime(sliderRenderStartTime);
+                                  if (sliderFade != null)
+                                  {
+                                      sprite.Fade(sliderRenderStartTime, sliderFade.value);
+                                  }
+                                  else
+                                  {
+                                      sprite.Fade(sliderRenderStartTime, 1);
+                                  }
+
+                                  sprite.Fade(sliderRenderEndTime, 0);
+                                  double sliderRotation = sprite.RotationAt(sliderCurrentTime);
+
+                                  float defaultScaleX = 0.7f / 0.5f;
+                                  float defaultScaleY = 0.15f / 0.5f * ((float)part.Duration / 20f); // This scaled was based on 20ms long sliderParts
+
+                                  Vector2 newScale = new Vector2(defaultScaleX * column.origin.ScaleAt(sliderCurrentTime).X, defaultScaleY * column.origin.ScaleAt(sliderCurrentTime).Y);
+
+                                  SliderMovement.Add(sliderCurrentTime, currentSliderPositon, EasingFunctions.ToEasingFunction(easing));
+                                  SliderScale.Add(sliderCurrentTime, newScale, EasingFunctions.ToEasingFunction(easing));
+
+                                  bool hasStartedRendering = false;
+                                  float prevTheta = 0;  // You need to store the previous theta between calls
+
+                                  do
+                                  {
+
+                                      if (sliderCurrentTime > endtime)
+                                      {
+                                          break;
+                                      }
+
+                                      sliderFade = instance.findFadeAtTime(sliderCurrentTime);
                                       if (sliderFade != null)
                                       {
-                                          sprite.Fade(sliderRenderStartTime, sliderFade.value);
-                                      }
-                                      else
-                                      {
-                                          sprite.Fade(sliderRenderStartTime, 1);
+                                          if (sprite.OpacityAt(sliderCurrentTime) != sliderFade.value)
+                                              sprite.Fade(sliderFade.easing, sliderCurrentTime, sliderCurrentTime, sprite.OpacityAt(sliderCurrentTime), sliderFade.value);
                                       }
 
-                                      sprite.Fade(sliderRenderEndTime, 0);
-                                      double sliderRotation = sprite.RotationAt(sliderCurrentTime);
+                                      double timeleft = sliderStartime - sliderCurrentTime;
+                                      sliderProgress = Math.Min((float)(sliderIteratedTime / easetime), 1);
+                                      float sliderProgressNext = Math.Min((float)((sliderIteratedTime + sliderIterationLenght) / easetime), 1);
 
-                                      float defaultScaleX = 0.7f / 0.5f;
-                                      float defaultScaleY = 0.15f / 0.5f * ((float)part.Duration / 20f); // This scaled was based on 20ms long sliderParts
+                                      debug += sliderProgressNext;
 
-                                      Vector2 newScale = new Vector2(defaultScaleX * column.origin.ScaleAt(sliderCurrentTime).X, defaultScaleY * column.origin.ScaleAt(sliderCurrentTime).Y);
+                                      // Apply easing to the progress
+                                      float easedProgress = (float)easing.Ease(sliderProgress);
+                                      float easedNextProgress = (float)easing.Ease(sliderProgressNext);
 
-                                      SliderMovement.Add(sliderCurrentTime, currentSliderPositon, EasingFunctions.ToEasingFunction(easing));
-                                      SliderScale.Add(sliderCurrentTime, newScale, EasingFunctions.ToEasingFunction(easing));
-
-                                      bool hasStartedRendering = false;
-                                      float prevTheta = 0;  // You need to store the previous theta between calls
-
-                                      do
+                                      if (currentEffect.Value != null && currentEffect.Value.effektType == EffectType.RenderPlayFieldFrom)
                                       {
-
-                                          if (sliderCurrentTime > endtime)
+                                          if (easedProgress < currentEffect.Value.value)
                                           {
+
+                                              Vector2 originPositionLocal = column.origin.originSprite.PositionAt(sliderCurrentTime + sliderIterationLenght);
+                                              Vector2 receptorPositionLocal = column.receptor.renderedSprite.PositionAt(sliderCurrentTime + sliderIterationLenght);
+                                              Vector2 newPositionLocal = Vector2.Lerp(originPositionLocal, receptorPositionLocal, easedProgress);
+
+                                              sprite.Fade(sliderCurrentTime, 0);
+                                              sliderIteratedTime += sliderIterationLenght;
+                                              sliderCurrentTime += sliderIterationLenght;
+                                              currentSliderPositon = newPositionLocal;
+                                          }
+                                          else if (hasStartedRendering == false)
+                                          {
+                                              hasStartedRendering = true;
+                                              float fade = 1;
+                                              if (noteFade != null)
+                                              {
+                                                  fade = noteFade.value;
+                                              }
+                                              sprite.Fade(sliderCurrentTime + sliderIterationLenght, sliderCurrentTime + sliderIterationLenght + fadeInTime, 0, fade);
+                                          }
+                                      }
+
+                                      if (currentEffect.Value != null && currentEffect.Value.effektType == EffectType.RenderPlayFieldUntil)
+                                      {
+                                          if (easedProgress > currentEffect.Value.value)
+                                          {
+                                              sprite.Fade(sliderCurrentTime, sliderCurrentTime + fadeOutTime, sprite.OpacityAt(currentTime), 0);
                                               break;
                                           }
+                                      }
 
-                                          sliderFade = instance.findFadeAtTime(sliderCurrentTime);
-                                          if (sliderFade != null)
-                                          {
-                                              if (sprite.OpacityAt(sliderCurrentTime) != sliderFade.value)
-                                                  sprite.Fade(sliderFade.easing, sliderCurrentTime, sliderCurrentTime, sprite.OpacityAt(sliderCurrentTime), sliderFade.value);
-                                          }
+                                      Vector2 originPosition = column.origin.originSprite.PositionAt(sliderCurrentTime + sliderIterationLenght);
+                                      Vector2 receptorPosition = column.receptor.renderedSprite.PositionAt(sliderCurrentTime + sliderIterationLenght);
+                                      Vector2 newPosition = Vector2.Lerp(originPosition, receptorPosition, easedProgress);
+                                      Vector2 nextPosition = Vector2.Lerp(originPosition, receptorPosition, easedNextProgress);
 
-                                          double timeleft = sliderStartime - sliderCurrentTime;
-                                          sliderProgress = Math.Min((float)(sliderIteratedTime / easetime), 1);
-                                          float sliderProgressNext = Math.Min((float)((sliderIteratedTime + sliderIterationLenght) / easetime), 1);
+                                      var par = new EquationParameters();
+                                      par.position = newPosition;
+                                      par.time = sliderCurrentTime;
+                                      par.progress = easedProgress;
+                                      par.sprite = sprite;
+                                      par.note = note;
+                                      par.part = part;
+                                      par.column = column;
+                                      par.isHoldBody = true;
 
-                                          debug += sliderProgressNext;
+                                      var parNext = new EquationParameters();
+                                      parNext.position = nextPosition;
+                                      parNext.time = sliderCurrentTime;
+                                      parNext.progress = easedNextProgress;
+                                      parNext.sprite = null;
+                                      parNext.note = note;
+                                      parNext.column = column;
+                                      parNext.isHoldBody = true;
 
-                                          // Apply easing to the progress
-                                          float easedProgress = (float)easing.Ease(sliderProgress);
-                                          float easedNextProgress = (float)easing.Ease(sliderProgressNext);
+                                      newPosition = equation(par);
+                                      nextPosition = equation(parNext);
 
-                                          if (currentEffect.Value != null && currentEffect.Value.effektType == EffectType.RenderPlayFieldFrom)
-                                          {
-                                              if (easedProgress < currentEffect.Value.value)
-                                              {
+                                      Vector2 receptorScale = column.receptor.ScaleAt(sliderCurrentTime + sliderIterationLenght);
+                                      Vector2 originScale = column.origin.ScaleAt(sliderCurrentTime + sliderIterationLenght);
 
-                                                  Vector2 originPositionLocal = column.origin.originSprite.PositionAt(sliderCurrentTime + sliderIterationLenght);
-                                                  Vector2 receptorPositionLocal = column.receptor.renderedSprite.PositionAt(sliderCurrentTime + sliderIterationLenght);
-                                                  Vector2 newPositionLocal = Vector2.Lerp(originPositionLocal, receptorPositionLocal, easedProgress);
-
-                                                  sprite.Fade(sliderCurrentTime, 0);
-                                                  sliderIteratedTime += sliderIterationLenght;
-                                                  sliderCurrentTime += sliderIterationLenght;
-                                                  currentSliderPositon = newPositionLocal;
-                                              }
-                                              else if (hasStartedRendering == false)
-                                              {
-                                                  hasStartedRendering = true;
-                                                  float fade = 1;
-                                                  if (noteFade != null)
-                                                  {
-                                                      fade = noteFade.value;
-                                                  }
-                                                  sprite.Fade(sliderCurrentTime + sliderIterationLenght, sliderCurrentTime + sliderIterationLenght + fadeInTime, 0, fade);
-                                              }
-                                          }
-
-                                          if (currentEffect.Value != null && currentEffect.Value.effektType == EffectType.RenderPlayFieldUntil)
-                                          {
-                                              if (easedProgress > currentEffect.Value.value)
-                                              {
-                                                  sprite.Fade(sliderCurrentTime, sliderCurrentTime + fadeOutTime, sprite.OpacityAt(currentTime), 0);
-                                                  break;
-                                              }
-                                          }
-
-                                          Vector2 originPosition = column.origin.originSprite.PositionAt(sliderCurrentTime + sliderIterationLenght);
-                                          Vector2 receptorPosition = column.receptor.renderedSprite.PositionAt(sliderCurrentTime + sliderIterationLenght);
-                                          Vector2 newPosition = Vector2.Lerp(originPosition, receptorPosition, easedProgress);
-                                          Vector2 nextPosition = Vector2.Lerp(originPosition, receptorPosition, easedNextProgress);
-
-                                          var par = new EquationParameters();
-                                          par.position = newPosition;
-                                          par.time = sliderCurrentTime;
-                                          par.progress = easedProgress;
-                                          par.sprite = sprite;
-                                          par.note = note;
-                                          par.part = part;
-                                          par.column = column;
-                                          par.isHoldBody = true;
-
-                                          var parNext = new EquationParameters();
-                                          parNext.position = nextPosition;
-                                          parNext.time = sliderCurrentTime;
-                                          parNext.progress = easedNextProgress;
-                                          parNext.sprite = null;
-                                          parNext.note = note;
-                                          parNext.column = column;
-                                          parNext.isHoldBody = true;
-
-                                          newPosition = equation(par);
-                                          nextPosition = equation(parNext);
-
-                                          Vector2 receptorScale = column.receptor.ScaleAt(sliderCurrentTime + sliderIterationLenght);
-                                          Vector2 originScale = column.origin.ScaleAt(sliderCurrentTime + sliderIterationLenght);
-
-                                          Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, (float)instance.holdScaleEasing.Ease(sliderProgress));
-                                          Vector2 renderedReceptorPosition = column.receptor.renderedSprite.PositionAt(sliderCurrentTime);
+                                      Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, (float)instance.holdScaleEasing.Ease(sliderProgress));
+                                      Vector2 renderedReceptorPosition = column.receptor.renderedSprite.PositionAt(sliderCurrentTime);
 
 
-                                          float theta = 0;
+                                      float theta = 0;
 
-                                          // Calculate the current theta
-                                          Vector2 delta = new Vector2(nextPosition.X - newPosition.X, nextPosition.Y - newPosition.Y);
-                                          float newTheta = (float)Math.Round(Math.Atan2(delta.X, delta.Y), 5);
+                                      // Calculate the current theta
+                                      Vector2 delta = new Vector2(nextPosition.X - newPosition.X, nextPosition.Y - newPosition.Y);
+                                      float newTheta = (float)Math.Round(Math.Atan2(delta.X, delta.Y), 5);
 
-                                          // Check if the difference between the new theta and the previous theta exceeds 180°
-                                          float difference = newTheta - prevTheta;
-                                          if (difference > Math.PI)
-                                          {
-                                              newTheta -= 2f * (float)Math.Round(Math.PI, 5);
-                                          }
-                                          else if (difference < -Math.PI)
-                                          {
-                                              newTheta += 2 * (float)Math.PI;
-                                          }
+                                      // Check if the difference between the new theta and the previous theta exceeds 180°
+                                      float difference = newTheta - prevTheta;
+                                      if (difference > Math.PI)
+                                      {
+                                          newTheta -= 2f * (float)Math.Round(Math.PI, 5);
+                                      }
+                                      else if (difference < -Math.PI)
+                                      {
+                                          newTheta += 2 * (float)Math.PI;
+                                      }
 
-                                          theta = newTheta;
-                                          prevTheta = newTheta;
+                                      theta = newTheta;
+                                      prevTheta = newTheta;
 
-                                          float xScale = column.type == ColumnType.one || column.type == ColumnType.four ? scaleProgress.Y : scaleProgress.X;
-                                          float yScale = column.type == ColumnType.one || column.type == ColumnType.four ? scaleProgress.X : scaleProgress.Y;
-                                          newScale = new Vector2(defaultScaleX * xScale, defaultScaleY * yScale);
+                                      float xScale = column.type == ColumnType.one || column.type == ColumnType.four ? scaleProgress.Y : scaleProgress.X;
+                                      float yScale = column.type == ColumnType.one || column.type == ColumnType.four ? scaleProgress.X : scaleProgress.Y;
+                                      newScale = new Vector2(defaultScaleX * xScale, defaultScaleY * yScale);
 
-                                          SliderMovement.Add(sliderCurrentTime + sliderIterationLenght, newPosition);
-                                          SliderScale.Add(sliderCurrentTime + sliderIterationLenght, newScale);
+                                      SliderMovement.Add(sliderCurrentTime + sliderIterationLenght, newPosition);
+                                      SliderScale.Add(sliderCurrentTime + sliderIterationLenght, newScale);
 
-                                          if (nextPosition != newPosition)
-                                          {
-                                              SliderRotation.Add(sliderCurrentTime + sliderIterationLenght, -theta);
-                                          }
+                                      if (nextPosition != newPosition)
+                                      {
+                                          SliderRotation.Add(sliderCurrentTime + sliderIterationLenght, -theta);
+                                      }
 
-                                          sliderIteratedTime += sliderIterationLenght;
-                                          sliderCurrentTime += sliderIterationLenght;
-                                          currentSliderPositon = newPosition;
+                                      sliderIteratedTime += sliderIterationLenght;
+                                      sliderCurrentTime += sliderIterationLenght;
+                                      currentSliderPositon = newPosition;
 
-                                      } while (sliderProgress < 1);
+                                  } while (sliderProgress < 1);
 
-                                      // Render out Hold keyframes
-                                      SliderMovement.Simplify(instance.HoldMovementPrecision);
-                                      SliderScale.Simplify(instance.HoldScalePrecision);
-                                      SliderRotation.Simplify(instance.HoldRotationPrecision);
-                                      SliderMovement.ForEachPair((start, end) => sprite.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
-                                      SliderScale.ForEachPair((start, end) => sprite.ScaleVec(start.Time, end.Time, start.Value.X, start.Value.Y, end.Value.X, end.Value.Y));
-                                      SliderRotation.ForEachPair((start, end) => sprite.Rotate(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
-                                  });
-
-
-                                  // Render out Note keyframes
-                                  movement.Simplify(instance.NoteMovementPrecision);
-                                  scale.Simplify(instance.NoteScalePrecision);
-                                  rotation.Simplify(instance.NoteRotationPrecision);
-                                  movement.ForEachPair((start, end) => note.Move(start.Time, end.Time - start.Time, OsbEasing.None, start.Value, end.Value));
-                                  scale.ForEachPair((start, end) => note.Scale(start.Time, end.Time, OsbEasing.None, start.Value, end.Value));
-                                  rotation.ForEachPair((start, end) => note.Rotate(start.Time, end.Time - start.Time, OsbEasing.None, start.Value, end.Value));
-
-                                  if (progress == 1 && renderReceptor)
-                                  {
-                                      note.ApplyHitLightingToNote(note.starttime, note.endtime, fadeOutTime, column.receptor, localIterationRate);
-                                  }
+                                  // Render out Hold keyframes
+                                  SliderMovement.Simplify(instance.HoldMovementPrecision);
+                                  SliderScale.Simplify(instance.HoldScalePrecision);
+                                  SliderRotation.Simplify(instance.HoldRotationPrecision);
+                                  SliderMovement.ForEachPair((start, end) => sprite.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
+                                  SliderScale.ForEachPair((start, end) => sprite.ScaleVec(start.Time, end.Time, start.Value.X, start.Value.Y, end.Value.X, end.Value.Y));
+                                  SliderRotation.ForEachPair((start, end) => sprite.Rotate(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
                               });
-                     });
 
-                return debug;
-            }
+
+                         // Render out Note keyframes
+                         movement.Simplify(instance.NoteMovementPrecision);
+                         scale.Simplify(instance.NoteScalePrecision);
+                         rotation.Simplify(instance.NoteRotationPrecision);
+                         movement.ForEachPair((start, end) => note.Move(start.Time, end.Time - start.Time, OsbEasing.None, start.Value, end.Value));
+                         scale.ForEachPair((start, end) => note.Scale(start.Time, end.Time, OsbEasing.None, start.Value, end.Value));
+                         rotation.ForEachPair((start, end) => note.Rotate(start.Time, end.Time - start.Time, OsbEasing.None, start.Value, end.Value));
+
+                         if (progress == 1 && renderReceptor)
+                         {
+                             note.ApplyHitLightingToNote(note.starttime, note.endtime, fadeOutTime, column.receptor, localIterationRate);
+                         }
+                     });
+            });
+
+            return debug;
+        }
     }
-    }
+}

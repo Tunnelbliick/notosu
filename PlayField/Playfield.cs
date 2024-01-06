@@ -165,24 +165,42 @@ namespace StorybrewScripts
 
                 Dictionary<double, Note> notes = new Dictionary<double, Note>();
                 double xOffset = column.offset;
-
-                foreach (OsuHitObject hitobject in objects)
-                {
-                    if (hitobject.Position.X != xOffset)
-                        continue;
-
-                    // Check for overlapping times
-                    if (hitobject.StartTime <= noteEnd && hitobject.EndTime >= noteStart)
-                    {
-                        Note currentNote = new Note(this.noteLayer, hitobject, column, bpm, offset, isColored, msPerPart);
-                        notes.Add(hitobject.StartTime, currentNote);
-                    }
-                }
-
                 columnNotes.Add(column.type, notes);
             }
 
-            Thread.Sleep(1000);
+            objects.Reverse();
+
+            foreach (OsuHitObject hitobject in objects)
+            {
+                switch ((int)hitobject.Position.X)
+                {
+                    case 128:
+                        AddNote(columnNotes[ColumnType.one], hitobject, columns[ColumnType.one], bpm, offset, isColored, msPerPart);
+                        break;
+                    case 256:
+                        AddNote(columnNotes[ColumnType.two], hitobject, columns[ColumnType.two], bpm, offset, isColored, msPerPart);
+                        break;
+                    case 384:
+                        AddNote(columnNotes[ColumnType.three], hitobject, columns[ColumnType.three], bpm, offset, isColored, msPerPart);
+                        break;
+                    case 512:
+                        AddNote(columnNotes[ColumnType.four], hitobject, columns[ColumnType.four], bpm, offset, isColored, msPerPart);
+                        break;
+                    default:
+                        continue;
+                }
+            }
+        }
+
+        public void AddNote(Dictionary<double, Note> notes, OsuHitObject hitobject, Column column, double bpm, double offset, bool isColored, double msPerPart)
+        {
+
+            // Check for overlapping times
+            if (hitobject.StartTime <= noteEnd && hitobject.EndTime >= noteStart)
+            {
+                Note currentNote = new Note(this.noteLayer, hitobject, column, bpm, offset, isColored, msPerPart);
+                notes.Add(hitobject.StartTime, currentNote);
+            }
         }
 
         // TODO fix this
@@ -347,11 +365,11 @@ namespace StorybrewScripts
         public void Scale(OsbEasing easing, double starttime, double endtime, Vector2 newScale, bool keepPosition = false, CenterType centerType = CenterType.playfield)
         {
 
-            Vector2 center = calculatePlayFieldCenter(starttime);
+            Vector2 center = calculatePlayFieldCenter(endtime);
 
             if (centerType == CenterType.playfield)
             {
-                center = calculatePlayFieldCenter(starttime);
+                center = calculatePlayFieldCenter(endtime);
             }
             else if (centerType == CenterType.middle)
             {
@@ -365,7 +383,7 @@ namespace StorybrewScripts
 
                 foreach (Column column in columns.Values)
                 {
-                    Vector2 receptorPosition = column.receptor.PositionAt(starttime);
+                    Vector2 receptorPosition = column.receptor.PositionAt(endtime);
 
                     // Check for most left position based on x-coordinate
                     if (receptorPosition.X < mostLeft.X)
@@ -393,11 +411,11 @@ namespace StorybrewScripts
                 Receptor receptor = column.receptor;
                 NoteOrigin origin = column.origin;
 
-                Vector2 receptorPosition = receptor.PositionAt(starttime);
-                Vector2 originPosition = origin.PositionAt(starttime);
+                Vector2 receptorPosition = receptor.PositionAt(endtime);
+                Vector2 originPosition = origin.PositionAt(endtime);
 
-                Vector2 receptorScale = receptor.ScaleAt(starttime);
-                Vector2 originScale = origin.ScaleAt(starttime);
+                Vector2 receptorScale = receptor.ScaleAt(endtime);
+                Vector2 originScale = origin.ScaleAt(endtime);
 
                 receptor.ScaleReceptor(easing, starttime, endtime, newScale);
                 origin.ScaleReceptor(easing, starttime, endtime, newScale);
@@ -707,12 +725,12 @@ namespace StorybrewScripts
 
         }
 
-        public void RotateColumn(OsbEasing easing, double starttime, double endtime, double radians, ColumnType columnType, CenterType centerType = CenterType.middle)
+        public void RotateColumn(OsbEasing easing, double starttime, double endtime, double radians, ColumnType columnType, CenterTypeColumn centerType = CenterTypeColumn.middle)
         {
 
             var center = new Vector2(320, 240);
 
-            if (centerType == CenterType.playfield)
+            if (centerType == CenterTypeColumn.playfield)
             {
                 center = calculatePlayFieldCenter(starttime);
             }
@@ -721,10 +739,21 @@ namespace StorybrewScripts
             Receptor receptor = column.receptor;
             NoteOrigin origin = column.origin;
 
-            if (centerType == CenterType.receptor)
+            if (centerType == CenterTypeColumn.receptor)
             {
                 center = receptor.PositionAt(starttime);
                 //receptor.RotateReceptor(starttime, duration, easing, radians);
+            }
+
+            if (centerType == CenterTypeColumn.column)
+            {
+                center = (receptor.PositionAt(starttime) + origin.PositionAt(starttime)) / 2;
+            }
+
+            if (centerType == CenterTypeColumn.columnX)
+            {
+                center = new Vector2(320f, 240f);
+                center.X = receptor.PositionAt(starttime).X;
             }
 
             receptor.PivotReceptor(easing, starttime, endtime, radians, center);

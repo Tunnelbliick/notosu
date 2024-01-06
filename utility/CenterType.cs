@@ -11,4 +11,13 @@ namespace StorybrewScripts
         middle,
         playfield
     }
+
+    public enum CenterTypeColumn
+    {
+        receptor,
+        middle,
+        playfield,
+        column,
+        columnX
+    }
 }
