@@ -72,6 +72,6 @@ Follow these instructions to effectively set up your notOSU! Playfield and Notes
 
 ## Documentation and Community Support
 
-For detailed guidance and advanced features, refer to the [notOSU! Documentation](https://notosu.sh). Join our community on [Discord](https://discord.gg/notosu) for support, collaboration, and sharing ideas with fellow storyboarders.
+For detailed guidance and advanced features, refer to the [notOSU! Documentation](https://notosu.sh). Join our community on [Discord](https://discord.notosu.sh) for support, collaboration, and sharing ideas with fellow storyboarders.
 
 Start your creative journey in osu!mania storyboarding with notOSU! today!
