@@ -39,31 +39,29 @@ Creating a dynamic storyboard in notOSU! involves setting up layers, a playfield
 var receptors = GetLayer("r");
 var notes = GetLayer("n");
 
-// General configuration values
+// General values
 var starttime = 0;
-var endtime = 24000;
+var endtime = 134573;
 var duration = endtime - starttime;
 
-// Playfield size
-var width = 200f;
-var height = 500;
+// Playfield Scale
+var width = 250f;
+var height = -500;
 
-// Note initialization
-var bpm = 190f;
-var offset = 0f;
+// Note initilization Values
+var bpm = Beatmap.GetControlPointAt(9999).Bpm;
+var offset = Beatmap.GetControlPointAt(9999).Offset;
 
-// DrawInstance settings
+// Drawinstance Values
 var updatesPerSecond = 50;
-var scrollSpeed = 800f;
+var scrollSpeed = 1000f;
 var rotateNotesToFaceReceptor = false;
 var fadeTime = 60;
-
-var receptorBitmap = GetMapsetBitmap("sb/sprites/receiver.png");
-var receptorWidth = receptorBitmap.Width;
+var sliderAccuracy = 40;
 
 Playfield field = new Playfield();
-field.InitializePlayField(receptors, notes, starttime, endtime, width, height, 50);
-field.InitializeNotes(Beatmap.HitObjects.ToList(), bpm, offset, false, sliderAccuracy);
+field.initilizePlayField(receptors, notes, starttime, endtime, 250f, height, 50);
+field.initializeNotes(Beatmap.HitObjects.ToList(), bpm, offset, false, sliderAccuracy);
 
 DrawInstance draw = new DrawInstance(field, starttime, scrollSpeed, updatesPerSecond, OsbEasing.None, rotateNotesToFaceReceptor, fadeTime, fadeTime);
 
