@@ -31,6 +31,9 @@ namespace StorybrewScripts
         public SortedDictionary<double, float> positionX = new SortedDictionary<double, float>();
         public SortedDictionary<double, float> positionY = new SortedDictionary<double, float>();
 
+        public OsbSprite light;
+        public OsbSprite hit;
+
         private readonly object lockX = new object();
         private readonly object lockY = new object();
 
@@ -48,6 +51,8 @@ namespace StorybrewScripts
             this.deltaIncrement = delta;
 
             OsbSprite receptorSprite = layer.CreateSprite(receptorSpritePath, OsbOrigin.Centre);
+            OsbSprite light = layer.CreateSprite("sb/sprites/light.png", OsbOrigin.Centre);
+            OsbSprite hit = layer.CreateSprite("sb/sprites/hit.png", OsbOrigin.Centre);
 
             positionX.Add(0, 0);
             positionY.Add(0, 0);
@@ -55,21 +60,32 @@ namespace StorybrewScripts
             switch (type)
             {
                 case ColumnType.one:
+                    light.Rotate(starttime - 1, 1 * Math.PI / 2);
+                    hit.Rotate(starttime - 1, 1 * Math.PI / 2);
                     receptorSprite.Rotate(starttime - 1, 1 * Math.PI / 2);
                     break;
                 case ColumnType.two:
+                    light.Rotate(starttime - 1, 0 * Math.PI / 2);
+                    hit.Rotate(starttime - 1, 0 * Math.PI / 2);
                     receptorSprite.Rotate(starttime - 1, 0 * Math.PI / 2);
                     break;
                 case ColumnType.three:
+                    light.Rotate(starttime - 1, 2 * Math.PI / 2);
+                    hit.Rotate(starttime - 1, 2 * Math.PI / 2);
                     receptorSprite.Rotate(starttime - 1, 2 * Math.PI / 2);
                     break;
                 case ColumnType.four:
+                    light.Rotate(starttime - 1, 3 * Math.PI / 2);
+                    hit.Rotate(starttime - 1, 3 * Math.PI / 2);
                     receptorSprite.Rotate(starttime - 1, 3 * Math.PI / 2);
                     break;
             }
 
             receptorSprite.ScaleVec(starttime, scale);
+            light.ScaleVec(starttime, scale * 2f);
 
+            this.light = light;
+            this.hit = hit;
             this.columnType = type;
             this.receptorSpritePath = receptorSpritePath;
             this.renderedSprite = receptorSprite;
@@ -83,6 +99,8 @@ namespace StorybrewScripts
         {
             OsbSprite receptor = layer.CreateSprite("sb/transparent.png", OsbOrigin.Centre);
             OsbSprite receptorSprite = layer.CreateSprite(receptorSpritePath, OsbOrigin.Centre);
+            OsbSprite light = layer.CreateSprite("sb/sprites/light.png", OsbOrigin.Centre);
+            OsbSprite hit = layer.CreateSprite("sb/sprites/hit.png", OsbOrigin.Centre);
 
             this.deltaIncrement = delta;
 
@@ -92,19 +110,29 @@ namespace StorybrewScripts
             switch (type)
             {
                 case ColumnType.one:
+                    light.Rotate(0 - 1, 1 * Math.PI / 2);
+                    hit.Rotate(0 - 1, 1 * Math.PI / 2);
                     receptor.Rotate(0 - 1, 1 * Math.PI / 2);
                     break;
                 case ColumnType.two:
+                    light.Rotate(0 - 1, 0 * Math.PI / 2);
+                    hit.Rotate(0 - 1, 0 * Math.PI / 2);
                     receptor.Rotate(0 - 1, 0 * Math.PI / 2);
                     break;
                 case ColumnType.three:
+                    light.Rotate(0 - 1, 2 * Math.PI / 2);
+                    hit.Rotate(0 - 1, 2 * Math.PI / 2);
                     receptor.Rotate(0 - 1, 2 * Math.PI / 2);
                     break;
                 case ColumnType.four:
+                    light.Rotate(0 - 1, 3 * Math.PI / 2);
+                    hit.Rotate(0 - 1, 3 * Math.PI / 2);
                     receptor.Rotate(0 - 1, 3 * Math.PI / 2);
                     break;
             }
 
+            this.light = light;
+            this.hit = hit;
             this.columnType = type;
             this.receptorSpritePath = receptorSpritePath;
             this.renderedSprite = receptorSprite;
@@ -201,10 +229,14 @@ namespace StorybrewScripts
             if (starttime == endtime)
             {
                 receptor.ScaleVec(starttime, newScale);
+                light.ScaleVec(starttime, newScale * 2f);
+                hit.ScaleVec(starttime, newScale * 2f);
             }
             else
             {
                 receptor.ScaleVec(ease, starttime, endtime, originalScale, newScale);
+                light.ScaleVec(ease, starttime, endtime, originalScale * 2f, newScale * 2f);
+                hit.ScaleVec(ease, starttime, endtime, originalScale * 2f, newScale * 2f);
             }
         }
 
@@ -216,10 +248,14 @@ namespace StorybrewScripts
             if (starttime == endtime)
             {
                 receptor.Rotate(starttime, rotation);
+                light.Rotate(starttime, rotation);
+                hit.Rotate(starttime, rotation);
             }
             else
             {
                 receptor.Rotate(ease, starttime, endtime, RotationAt(starttime), rotation);
+                light.Rotate(ease, starttime, endtime, RotationAt(starttime), rotation);
+                hit.Rotate(ease, starttime, endtime, RotationAt(starttime), rotation);
             }
 
             this.rotation = rotation;
@@ -235,10 +271,14 @@ namespace StorybrewScripts
             if (starttime == endtime)
             {
                 receptor.Rotate(starttime, newRotation);
+                light.Rotate(starttime, newRotation);
+                hit.Rotate(starttime, newRotation);
             }
             else
             {
                 receptor.Rotate(ease, starttime, endtime, currentRot, newRotation);
+                light.Rotate(ease, starttime, endtime, currentRot, newRotation);
+                hit.Rotate(ease, starttime, endtime, currentRot, newRotation);
             }
 
             this.rotation = newRotation;

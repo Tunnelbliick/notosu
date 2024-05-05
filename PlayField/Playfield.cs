@@ -1,13 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTK;
 using storyboard.scriptslibrary.maniaModCharts.effects;
-using storyboard.scriptslibrary.maniaModCharts.utility;
 using StorybrewCommon.Mapset;
-using StorybrewCommon.Scripting;
 using StorybrewCommon.Storyboarding;
 using StorybrewCommon.Storyboarding.CommandValues;
 
@@ -52,6 +48,8 @@ namespace StorybrewScripts
 
         public Dictionary<double, FadeEffect> fadeAtTime = new Dictionary<double, FadeEffect>();
 
+        public double od;
+
         private bool disposed = false;
 
         public void Dispose()
@@ -83,7 +81,7 @@ namespace StorybrewScripts
             Dispose(false);
         }
 
-        public void initilizePlayField(StoryboardLayer receptors, StoryboardLayer notes, double starttime, double endtime, float initialWidht, float initialHeight, float receptorWallOffset)
+        public void initilizePlayField(StoryboardLayer receptors, StoryboardLayer notes, double starttime, double endtime, float initialWidht, float initialHeight, float receptorWallOffset, double OverallDifficulty)
         {
             this.starttime = starttime;
             this.endtime = endtime;
@@ -96,6 +94,8 @@ namespace StorybrewScripts
 
             height = initialHeight;
             width = initialWidht;
+
+            this.od = OverallDifficulty;
 
             Column one = new Column(128, ColumnType.one, receptorSpritePath, receptors, receptorScale, starttime, delta);
             Column two = new Column(256, ColumnType.two, receptorSpritePath, receptors, receptorScale, starttime, delta);

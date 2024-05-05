@@ -40,6 +40,10 @@ namespace StorybrewScripts
             receptor.renderedSprite.Fade(starttime, 1);
             receptor.renderedSprite.Fade(endTime, 0);
 
+            receptor.hit.Fade(starttime - 2500, 0);
+            receptor.light.Fade(starttime - 2500, 0);
+
+
             double relativeTime = playfieldInstance.starttime;
 
             var pos = receptor.PositionAt(relativeTime);
@@ -57,7 +61,12 @@ namespace StorybrewScripts
             }
 
             movement.Simplify(1);
-            movement.ForEachPair((start, end) => receptor.renderedSprite.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
+            movement.ForEachPair((start, end) =>
+            {
+                receptor.renderedSprite.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value);
+                receptor.light.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value);
+                receptor.hit.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value);
+            });
 
 
 

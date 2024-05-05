@@ -198,8 +198,10 @@ namespace StorybrewScripts
 
         }
 
-        public void ApplyHitLightingToNote(double startime, double endtime, double fadeOutTime, Receptor currentReceptor, double iterationRate = 10)
+        public string ApplyHitLightingToNote(double startime, double endtime, double fadeOutTime, Column column, double iterationRate = 10)
         {
+
+            string debug = "";
 
             double renderStart = startime;
             double renderEnd = endtime + fadeOutTime;
@@ -207,11 +209,13 @@ namespace StorybrewScripts
             var originalScale = new Vector2(1f, 1f);
             var baseNoteScale = new Vector2(0.5f, 0.5f);
 
+            Receptor currentReceptor = column.receptor;
+
             var scaleRatio = Vector2.Divide(currentReceptor.renderedSprite.ScaleAt(renderStart), baseNoteScale);
             var currentScale = originalScale * scaleRatio;
 
             Vector2 currentPosition = currentReceptor.renderedSprite.PositionAt(renderStart);
-            OsbSprite hitlighting = layer.CreateSprite($"sb/sprites/{GetRandomJudgement()}.png", OsbOrigin.Centre, currentPosition);
+            //OsbSprite hitlighting = column.hitlighting;
 
             float currentOpacity = currentReceptor.renderedSprite.OpacityAt(renderStart);
             double currentRotation = currentReceptor.renderedSprite.RotationAt(renderStart);
@@ -219,35 +223,6 @@ namespace StorybrewScripts
             OsbSprite hold;
 
             double localCurrentTime = renderStart;
-
-            if (isSlider == false)
-            {
-                // Handle non hold
-                while (localCurrentTime < renderEnd)
-                {
-                    double localTime = localCurrentTime + iterationRate;
-
-                    scaleRatio = Vector2.Divide(currentReceptor.renderedSprite.ScaleAt(localTime), baseNoteScale);
-                    var newScale = originalScale * scaleRatio;
-
-                    Vector2 nexPosition = currentReceptor.renderedSprite.PositionAt(localTime);
-                    float newOpactiy = currentReceptor.renderedSprite.OpacityAt(localCurrentTime);
-                    double newRotation = currentReceptor.renderedSprite.RotationAt(localTime);
-
-                    hitlighting.Move(localCurrentTime, localTime, currentPosition, nexPosition);
-                    hitlighting.ScaleVec(localCurrentTime, localTime, currentScale, newScale);
-                    hitlighting.Fade(localCurrentTime, newOpactiy);
-                    hitlighting.Rotate(localCurrentTime, localTime, currentRotation, newRotation);
-
-                    currentScale = newScale;
-                    currentRotation = newRotation;
-                    currentPosition = nexPosition;
-                    currentOpacity = newOpactiy;
-                    localCurrentTime += iterationRate;
-                }
-
-                hitlighting.Fade(renderEnd, 0);
-            }
 
             if (isSlider == true)
             {
@@ -260,33 +235,6 @@ namespace StorybrewScripts
 
                 scaleRatio = Vector2.Divide(currentReceptor.renderedSprite.ScaleAt(renderStart), baseNoteScale);
                 var currentHoldScale = originalScale * scaleRatio;
-
-                while (localCurrentTime < Math.Min(renderStart + fadeOutTime, this.endtime))
-                {
-                    double localTime = localCurrentTime + iterationRate;
-
-                    scaleRatio = Vector2.Divide(currentReceptor.renderedSprite.ScaleAt(localTime), baseNoteScale);
-                    var newScale = originalScale * scaleRatio;
-
-                    Vector2 nexPosition = currentReceptor.renderedSprite.PositionAt(localTime);
-                    float newOpactiy = currentReceptor.renderedSprite.OpacityAt(localTime);
-                    double newRotation = currentReceptor.renderedSprite.RotationAt(localTime);
-
-                    hitlighting.Move(localCurrentTime, localTime, currentPosition, nexPosition);
-                    hitlighting.ScaleVec(localCurrentTime, localTime, currentScale, newScale);
-                    hitlighting.Fade(localCurrentTime, newOpactiy);
-                    hitlighting.Rotate(localCurrentTime, localTime, currentRotation, newRotation);
-
-                    currentScale = newScale;
-                    currentRotation = newRotation;
-                    currentPosition = nexPosition;
-                    currentOpacity = newOpactiy;
-                    localCurrentTime += iterationRate;
-                }
-
-                hitlighting.Fade(renderStart + fadeOutTime, 0);
-
-                // render out hold sprite
 
                 localCurrentTime = renderStart;
 
@@ -317,6 +265,8 @@ namespace StorybrewScripts
                 hold.Fade(renderEnd, 0);
 
             }
+
+            return debug;
 
         }
 

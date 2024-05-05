@@ -9,6 +9,7 @@ using StorybrewCommon.Storyboarding;
 
 namespace StorybrewScripts
 {
+    [Obsolete("Deprecated use RenderViaEquation instead")]
     public static class Stutter
     {
 
@@ -145,7 +146,7 @@ namespace StorybrewScripts
                         currentPosition = newPosition;
 
                     } while (progress < 1);
-                    
+
                     Parallel.ForEach(note.sliderPositions, part =>
                          {
 
@@ -265,7 +266,7 @@ namespace StorybrewScripts
 
                     if (progress == 1)
                     {
-                        note.ApplyHitLightingToNote(note.starttime, note.endtime, fadeOutTime, column.receptor);
+                        //note.ApplyHitLightingToNote(note.starttime, note.endtime, fadeOutTime, column.receptor);
                     }
 
                 });

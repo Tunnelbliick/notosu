@@ -9,6 +9,7 @@ using StorybrewCommon.Storyboarding;
 
 namespace StorybrewScripts
 {
+    [Obsolete("")]
     public static class ByAnchors
     {
 
@@ -451,7 +452,7 @@ namespace StorybrewScripts
 
                     if (progress == 1)
                     {
-                        note.ApplyHitLightingToNote(note.starttime, note.endtime, fadeOutTime, column.receptor, localIterationRate);
+                        //note.ApplyHitLightingToNote(note.starttime, note.endtime, fadeOutTime, column.receptor, localIterationRate);
                     }
                 });
             });

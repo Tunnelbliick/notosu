@@ -9,6 +9,7 @@ using StorybrewCommon.Storyboarding;
 
 namespace StorybrewScripts
 {
+    [Obsolete("")]
     public static class PathWay
     {
 

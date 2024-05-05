@@ -37,6 +37,8 @@ namespace StorybrewScripts
                 Dictionary<double, Note> notes = playfieldInstance.columnNotes[column.type];
                 var keysInRange = notes.Keys.Where(hittime => hittime >= starttime && hittime - easetime <= endtime).ToList();
 
+                HitSound.AddHitSound(playfieldInstance, column, keysInRange, notes);
+
                 Parallel.ForEach(keysInRange, key =>
                 {
 
@@ -268,7 +270,7 @@ namespace StorybrewScripts
 
                     if (progress == 1 && renderReceptor)
                     {
-                        note.ApplyHitLightingToNote(note.starttime, note.endtime, fadeOutTime, column.receptor, localIterationRate);
+                        //note.ApplyHitLightingToNote(note.starttime, note.endtime, fadeOutTime, column.receptor, localIterationRate);
                     }
 
                 });

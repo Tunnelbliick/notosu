@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using OpenTK;
+using OpenTK.Graphics;
 using storyboard.scriptslibrary.maniaModCharts.effects;
 using StorybrewCommon.Animations;
 using StorybrewCommon.Storyboarding;
@@ -57,6 +58,7 @@ namespace StorybrewScripts
                 Dictionary<double, Note> notes = playfieldInstance.columnNotes[column.type];
                 var keysInRange = notes.Keys.Where(hittime => hittime >= starttime && hittime - easetime <= endtime).ToList();
 
+                HitSound.AddHitSound(playfieldInstance, column, keysInRange, notes);
 
                 //foreach (var key in keysInRange)
                 //{
@@ -188,13 +190,15 @@ namespace StorybrewScripts
                              Vector2 receptorPosition = column.receptor.renderedSprite.PositionAt(currentTime + localIterationRate);
                              Vector2 newPosition = Vector2.Lerp(originPosition, receptorPosition, easedProgress);
 
-                             var par = new EquationParameters();
-                             par.position = newPosition;
-                             par.time = currentTime;
-                             par.progress = easedProgress;
-                             par.sprite = note.noteSprite;
-                             par.note = note;
-                             par.column = column;
+                             var par = new EquationParameters
+                             {
+                                 position = newPosition,
+                                 time = currentTime,
+                                 progress = easedProgress,
+                                 sprite = note.noteSprite,
+                                 note = note,
+                                 column = column
+                             };
 
                              newPosition = equation(par);
                              Vector2 originScale = column.origin.ScaleAt(currentTime + localIterationRate);
@@ -248,11 +252,11 @@ namespace StorybrewScripts
                                   FadeEffect sliderFade = instance.findFadeAtTime(sliderRenderStartTime);
                                   if (sliderFade != null)
                                   {
-                                      sprite.Fade(sliderRenderStartTime, sliderFade.value);
+                                      sprite.Fade(sliderRenderStartTime, sliderRenderStartTime + fadeInTime, 0, sliderFade.value);
                                   }
                                   else
                                   {
-                                      sprite.Fade(sliderRenderStartTime, 1);
+                                      sprite.Fade(sliderRenderStartTime, sliderRenderStartTime + fadeInTime, 0, 1);
                                   }
 
                                   sprite.Fade(sliderRenderEndTime, 0);
@@ -334,24 +338,28 @@ namespace StorybrewScripts
                                       Vector2 newPosition = Vector2.Lerp(originPosition, receptorPosition, easedProgress);
                                       Vector2 nextPosition = Vector2.Lerp(originPosition, receptorPosition, easedNextProgress);
 
-                                      var par = new EquationParameters();
-                                      par.position = newPosition;
-                                      par.time = sliderCurrentTime;
-                                      par.progress = easedProgress;
-                                      par.sprite = sprite;
-                                      par.note = note;
-                                      par.part = part;
-                                      par.column = column;
-                                      par.isHoldBody = true;
+                                      var par = new EquationParameters
+                                      {
+                                          position = newPosition,
+                                          time = sliderCurrentTime,
+                                          progress = easedProgress,
+                                          sprite = sprite,
+                                          note = note,
+                                          part = part,
+                                          column = column,
+                                          isHoldBody = true
+                                      };
 
-                                      var parNext = new EquationParameters();
-                                      parNext.position = nextPosition;
-                                      parNext.time = sliderCurrentTime;
-                                      parNext.progress = easedNextProgress;
-                                      parNext.sprite = null;
-                                      parNext.note = note;
-                                      parNext.column = column;
-                                      parNext.isHoldBody = true;
+                                      var parNext = new EquationParameters
+                                      {
+                                          position = nextPosition,
+                                          time = sliderCurrentTime,
+                                          progress = easedNextProgress,
+                                          sprite = null,
+                                          note = note,
+                                          column = column,
+                                          isHoldBody = true
+                                      };
 
                                       newPosition = equation(par);
                                       nextPosition = equation(parNext);
@@ -421,7 +429,7 @@ namespace StorybrewScripts
 
                          if (progress == 1 && renderReceptor)
                          {
-                             note.ApplyHitLightingToNote(note.starttime, note.endtime, fadeOutTime, column.receptor, localIterationRate);
+                             note.ApplyHitLightingToNote(note.starttime, note.endtime, fadeOutTime, column, localIterationRate);
                          }
                      });
             });

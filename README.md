@@ -1,79 +1,75 @@
-# notOSU! - A Tool for Dynamic osu!mania Storyboarding
-![](https://repository-images.githubusercontent.com/669634772/939caa35-269b-44bb-92e0-4b0aa3d3ba1d)
+# Storybrew osu!Mania Modcharts
+## How do i use this?
 
-Welcome to notOSU!, an innovative tool designed to enhance your storyboarding experience in osu!mania. This README provides guidance on setting up and configuring notOSU! for your storyboard projects.
+### Initial Setup
 
-## Getting Started
+1. Download all files
+2. Drag and drop the Folders into your `/scriptLibrary` Directory
+3. Drag and drop `AForge.dll` and `AForge.Imaging.dll` into the Main Storybrew Directory
+4. Add `AForge.dll` and `AForge.Imaging.dll` to Assembly References *they are an Image editing library that is used for some Full Transformation effekts*
+5. Initial setup complete!
 
-### [notOSU! Documentation](https://notosu.sh). 
+### Setting up a Playfield
 
-### Step 1: Downloading notOSU!
+To get a Playfield and Notes we need 3 Things. 
+1. Layers for our Receptor and Notes
+2. A Playfield Instance
+3. A DrawInstance
 
-Begin by downloading the latest release of notOSU!:
-
-- Visit the [official repository](https://github.com/Tunnelbliick/notosu/releases/latest).
-- Choose the most recent version to access the latest features.
-
-### Step 2: Installation
-
-After downloading, integrate notOSU! into your storyboard environment:
-
-- Find the `/scriptLibrary` directory in your storyboard project.
-- Extract and place the downloaded notOSU! folders into the `/scriptLibrary` directory.
-
-Congratulations! The initial setup of notOSU! is now complete.
-
-## Configuring a Playfield for Storyboarding
-
-Creating a dynamic storyboard in notOSU! involves setting up layers, a playfield instance, and a DrawInstance.
-
-### Required Components:
-
-1. **Layers**: Define layers for receptors and notes.
-2. **Playfield Instance**: Manage the gameplay area and note mechanics.
-3. **DrawInstance**: Handle the drawing and animation of notes.
-
-### Example Configuration:
-
+Here is a short example to get it up and running
 ```csharp
 var receptors = GetLayer("r");
 var notes = GetLayer("n");
 
-// General configuration values
+// General values
 var starttime = 0;
-var endtime = 24000;
-var duration = endtime - starttime;
+var endtime = 10000;
+var duration = 10000;
 
-// Playfield size
-var width = 200f;
-var height = 500;
+// Playfield Scale
+var width = 250f;
+var height = 500f;
 
-// Note initialization
-var bpm = 190f;
-var offset = 0f;
+// Note initilization Values
+var bpm = 69f;
+var offset = 69f;
+var sliderAccuracy = 40;
 
-// DrawInstance settings
-var updatesPerSecond = 50;
-var scrollSpeed = 800f;
+// Drawinstance Values
+var updatesPerSecond = 30;
+var scrollSpeed = 900f;
 var rotateNotesToFaceReceptor = false;
-var fadeTime = 60;
+var fadeTime = 50;
 
-var receptorBitmap = GetMapsetBitmap("sb/sprites/receiver.png");
-var receptorWidth = receptorBitmap.Width;
+var recepotrBitmap = GetMapsetBitmap("sb/sprites/receiver.png"); // The receptor sprite
+var receportWidth = recepotrBitmap.Width;
 
 Playfield field = new Playfield();
-field.InitializePlayField(receptors, notes, starttime, endtime, width, height, 50);
-field.InitializeNotes(Beatmap.HitObjects.ToList(), bpm, offset, false, sliderAccuracy);
+field.initilizePlayField(receptors, notes, startime, endtime, receportWidth, 60, 0);
+field.ScalePlayField(starttime + 1, 1, OsbEasing.None, width, height); // Its important that this gets executed AFTER the Playfield is initialized otherwise this will run into "overlapped commands" and break
+field.initializeNotes(Beatmap.HitObjects.ToList(), notes, bpm, offset, sliderAccuracy);
 
 DrawInstance draw = new DrawInstance(field, starttime, scrollSpeed, updatesPerSecond, OsbEasing.None, rotateNotesToFaceReceptor, fadeTime, fadeTime);
 
-draw.DrawNotesByOriginToReceptor(duration);
+// All effekts have to be executed before calling the draw Function.
+// Anything that is done after the draw Function call will not be rendered out.
+draw.drawNotesByOriginToReceptor(duration);
 ```
 
-Follow these instructions to effectively set up your notOSU! Playfield and Notes for storyboard creation.
+# What is currently supported?
+- Moving of note origin and receptors
+- Rotation of note and receptors
+- Rotation of the Playfield
+- Moving the Playfield
+- Swapping individual Playfield columns
+- Drawing Notes over a Path via Anchor points
+- Fulltransformation of Playfield (skew, tilt, etc) *this implementation is pretty bad atm and needs to be redone*
 
-## Documentation and Community Support
+The drawinstace will handle all the Notes the only thing you have to manipulate is the origin and the receptors. The notes will follow automatically.
 
-For detailed guidance and advanced features, refer to the [notOSU! Documentation](https://notosu.sh). Join our community on [Discord](https://discord.gg/notosu) for support, collaboration, and sharing ideas with fellow storyboarders.
+This might not seem like alot but by allowing everything to be moved individually, you can come up with alot of effekts already, granted that not everything is possible with this current setup.
 
-Start your creative journey in osu!mania storyboarding with notOSU! today!
+# Contribution
+Anyone is welcome to contribute and expand this library, i just wanted to make a **BASE** for people to work of from.
+
+If you have Bugs or other stuff feel free to either create and Issue or make a PR if you have changes.
