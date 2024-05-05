@@ -9,6 +9,7 @@ using StorybrewCommon.Storyboarding;
 
 namespace StorybrewScripts
 {
+    [Obsolete("")]
     public static class PathWay
     {
 
@@ -233,8 +234,8 @@ namespace StorybrewScripts
                     var scale = scalePerSprite[i];
                     var rotation = rotationPerSprite[i];
 
-                    movement.Simplify2dKeyframes(0.75f, v => v);
-                    scale.Simplify2dKeyframes(0.25f, v => v);
+                    movement.Simplify(0.75f);
+                    scale.Simplify(0.25f);
                     //rotation.Simplify1dKeyframes(0.05f, v => (float)v); // this shit dont look good / dont work properly should instead do some value clamping to avoid instant 180° from pathway since that will result in shit.
 
                     movement.ForEachPair((start, end) => sprite.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));

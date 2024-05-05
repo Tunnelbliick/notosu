@@ -41,7 +41,6 @@ namespace StorybrewScripts
             this.offset = offset;
             this.type = type;
             this.scale = scale;
-
             double rotation = 0f;
 
             switch (type)

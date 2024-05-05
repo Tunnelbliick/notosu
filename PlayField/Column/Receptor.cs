@@ -31,6 +31,12 @@ namespace StorybrewScripts
         public SortedDictionary<double, float> positionX = new SortedDictionary<double, float>();
         public SortedDictionary<double, float> positionY = new SortedDictionary<double, float>();
 
+        public OsbSprite light;
+        public OsbSprite hit;
+
+        private readonly object lockX = new object();
+        private readonly object lockY = new object();
+
         // Rotation in radiants
         public double rotation = 0f;
         public double startRotation = 0f;
@@ -45,6 +51,8 @@ namespace StorybrewScripts
             this.deltaIncrement = delta;
 
             OsbSprite receptorSprite = layer.CreateSprite(receptorSpritePath, OsbOrigin.Centre);
+            OsbSprite light = layer.CreateSprite("sb/sprites/light.png", OsbOrigin.Centre);
+            OsbSprite hit = layer.CreateSprite("sb/sprites/hit.png", OsbOrigin.Centre);
 
             positionX.Add(0, 0);
             positionY.Add(0, 0);
@@ -52,21 +60,32 @@ namespace StorybrewScripts
             switch (type)
             {
                 case ColumnType.one:
+                    light.Rotate(starttime - 1, 1 * Math.PI / 2);
+                    hit.Rotate(starttime - 1, 1 * Math.PI / 2);
                     receptorSprite.Rotate(starttime - 1, 1 * Math.PI / 2);
                     break;
                 case ColumnType.two:
+                    light.Rotate(starttime - 1, 0 * Math.PI / 2);
+                    hit.Rotate(starttime - 1, 0 * Math.PI / 2);
                     receptorSprite.Rotate(starttime - 1, 0 * Math.PI / 2);
                     break;
                 case ColumnType.three:
+                    light.Rotate(starttime - 1, 2 * Math.PI / 2);
+                    hit.Rotate(starttime - 1, 2 * Math.PI / 2);
                     receptorSprite.Rotate(starttime - 1, 2 * Math.PI / 2);
                     break;
                 case ColumnType.four:
+                    light.Rotate(starttime - 1, 3 * Math.PI / 2);
+                    hit.Rotate(starttime - 1, 3 * Math.PI / 2);
                     receptorSprite.Rotate(starttime - 1, 3 * Math.PI / 2);
                     break;
             }
 
             receptorSprite.ScaleVec(starttime, scale);
+            light.ScaleVec(starttime, scale * 2f);
 
+            this.light = light;
+            this.hit = hit;
             this.columnType = type;
             this.receptorSpritePath = receptorSpritePath;
             this.renderedSprite = receptorSprite;
@@ -80,6 +99,8 @@ namespace StorybrewScripts
         {
             OsbSprite receptor = layer.CreateSprite("sb/transparent.png", OsbOrigin.Centre);
             OsbSprite receptorSprite = layer.CreateSprite(receptorSpritePath, OsbOrigin.Centre);
+            OsbSprite light = layer.CreateSprite("sb/sprites/light.png", OsbOrigin.Centre);
+            OsbSprite hit = layer.CreateSprite("sb/sprites/hit.png", OsbOrigin.Centre);
 
             this.deltaIncrement = delta;
 
@@ -89,19 +110,29 @@ namespace StorybrewScripts
             switch (type)
             {
                 case ColumnType.one:
+                    light.Rotate(0 - 1, 1 * Math.PI / 2);
+                    hit.Rotate(0 - 1, 1 * Math.PI / 2);
                     receptor.Rotate(0 - 1, 1 * Math.PI / 2);
                     break;
                 case ColumnType.two:
+                    light.Rotate(0 - 1, 0 * Math.PI / 2);
+                    hit.Rotate(0 - 1, 0 * Math.PI / 2);
                     receptor.Rotate(0 - 1, 0 * Math.PI / 2);
                     break;
                 case ColumnType.three:
+                    light.Rotate(0 - 1, 2 * Math.PI / 2);
+                    hit.Rotate(0 - 1, 2 * Math.PI / 2);
                     receptor.Rotate(0 - 1, 2 * Math.PI / 2);
                     break;
                 case ColumnType.four:
+                    light.Rotate(0 - 1, 3 * Math.PI / 2);
+                    hit.Rotate(0 - 1, 3 * Math.PI / 2);
                     receptor.Rotate(0 - 1, 3 * Math.PI / 2);
                     break;
             }
 
+            this.light = light;
+            this.hit = hit;
             this.columnType = type;
             this.receptorSpritePath = receptorSpritePath;
             this.renderedSprite = receptorSprite;
@@ -198,10 +229,14 @@ namespace StorybrewScripts
             if (starttime == endtime)
             {
                 receptor.ScaleVec(starttime, newScale);
+                light.ScaleVec(starttime, newScale * 2f);
+                hit.ScaleVec(starttime, newScale * 2f);
             }
             else
             {
                 receptor.ScaleVec(ease, starttime, endtime, originalScale, newScale);
+                light.ScaleVec(ease, starttime, endtime, originalScale * 2f, newScale * 2f);
+                hit.ScaleVec(ease, starttime, endtime, originalScale * 2f, newScale * 2f);
             }
         }
 
@@ -213,10 +248,14 @@ namespace StorybrewScripts
             if (starttime == endtime)
             {
                 receptor.Rotate(starttime, rotation);
+                light.Rotate(starttime, rotation);
+                hit.Rotate(starttime, rotation);
             }
             else
             {
                 receptor.Rotate(ease, starttime, endtime, RotationAt(starttime), rotation);
+                light.Rotate(ease, starttime, endtime, RotationAt(starttime), rotation);
+                hit.Rotate(ease, starttime, endtime, RotationAt(starttime), rotation);
             }
 
             this.rotation = rotation;
@@ -232,10 +271,14 @@ namespace StorybrewScripts
             if (starttime == endtime)
             {
                 receptor.Rotate(starttime, newRotation);
+                light.Rotate(starttime, newRotation);
+                hit.Rotate(starttime, newRotation);
             }
             else
             {
                 receptor.Rotate(ease, starttime, endtime, currentRot, newRotation);
+                light.Rotate(ease, starttime, endtime, currentRot, newRotation);
+                hit.Rotate(ease, starttime, endtime, currentRot, newRotation);
             }
 
             this.rotation = newRotation;
@@ -244,7 +287,7 @@ namespace StorybrewScripts
 
         public void PivotReceptor(OsbEasing ease, double starttime, double endtime, double rotation, Vector2 center)
         {
-            Vector2 point = PositionAt(starttime);
+            Vector2 point = PositionAt(endtime);
 
             double duration = Math.Max(endtime - starttime, 1);
             double endRadians = rotation; // Total rotation in radians
@@ -252,16 +295,15 @@ namespace StorybrewScripts
             Vector2 currentPosition = point;
             double currentTime = starttime;
 
-            while (currentTime < endtime)
+            while (currentTime <= endtime)
             {
-                currentTime += deltaIncrement;
                 double progress = Math.Max(currentTime - starttime, 1) / duration; // Calculate progress as a ratio
 
                 // Adjust the rotation based on progress and easing
                 double easedProgress = ease.Ease(progress); // Assuming ease.Ease() applies the easing to the progress
                 double currentRotation = endRadians * easedProgress; // Total rotation adjusted by eased progress
 
-                Vector2 rotatedPoint = Utility.PivotPoint(point, center, currentRotation);
+                Vector2 rotatedPoint = Utility.PivotPoint(point, center, Math.Round(currentRotation, 5));
 
                 Vector2 relativeMovement = rotatedPoint - currentPosition;
                 Vector2 absoluteMovement = rotatedPoint - point;
@@ -269,6 +311,7 @@ namespace StorybrewScripts
                 MoveReceptorRelative(ease, currentTime, currentTime, relativeMovement, absoluteMovement);
 
                 currentPosition = rotatedPoint;
+                currentTime += deltaIncrement;
             }
         }
 
@@ -363,54 +406,73 @@ namespace StorybrewScripts
 
         private void AddXValue(double time, float value, bool absolute = false)
         {
-            // Update or add the value at the specified time
-            if (positionX.ContainsKey(time))
-            {
-                if (absolute)
-                    positionX[time] = value;
-                else
-                    positionX[time] += value;
-            }
-            else
-            {
-                float lastValue = getLastX(time);
-                positionX.Add(time, lastValue + value);
-            }
 
-            // Adjust all subsequent values
-            foreach (var key in positionX.Keys.Where(k => k > time).ToList())
+            lock (lockX)
             {
-                positionX[key] += value;
+                if (positionX == null)
+                {
+                    positionX = new SortedDictionary<double, float>();
+                }
+
+                // Update or add the value at the specified time
+                if (positionX.ContainsKey(time))
+                {
+                    if (absolute)
+                        positionX[time] = value;
+                    else
+                        positionX[time] += value;
+                }
+                else
+                {
+                    float lastValue = getLastX(time);
+                    positionX.Add(time, lastValue + value);
+                }
+
+                // Adjust all subsequent values
+                Parallel.ForEach(positionX.Keys.Where(k => k > time).ToList(), key =>
+                {
+                    {
+                        positionX[key] += value;
+                    }
+                });
             }
         }
 
 
         private void AddYValue(double time, float value, bool absolute = false)
         {
-            // Update or add the value at the specified time
-            if (positionY.ContainsKey(time))
+            lock (lockY)
             {
-                if (absolute)
-                    positionY[time] = value;
-                else
-                    positionY[time] += value;
-            }
-            else
-            {
-                float lastValue = getLastY(time);
-                positionY.Add(time, lastValue + value);
-            }
+                if (positionY == null)
+                {
+                    positionY = new SortedDictionary<double, float>();
+                }
 
-            // Adjust all subsequent values
-            foreach (var key in positionY.Keys.Where(k => k > time).ToList())
-            {
-                positionY[key] += value;
+                // Update or add the value at the specified time
+                if (positionY.ContainsKey(time))
+                {
+                    if (absolute)
+                        positionY[time] = value;
+                    else
+                        positionY[time] += value;
+                }
+                else
+                {
+                    float lastValue = getLastY(time);
+                    positionY.Add(time, lastValue + value);
+                }
+
+                // Adjust all subsequent values
+                Parallel.ForEach(positionY.Keys.Where(k => k > time).ToList(), key =>
+                {
+                    positionY[key] += value;
+                });
             }
         }
 
         private float getLastX(double currentTime)
         {
-            if (positionX.Count == 0)
+            if (positionX == null || positionX.Count == 0)
             {
                 return 0; // Or your default value
             }
@@ -440,7 +502,7 @@ namespace StorybrewScripts
 
         private float getLastY(double currentTime)
         {
-            if (positionY.Count == 0)
+            if (positionY == null || positionY.Count == 0)
             {
                 return 0; // Or your default value
             }

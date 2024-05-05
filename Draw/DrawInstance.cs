@@ -57,6 +57,10 @@ namespace StorybrewScripts
             this.iterationLength = 1000 / updatesPerSecond;
             this.changeUpdateRate(starttime, updatesPerSecond);
 
+            this.noteScaleEasing = easing;
+            this.holdScaleEasing = easing;
+
+
             return this;
 
         }
@@ -90,21 +94,28 @@ namespace StorybrewScripts
             this.changeUpdateRate(starttime, updatesPerSecond);
         }
 
+
+
+
+        [Obsolete("drawNotesStutteredByOriginToReceptor is deprecated, please use drawViaEquation instead.")]
         public void drawNotesStutteredByOriginToReceptor(double duration, bool renderReceptor = true)
         {
             Stutter.drawNotesStutteredByOriginToReceptor(this, duration, renderReceptor);
         }
 
+        [Obsolete("drawNotesByOriginToReceptor is deprecated, please use drawViaEquation instead.")]
         public void drawNotesByOriginToReceptor(double duration, bool renderReceptor = true)
         {
             OriginToReceptor.drawNotesByOriginToReceptor(this, duration, renderReceptor);
         }
 
+        [Obsolete("drawNotesByAnchors is deprecated, please use drawViaEquation instead.")]
         public void drawNotesByAnchors(double duration, PathType type = PathType.line)
         {
             ByAnchors.drawNotesByAnchors(this, duration, type);
         }
 
+        [Obsolete("drawPath is deprecated, please use drawViaEquation instead.")]
         public void drawPath(double starttime, double endtime, StoryboardLayer layer, string spritePath, PathType type, int precision, int updatesPerSecond = 3)
         {
             PathWay.DrawPath(this, starttime, endtime, layer, spritePath, type, precision, updatesPerSecond);
@@ -115,6 +126,7 @@ namespace StorybrewScripts
             return ByEquation.drawViaEquation(this, duration, noteFunction, renderReceptor);
         }
 
+        [Obsolete("")]
         public List<Vector2> GetPathAnchorVectors(List<Anchor> notePath, double currentTime)
         {
             List<Vector2> points = new List<Vector2>();
@@ -126,6 +138,7 @@ namespace StorybrewScripts
             return points;
         }
 
+        [Obsolete("")]
         public void addAnchor(ColumnType column, Vector2 position, bool debug, StoryboardLayer debugLayer)
         {
 
@@ -175,6 +188,7 @@ namespace StorybrewScripts
             }
         }
 
+        [Obsolete("")]
         // This adds an anchor relative to the current position of the column
         public String addRelativeAnchor(ColumnType column, double starttime, Vector2 relativeOffset, bool debug, StoryboardLayer debugLayer)
         {
@@ -201,6 +215,7 @@ namespace StorybrewScripts
             return debugstring;
         }
 
+        [Obsolete("")]
         public String addRelativeAnchorList(ColumnType column, double starttime, List<Vector2> relativeOffset, bool debug, StoryboardLayer debugLayer)
         {
 
@@ -226,6 +241,7 @@ namespace StorybrewScripts
             return debugstring;
         }
 
+        [Obsolete("")]
         private String addRelative(ColumnType column, double starttime, Vector2 relativeOffset, bool debug, StoryboardLayer debugLayer)
         {
 
@@ -272,6 +288,7 @@ namespace StorybrewScripts
             return debugString;
         }
 
+        [Obsolete("")]
         private String addListRelative(ColumnType column, double starttime, List<Vector2> relativeOffsets, bool debug, StoryboardLayer debugLayer)
         {
 
@@ -328,6 +345,7 @@ namespace StorybrewScripts
             return debugString;
         }
 
+        [Obsolete("")]
         public void ManipulateAnchorRelative(int index, double starttime, double transitionTime, Vector2 newPosition, OsbEasing easing, ColumnType column = ColumnType.all)
         {
 
@@ -369,6 +387,7 @@ namespace StorybrewScripts
 
         }
 
+        [Obsolete("")]
         public double ResetAnchors(double starttime, double transitionTime, OsbEasing easing, ColumnType column = ColumnType.all)
         {
             if (column == ColumnType.all)
@@ -433,7 +452,7 @@ namespace StorybrewScripts
 
         }
 
-
+        [Obsolete("")]
         public void ManipulateAnchorAbsolute(int index, double starttime, double transitionTime, Vector2 newPosition, OsbEasing easing, ColumnType column)
         {
 
@@ -471,6 +490,7 @@ namespace StorybrewScripts
 
         }
 
+        [Obsolete("")]
         // TODO figure this shit out!
         public String UpdateAnchors(double starttime, double duration, ColumnType column)
         {
@@ -532,6 +552,7 @@ namespace StorybrewScripts
 
         }
 
+        [Obsolete("")]
         public double FadePath(double starttime, double duration, OsbEasing easing, float fade, ColumnType column = ColumnType.all)
         {
 
@@ -561,7 +582,8 @@ namespace StorybrewScripts
 
             return starttime + duration;
         }
-
+        
+        [Obsolete("")]
         public String debugBezier(double starttime, StoryboardLayer layer)
         {
 

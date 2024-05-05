@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using StorybrewCommon.Storyboarding;
 
 namespace storyboard.scriptslibrary.maniaModCharts.Draw
 {
@@ -20,6 +21,9 @@ namespace storyboard.scriptslibrary.maniaModCharts.Draw
         public float HoldMovementPrecision = 2f;
         public float HoldScalePrecision = 0f;
         public float HoldRotationPrecision = 1f;
+
+        public OsbEasing noteScaleEasing = OsbEasing.None;
+        public OsbEasing holdScaleEasing = OsbEasing.None;
 
         public float HoldRoationDeadzone = 0f;
 

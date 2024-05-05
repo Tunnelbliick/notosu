@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using OpenTK;
+using OpenTK.Input;
 using StorybrewCommon.Animations;
 using StorybrewCommon.Scripting;
 using StorybrewCommon.Storyboarding;
@@ -25,6 +26,9 @@ namespace StorybrewScripts
         public double bpm;
 
         public OsbSprite debug;
+
+        private readonly object lockX = new object();
+        private readonly object lockY = new object();
 
         // Rotation in radiants
         public double rotation = 0f;
@@ -171,7 +175,7 @@ namespace StorybrewScripts
 
         public void PivotOrigin(OsbEasing ease, double starttime, double endtime, double rotation, Vector2 center)
         {
-            Vector2 point = PositionAt(starttime);
+            Vector2 point = PositionAt(endtime);
 
             double duration = Math.Max(endtime - starttime, 1);
             double endRadians = rotation; // Total rotation in radians
@@ -179,16 +183,15 @@ namespace StorybrewScripts
             Vector2 currentPosition = point;
             double currentTime = starttime;
 
-            while (currentTime < endtime)
-{
-                currentTime += deltaIncrement;
+            while (currentTime <= endtime)
+            {
                 double progress = Math.Max(currentTime - starttime, 1) / duration; // Calculate progress as a ratio
 
                 // Adjust the rotation based on progress and easing
                 double easedProgress = ease.Ease(progress); // Assuming ease.Ease() applies the easing to the progress
                 double currentRotation = endRadians * easedProgress; // Total rotation adjusted by eased progress
 
-                Vector2 rotatedPoint = Utility.PivotPoint(point, center, currentRotation);
+                Vector2 rotatedPoint = Utility.PivotPoint(point, center, Math.Round(currentRotation, 5));
 
                 Vector2 relativeMovement = rotatedPoint - currentPosition;
                 Vector2 absoluteMovement = rotatedPoint - point;
@@ -196,59 +199,80 @@ namespace StorybrewScripts
                 MoveOriginRelative(ease, currentTime, currentTime, relativeMovement, absoluteMovement);
 
                 currentPosition = rotatedPoint;
+                currentTime += deltaIncrement;
             }
         }
 
         private void AddXValue(double time, float value, bool absolute = false)
         {
-            // Update or add the value at the specified time
-            if (positionX.ContainsKey(time))
-            {
-                if (absolute)
-                    positionX[time] = value;
-                else
-                    positionX[time] += value;
-            }
-            else
-            {
-                float lastValue = getLastX(time);
-                positionX.Add(time, lastValue + value);
-            }
 
-            // Adjust all subsequent values
-            foreach (var key in positionX.Keys.Where(k => k > time).ToList())
+            lock (lockX)
             {
-                positionX[key] += value;
+                if (positionX == null)
+                {
+                    positionX = new SortedDictionary<double, float>();
+                }
+
+                // Update or add the value at the specified time
+                if (positionX.ContainsKey(time))
+                {
+                    if (absolute)
+                        positionX[time] = value;
+                    else
+                        positionX[time] += value;
+                }
+                else
+                {
+                    float lastValue = getLastX(time);
+                    positionX.Add(time, lastValue + value);
+                }
+
+                // Adjust all subsequent values
+                Parallel.ForEach(positionX.Keys.Where(k => k > time).ToList(), key =>
+                {
+                    {
+                        positionX[key] += value;
+                    }
+                });
             }
         }
 
 
         private void AddYValue(double time, float value, bool absolute = false)
         {
-            // Update or add the value at the specified time
-            if (positionY.ContainsKey(time))
+            lock (lockY)
             {
-                if (absolute)
-                    positionY[time] = value;
-                else
-                    positionY[time] += value;
-            }
-            else
-            {
-                float lastValue = getLastY(time);
-                positionY.Add(time, lastValue + value);
-            }
+                if (positionY == null)
+                {
+                    positionY = new SortedDictionary<double, float>();
+                }
 
-            // Adjust all subsequent values
-            foreach (var key in positionY.Keys.Where(k => k > time).ToList())
-            {
-                positionY[key] += value;
+                // Update or add the value at the specified time
+                if (positionY.ContainsKey(time))
+                {
+                    if (absolute)
+                        positionY[time] = value;
+                    else
+                        positionY[time] += value;
+                }
+                else
+                {
+                    float lastValue = getLastY(time);
+                    positionY.Add(time, lastValue + value);
+                }
+
+                // Adjust all subsequent values
+                Parallel.ForEach(positionY.Keys.Where(k => k > time).ToList(), key =>
+                {
+                    positionY[key] += value;
+                });
             }
         }
 
         private float getLastX(double currentTime)
         {
-            if (positionX.Count == 0)
+
+            if (positionX == null || positionX.Count == 0)
             {
                 return 0; // Or your default value
             }
@@ -278,7 +302,7 @@ namespace StorybrewScripts
 
         private float getLastY(double currentTime)
         {
-            if (positionY.Count == 0)
+            if (positionY == null || positionY.Count == 0)
             {
                 return 0; // Or your default value
             }
@@ -326,8 +350,8 @@ namespace StorybrewScripts
                 Vector2 movement = newPos - lastPos;               // Delta movement
 
                 // Apply the delta movement
-                AddXValue(start + deltaTime, movement.X);
-                AddYValue(start + deltaTime, movement.Y);
+                AddXValue(start + deltaTime, movement.X, true);
+                AddYValue(start + deltaTime, movement.Y, true);
 
 
                 lastPos = newPos;   // Update lastPos for the next iteration
@@ -355,7 +379,7 @@ namespace StorybrewScripts
                 float t = (float)ease.Ease(progress);   // Apply easing function
 
                 Vector2 newPos = Vector2.Lerp(startPos, endPos, t); // Interpolated position
-                Vector2 movement = newPos - lastPos;               // Delta movement
+                Vector2 movement = newPos - lastPos;     // Delta movement
 
                 // Apply the delta movement
                 if (offset.X != 0)

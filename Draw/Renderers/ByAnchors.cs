@@ -9,6 +9,7 @@ using StorybrewCommon.Storyboarding;
 
 namespace StorybrewScripts
 {
+    [Obsolete("")]
     public static class ByAnchors
     {
 
@@ -27,7 +28,8 @@ namespace StorybrewScripts
             double fadeOutTime = instance.fadeOutTime;
             string debug = "";
 
-            Parallel.ForEach(playfieldInstance.columns.Values, column => {
+            Parallel.ForEach(playfieldInstance.columns.Values, column =>
+            {
 
                 RenderReceptor.Render(instance, column, duration);
                 RenderOrigin.Render(instance, column);
@@ -36,7 +38,8 @@ namespace StorybrewScripts
                 Dictionary<double, Note> notes = playfieldInstance.columnNotes[column.type];
                 var keysInRange = notes.Keys.Where(hittime => hittime >= starttime && hittime - easetime <= endtime).ToList();
 
-                Parallel.ForEach(keysInRange, key => {
+                Parallel.ForEach(keysInRange, key =>
+                {
 
                     KeyframedValue<Vector2> movement = new KeyframedValue<Vector2>(null);
                     KeyframedValue<Vector2> scale = new KeyframedValue<Vector2>(null);
@@ -215,241 +218,241 @@ namespace StorybrewScripts
 
                     List<SliderParts> reversedSliderPoints = note.sliderPositions.ToList();
                     reversedSliderPoints.Reverse();
-                    foreach (SliderParts part in note.sliderPositions)
-                    {
+                    Parallel.ForEach(note.sliderPositions, part =>
+                         {
 
-                        KeyframedValue<Vector2> SliderMovement = new KeyframedValue<Vector2>(null);
-                        KeyframedValue<Vector2> SliderScale = new KeyframedValue<Vector2>(null);
-                        KeyframedValue<double> SliderRotation = new KeyframedValue<double>(null);
+                             KeyframedValue<Vector2> SliderMovement = new KeyframedValue<Vector2>(null);
+                             KeyframedValue<Vector2> SliderScale = new KeyframedValue<Vector2>(null);
+                             KeyframedValue<double> SliderRotation = new KeyframedValue<double>(null);
 
-                        double sliderStartime = part.Timestamp;
-                        OsbSprite sprite = part.Sprite;
-                        double sliderCurrentTime = sliderStartime - easetime - localIterationRate;
-                        Vector2 currentSliderPositon = column.origin.PositionAt(sliderCurrentTime);
-                        double sliderRenderStartTime = Math.Max(sliderCurrentTime, sliderStartime);
-                        double sliderRenderEndTime = Math.Min(sliderStartime + 0.1f, endtime);
+                             double sliderStartime = part.Timestamp;
+                             OsbSprite sprite = part.Sprite;
+                             double sliderCurrentTime = sliderStartime - easetime - localIterationRate;
+                             Vector2 currentSliderPositon = column.origin.PositionAt(sliderCurrentTime);
+                             double sliderRenderStartTime = Math.Max(sliderCurrentTime, sliderStartime);
+                             double sliderRenderEndTime = Math.Min(sliderStartime + 0.1f, endtime);
 
-                        sprite.Fade(sliderCurrentTime - 1000, 0);
+                             sprite.Fade(sliderCurrentTime - 1000, 0);
 
-                        sprite.Fade(Math.Max(sliderCurrentTime, renderStartTime), 1);
-                        sprite.Fade(sliderRenderEndTime, 0);
-                        double sliderRotation = sprite.RotationAt(sliderCurrentTime);
+                             sprite.Fade(Math.Max(sliderCurrentTime, renderStartTime), 1);
+                             sprite.Fade(sliderRenderEndTime, 0);
+                             double sliderRotation = sprite.RotationAt(sliderCurrentTime);
 
-                        float defaultScaleX = 0.7f / 0.5f;
-                        float defaultScaleY = 0.14f / 0.5f * ((float)part.Duration / 20f); // This scaled was based on 20ms long sliderParts
+                             float defaultScaleX = 0.7f / 0.5f;
+                             float defaultScaleY = 0.14f / 0.5f * ((float)part.Duration / 20f); // This scaled was based on 20ms long sliderParts
 
-                        Vector2 newScale = new Vector2(defaultScaleX * column.origin.ScaleAt(sliderCurrentTime).X, defaultScaleY * column.origin.ScaleAt(sliderCurrentTime).Y);
-                        SliderScale.Add(sliderCurrentTime, newScale, EasingFunctions.ToEasingFunction(easing));
+                             Vector2 newScale = new Vector2(defaultScaleX * column.origin.ScaleAt(sliderCurrentTime).X, defaultScaleY * column.origin.ScaleAt(sliderCurrentTime).Y);
+                             SliderScale.Add(sliderCurrentTime, newScale, EasingFunctions.ToEasingFunction(easing));
 
-                        float sliderProgress = 0;
-                        double sliderIteratedTime = 0;
+                             float sliderProgress = 0;
+                             double sliderIteratedTime = 0;
 
-                        switch (type)
-                        {
-                            // Use direct lines between anchors
-                            case PathType.line:
-                                double timePerAnchor = totalDuration / (notePath.Count - 1);
-                                int optimalUpdatesForAnchor = (int)(timePerAnchor / localIterationRate);
-                                localIterationRate = timePerAnchor / optimalUpdatesForAnchor;
+                             switch (type)
+                             {
+                                 // Use direct lines between anchors
+                                 case PathType.line:
+                                     double timePerAnchor = totalDuration / (notePath.Count - 1);
+                                     int optimalUpdatesForAnchor = (int)(timePerAnchor / localIterationRate);
+                                     localIterationRate = timePerAnchor / optimalUpdatesForAnchor;
 
-                                for (int n = 0; n < notePath.Count - 1; n++)
-                                {
-                                    sliderProgress = 0;
-                                    sliderIteratedTime = 0;
+                                     for (int n = 0; n < notePath.Count - 1; n++)
+                                     {
+                                         sliderProgress = 0;
+                                         sliderIteratedTime = 0;
 
-                                    while (sliderIteratedTime < timePerAnchor)
-                                    {
-                                        sliderProgress = (float)(sliderIteratedTime / timePerAnchor);
+                                         while (sliderIteratedTime < timePerAnchor)
+                                         {
+                                             sliderProgress = (float)(sliderIteratedTime / timePerAnchor);
 
-                                        // Apply easing to the progress
-                                        float easedProgress = (float)easing.Ease(sliderProgress);
+                                             // Apply easing to the progress
+                                             float easedProgress = (float)easing.Ease(sliderProgress);
 
-                                        currentEffect = instance.findEffectByReferenceTime(sliderCurrentTime);
-                                        if (currentEffect.Value != null)
-                                        {
-                                            //sprite.UpdateTransformed(sliderCurrentTime, sliderCurrentTime + movementTime, currentEffect.Value.reference, 10);
-                                        }
+                                             currentEffect = instance.findEffectByReferenceTime(sliderCurrentTime);
+                                             if (currentEffect.Value != null)
+                                             {
+                                                 //sprite.UpdateTransformed(sliderCurrentTime, sliderCurrentTime + movementTime, currentEffect.Value.reference, 10);
+                                             }
 
-                                        Vector2 startPos = notePath[n].sprite.PositionAt(sliderCurrentTime + localIterationRate);
-                                        Vector2 endPos = notePath[n + 1].sprite.PositionAt(sliderCurrentTime + localIterationRate);
+                                             Vector2 startPos = notePath[n].sprite.PositionAt(sliderCurrentTime + localIterationRate);
+                                             Vector2 endPos = notePath[n + 1].sprite.PositionAt(sliderCurrentTime + localIterationRate);
 
-                                        Vector2 newPosition = Vector2.Lerp(startPos, endPos, easedProgress);
-                                        Vector2 receptorPosition = column.receptor.PositionAt(sliderCurrentTime + localIterationRate);
-                                        Vector2 originScale = column.origin.ScaleAt(sliderCurrentTime + localIterationRate);
-                                        Vector2 receptorScale = column.receptor.ScaleAt(sliderCurrentTime + localIterationRate);
-                                        Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, easedProgress);
+                                             Vector2 newPosition = Vector2.Lerp(startPos, endPos, easedProgress);
+                                             Vector2 receptorPosition = column.receptor.PositionAt(sliderCurrentTime + localIterationRate);
+                                             Vector2 originScale = column.origin.ScaleAt(sliderCurrentTime + localIterationRate);
+                                             Vector2 receptorScale = column.receptor.ScaleAt(sliderCurrentTime + localIterationRate);
+                                             Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, easedProgress);
 
-                                        double theta = 0;
-                                        Vector2 delta = currentSliderPositon - newPosition;
-                                        if (delta.LengthSquared > 0 && rotateToFaceReceptor)
-                                        {
-                                            theta = Math.Atan2(delta.X, delta.Y);
-                                        }
+                                             double theta = 0;
+                                             Vector2 delta = currentSliderPositon - newPosition;
+                                             if (delta.LengthSquared > 0 && rotateToFaceReceptor)
+                                             {
+                                                 theta = Math.Atan2(delta.X, delta.Y);
+                                             }
 
-                                        // If the note is already done
-                                        if (sliderCurrentTime > note.starttime)
-                                        {
-                                            Vector2 newNotePosition = column.receptor.PositionAt(sliderCurrentTime + localIterationRate);
+                                             // If the note is already done
+                                             if (sliderCurrentTime > note.starttime)
+                                             {
+                                                 Vector2 newNotePosition = column.receptor.PositionAt(sliderCurrentTime + localIterationRate);
 
-                                            double noteTheta = 0;
-                                            Vector2 noteDelta = newNotePosition - currentPosition;
-                                            if (rotateToFaceReceptor)
-                                            {
-                                                noteTheta = Math.Atan2(noteDelta.X, noteDelta.Y);
-                                            }
+                                                 double noteTheta = 0;
+                                                 Vector2 noteDelta = newNotePosition - currentPosition;
+                                                 if (rotateToFaceReceptor)
+                                                 {
+                                                     noteTheta = Math.Atan2(noteDelta.X, noteDelta.Y);
+                                                 }
 
-                                            movement.Add(sliderCurrentTime + localIterationRate, newNotePosition, EasingFunctions.ToEasingFunction(easing));
-                                            scale.Add(sliderCurrentTime + localIterationRate, receptorScale, EasingFunctions.ToEasingFunction(easing));
-                                            rotation.Add(sliderCurrentTime + localIterationRate, startRotation - noteTheta, EasingFunctions.ToEasingFunction(easing));
-                                            currentPosition = newNotePosition;
-                                        }
+                                                 movement.Add(sliderCurrentTime + localIterationRate, newNotePosition, EasingFunctions.ToEasingFunction(easing));
+                                                 scale.Add(sliderCurrentTime + localIterationRate, receptorScale, EasingFunctions.ToEasingFunction(easing));
+                                                 rotation.Add(sliderCurrentTime + localIterationRate, startRotation - noteTheta, EasingFunctions.ToEasingFunction(easing));
+                                                 currentPosition = newNotePosition;
+                                             }
 
-                                        newScale = new Vector2(defaultScaleX * scaleProgress.X, defaultScaleY * scaleProgress.Y);
+                                             newScale = new Vector2(defaultScaleX * scaleProgress.X, defaultScaleY * scaleProgress.Y);
 
-                                        SliderMovement.Add(sliderCurrentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
-                                        SliderScale.Add(sliderCurrentTime + localIterationRate, newScale, EasingFunctions.ToEasingFunction(easing));
-                                        SliderRotation.Add(sliderCurrentTime + localIterationRate, sliderRotation - theta, EasingFunctions.ToEasingFunction(easing));
+                                             SliderMovement.Add(sliderCurrentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
+                                             SliderScale.Add(sliderCurrentTime + localIterationRate, newScale, EasingFunctions.ToEasingFunction(easing));
+                                             SliderRotation.Add(sliderCurrentTime + localIterationRate, sliderRotation - theta, EasingFunctions.ToEasingFunction(easing));
 
-                                        sliderIteratedTime += localIterationRate;
-                                        sliderCurrentTime += localIterationRate;
-                                        currentSliderPositon = newPosition;
-                                    }
+                                             sliderIteratedTime += localIterationRate;
+                                             sliderCurrentTime += localIterationRate;
+                                             currentSliderPositon = newPosition;
+                                         }
 
-                                    if (n == notePath.Count - 2)
-                                    {
-                                        sliderProgress = Math.Min((float)(sliderIteratedTime / timePerAnchor), 1);
+                                         if (n == notePath.Count - 2)
+                                         {
+                                             sliderProgress = Math.Min((float)(sliderIteratedTime / timePerAnchor), 1);
 
-                                        // Apply easing to the progress
-                                        float easedProgress = (float)easing.Ease(sliderProgress);
+                                             // Apply easing to the progress
+                                             float easedProgress = (float)easing.Ease(sliderProgress);
 
-                                        currentEffect = instance.findEffectByReferenceTime(sliderCurrentTime);
-                                        if (currentEffect.Value != null)
-                                        {
-                                            //sprite.UpdateTransformed(sliderCurrentTime, sliderCurrentTime + movementTime, currentEffect.Value.reference, 10);
-                                        }
+                                             currentEffect = instance.findEffectByReferenceTime(sliderCurrentTime);
+                                             if (currentEffect.Value != null)
+                                             {
+                                                 //sprite.UpdateTransformed(sliderCurrentTime, sliderCurrentTime + movementTime, currentEffect.Value.reference, 10);
+                                             }
 
-                                        Vector2 startPos = notePath[n].sprite.PositionAt(sliderCurrentTime + localIterationRate);
-                                        Vector2 endPos = notePath[n + 1].sprite.PositionAt(sliderCurrentTime + localIterationRate);
+                                             Vector2 startPos = notePath[n].sprite.PositionAt(sliderCurrentTime + localIterationRate);
+                                             Vector2 endPos = notePath[n + 1].sprite.PositionAt(sliderCurrentTime + localIterationRate);
 
-                                        Vector2 newPosition = Vector2.Lerp(startPos, endPos, easedProgress);
-                                        Vector2 receptorPosition = column.receptor.PositionAt(sliderCurrentTime + localIterationRate);
-                                        Vector2 originScale = column.origin.ScaleAt(sliderCurrentTime + localIterationRate);
-                                        Vector2 receptorScale = column.receptor.ScaleAt(sliderCurrentTime + localIterationRate);
-                                        Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, easedProgress);
+                                             Vector2 newPosition = Vector2.Lerp(startPos, endPos, easedProgress);
+                                             Vector2 receptorPosition = column.receptor.PositionAt(sliderCurrentTime + localIterationRate);
+                                             Vector2 originScale = column.origin.ScaleAt(sliderCurrentTime + localIterationRate);
+                                             Vector2 receptorScale = column.receptor.ScaleAt(sliderCurrentTime + localIterationRate);
+                                             Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, easedProgress);
 
-                                        double theta = 0;
-                                        Vector2 delta = currentSliderPositon - newPosition;
-                                        if (delta.LengthSquared > 0 && rotateToFaceReceptor)
-                                        {
-                                            theta = Math.Atan2(delta.X, delta.Y);
-                                        }
+                                             double theta = 0;
+                                             Vector2 delta = currentSliderPositon - newPosition;
+                                             if (delta.LengthSquared > 0 && rotateToFaceReceptor)
+                                             {
+                                                 theta = Math.Atan2(delta.X, delta.Y);
+                                             }
 
-                                        // If the note is already done
-                                        if (sliderCurrentTime > note.starttime)
-                                        {
-                                            Vector2 newNotePosition = column.receptor.PositionAt(sliderCurrentTime + localIterationRate);
+                                             // If the note is already done
+                                             if (sliderCurrentTime > note.starttime)
+                                             {
+                                                 Vector2 newNotePosition = column.receptor.PositionAt(sliderCurrentTime + localIterationRate);
 
-                                            double noteTheta = 0;
-                                            Vector2 noteDelta = newNotePosition - currentPosition;
-                                            if (rotateToFaceReceptor)
-                                            {
-                                                noteTheta = Math.Atan2(noteDelta.X, noteDelta.Y);
-                                            }
+                                                 double noteTheta = 0;
+                                                 Vector2 noteDelta = newNotePosition - currentPosition;
+                                                 if (rotateToFaceReceptor)
+                                                 {
+                                                     noteTheta = Math.Atan2(noteDelta.X, noteDelta.Y);
+                                                 }
 
-                                            movement.Add(sliderCurrentTime + localIterationRate, newNotePosition, EasingFunctions.ToEasingFunction(easing));
-                                            scale.Add(sliderCurrentTime + localIterationRate, receptorScale, EasingFunctions.ToEasingFunction(easing));
-                                            rotation.Add(sliderCurrentTime + localIterationRate, startRotation - noteTheta, EasingFunctions.ToEasingFunction(easing));
-                                            currentPosition = newNotePosition;
-                                        }
+                                                 movement.Add(sliderCurrentTime + localIterationRate, newNotePosition, EasingFunctions.ToEasingFunction(easing));
+                                                 scale.Add(sliderCurrentTime + localIterationRate, receptorScale, EasingFunctions.ToEasingFunction(easing));
+                                                 rotation.Add(sliderCurrentTime + localIterationRate, startRotation - noteTheta, EasingFunctions.ToEasingFunction(easing));
+                                                 currentPosition = newNotePosition;
+                                             }
 
-                                        newScale = new Vector2(defaultScaleX * scaleProgress.X, defaultScaleY * scaleProgress.Y);
+                                             newScale = new Vector2(defaultScaleX * scaleProgress.X, defaultScaleY * scaleProgress.Y);
 
-                                        SliderMovement.Add(sliderCurrentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
-                                        SliderScale.Add(sliderCurrentTime + localIterationRate, newScale, EasingFunctions.ToEasingFunction(easing));
-                                        SliderRotation.Add(sliderCurrentTime + localIterationRate, sliderRotation - theta, EasingFunctions.ToEasingFunction(easing));
+                                             SliderMovement.Add(sliderCurrentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
+                                             SliderScale.Add(sliderCurrentTime + localIterationRate, newScale, EasingFunctions.ToEasingFunction(easing));
+                                             SliderRotation.Add(sliderCurrentTime + localIterationRate, sliderRotation - theta, EasingFunctions.ToEasingFunction(easing));
 
-                                    }
-                                }
-                                break;
+                                         }
+                                     }
+                                     break;
 
-                            // Use Bezier calculation for the path
-                            case PathType.bezier:
-                                while (sliderProgress < 1)
-                                {
-                                    sliderProgress = Math.Min((float)(sliderIteratedTime / totalDuration), 1f);
+                                 // Use Bezier calculation for the path
+                                 case PathType.bezier:
+                                     while (sliderProgress < 1)
+                                     {
+                                         sliderProgress = Math.Min((float)(sliderIteratedTime / totalDuration), 1f);
 
-                                    // Apply easing to the progress
-                                    float easedProgress = (float)easing.Ease(sliderProgress);
+                                         // Apply easing to the progress
+                                         float easedProgress = (float)easing.Ease(sliderProgress);
 
-                                    Vector2 receptorPosition = column.ReceptorPositionAt(sliderCurrentTime + localIterationRate);
-                                    Vector2 originScale = column.origin.ScaleAt(sliderCurrentTime + localIterationRate);
-                                    Vector2 receptorScale = column.receptor.ScaleAt(sliderCurrentTime + localIterationRate);
-                                    Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, easedProgress);
-                                    List<Vector2> points = instance.GetPathAnchorVectors(notePath, sliderCurrentTime);
+                                         Vector2 receptorPosition = column.ReceptorPositionAt(sliderCurrentTime + localIterationRate);
+                                         Vector2 originScale = column.origin.ScaleAt(sliderCurrentTime + localIterationRate);
+                                         Vector2 receptorScale = column.receptor.ScaleAt(sliderCurrentTime + localIterationRate);
+                                         Vector2 scaleProgress = Vector2.Lerp(originScale, receptorScale, easedProgress);
+                                         List<Vector2> points = instance.GetPathAnchorVectors(notePath, sliderCurrentTime);
 
-                                    Vector2 newPosition = BezierCurve.CalculatePoint(points, easedProgress);
+                                         Vector2 newPosition = BezierCurve.CalculatePoint(points, easedProgress);
 
-                                    double theta = 0;
-                                    Vector2 delta = newPosition - currentSliderPositon;
-                                    theta = Math.Atan2(delta.X, delta.Y);
+                                         double theta = 0;
+                                         Vector2 delta = newPosition - currentSliderPositon;
+                                         theta = Math.Atan2(delta.X, delta.Y);
 
-                                    /*if (this.HoldRoationDeadzone != 0 && Math.Abs(theta) > this.HoldRoationDeadzone)
-                                    {
-                                        theta = 0;
-                                    }*/
+                                         /*if (this.HoldRoationDeadzone != 0 && Math.Abs(theta) > this.HoldRoationDeadzone)
+                                         {
+                                             theta = 0;
+                                         }*/
 
-                                    // If the note is already done
-                                    if (sliderCurrentTime > note.starttime)
-                                    {
-                                        Vector2 newNotePosition = column.receptor.PositionAt(sliderCurrentTime + localIterationRate);
+                                         // If the note is already done
+                                         if (sliderCurrentTime > note.starttime)
+                                         {
+                                             Vector2 newNotePosition = column.receptor.PositionAt(sliderCurrentTime + localIterationRate);
 
-                                        double noteTheta = 0;
-                                        Vector2 noteDelta = newNotePosition - currentPosition;
-                                        if (rotateToFaceReceptor)
-                                        {
-                                            noteTheta = Math.Atan2(noteDelta.X, noteDelta.Y);
-                                        }
+                                             double noteTheta = 0;
+                                             Vector2 noteDelta = newNotePosition - currentPosition;
+                                             if (rotateToFaceReceptor)
+                                             {
+                                                 noteTheta = Math.Atan2(noteDelta.X, noteDelta.Y);
+                                             }
 
-                                        movement.Add(sliderCurrentTime + localIterationRate, newNotePosition, EasingFunctions.ToEasingFunction(easing));
-                                        scale.Add(sliderCurrentTime + localIterationRate, receptorScale, EasingFunctions.ToEasingFunction(easing));
-                                        rotation.Add(sliderCurrentTime + localIterationRate, startRotation - noteTheta, EasingFunctions.ToEasingFunction(easing));
-                                        currentPosition = newNotePosition;
-                                    }
+                                             movement.Add(sliderCurrentTime + localIterationRate, newNotePosition, EasingFunctions.ToEasingFunction(easing));
+                                             scale.Add(sliderCurrentTime + localIterationRate, receptorScale, EasingFunctions.ToEasingFunction(easing));
+                                             rotation.Add(sliderCurrentTime + localIterationRate, startRotation - noteTheta, EasingFunctions.ToEasingFunction(easing));
+                                             currentPosition = newNotePosition;
+                                         }
 
 
-                                    newScale = new Vector2(defaultScaleX * scaleProgress.X, defaultScaleY * scaleProgress.Y);
+                                         newScale = new Vector2(defaultScaleX * scaleProgress.X, defaultScaleY * scaleProgress.Y);
 
-                                    SliderMovement.Add(sliderCurrentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
-                                    SliderScale.Add(sliderCurrentTime + localIterationRate, newScale, EasingFunctions.ToEasingFunction(easing));
-                                    SliderRotation.Add(sliderCurrentTime + localIterationRate, sliderRotation - theta, EasingFunctions.ToEasingFunction(easing));
+                                         SliderMovement.Add(sliderCurrentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
+                                         SliderScale.Add(sliderCurrentTime + localIterationRate, newScale, EasingFunctions.ToEasingFunction(easing));
+                                         SliderRotation.Add(sliderCurrentTime + localIterationRate, sliderRotation - theta, EasingFunctions.ToEasingFunction(easing));
 
-                                    sliderIteratedTime += localIterationRate;
-                                    sliderCurrentTime += localIterationRate;
-                                    currentSliderPositon = newPosition;
-                                }
-                                break;
-                        }
-                        // Render out Slider keyframes
-                        SliderMovement.Simplify2dKeyframes(instance.HoldMovementPrecision, v => v);
-                        SliderScale.Simplify2dKeyframes(instance.HoldScalePrecision, v => v);
-                        SliderRotation.Simplify1dKeyframes(instance.HoldRotationPrecision, v => (float)v);
-                        SliderMovement.ForEachPair((start, end) => sprite.Move(easing, start.Time, end.Time, start.Value, end.Value));
-                        SliderScale.ForEachPair((start, end) => sprite.ScaleVec(start.Time, end.Time, start.Value.X, start.Value.Y, end.Value.X, end.Value.Y));
-                        SliderRotation.ForEachPair((start, end) => sprite.Rotate(start.Time, end.Value));
+                                         sliderIteratedTime += localIterationRate;
+                                         sliderCurrentTime += localIterationRate;
+                                         currentSliderPositon = newPosition;
+                                     }
+                                     break;
+                             }
+                             // Render out Slider keyframes
+                             SliderMovement.Simplify(instance.HoldMovementPrecision);
+                             SliderScale.Simplify(instance.HoldScalePrecision);
+                             SliderRotation.Simplify(instance.HoldRotationPrecision);
+                             SliderMovement.ForEachPair((start, end) => sprite.Move(easing, start.Time, end.Time, start.Value, end.Value));
+                             SliderScale.ForEachPair((start, end) => sprite.ScaleVec(start.Time, end.Time, start.Value.X, start.Value.Y, end.Value.X, end.Value.Y));
+                             SliderRotation.ForEachPair((start, end) => sprite.Rotate(start.Time, end.Value));
 
-                    }
+                         });
 
                     // Render out Note keyframes
-                    movement.Simplify2dKeyframes(instance.NoteMovementPrecision, v => v);
-                    scale.Simplify2dKeyframes(instance.NoteScalePrecision, v => v);
-                    rotation.Simplify1dKeyframes(instance.NoteRotationPrecision, v => (float)v);
+                    movement.Simplify(instance.NoteMovementPrecision);
+                    scale.Simplify(instance.NoteScalePrecision);
+                    rotation.Simplify(instance.NoteRotationPrecision);
                     movement.ForEachPair((start, end) => note.Move(start.Time, end.Time - start.Time, OsbEasing.None, start.Value, end.Value));
                     scale.ForEachPair((start, end) => note.Scale(start.Time, end.Time, OsbEasing.None, start.Value, end.Value));
                     rotation.ForEachPair((start, end) => note.AbsoluteRotate(start.Time, end.Time - start.Time, OsbEasing.None, end.Value));
 
                     if (progress == 1)
                     {
-                        note.ApplyHitLightingToNote(note.starttime, note.endtime, fadeOutTime, column.receptor, localIterationRate);
+                        //note.ApplyHitLightingToNote(note.starttime, note.endtime, fadeOutTime, column.receptor, localIterationRate);
                     }
                 });
             });
