@@ -15,6 +15,7 @@ namespace StorybrewScripts
     public class EquationParameters
     {
         public Vector2 position;
+        public Vector2 lastPosition;
         public double time;
         public float progress;
         public OsbSprite sprite;
@@ -116,7 +117,8 @@ namespace StorybrewScripts
 
                          note.Scale(currentTime, currentTime, OsbEasing.None, column.origin.ScaleAt(currentTime), column.origin.ScaleAt(currentTime));
 
-                         double startRotation = note.getRotation(currentTime);
+                         double startRotation = column.receptor.RotationAt(currentTime);
+                         rotation.Add(currentTime, (float)startRotation, EasingFunctions.ToEasingFunction(easing));
 
                          do
                          {
@@ -193,6 +195,7 @@ namespace StorybrewScripts
                              var par = new EquationParameters
                              {
                                  position = newPosition,
+                                 lastPosition = currentPosition,
                                  time = currentTime,
                                  progress = easedProgress,
                                  sprite = note.noteSprite,
@@ -217,7 +220,7 @@ namespace StorybrewScripts
                                  }
                                  theta = Math.Atan2(delta.X, delta.Y);
                              }
-
+                            
                              movement.Add(currentTime + localIterationRate, newPosition, EasingFunctions.ToEasingFunction(easing));
                              scale.Add(currentTime + localIterationRate, scaleProgress, EasingFunctions.ToEasingFunction(easing));
                              rotation.Add(currentTime + localIterationRate, (float)(startRotation - theta), EasingFunctions.ToEasingFunction(easing));
@@ -341,6 +344,7 @@ namespace StorybrewScripts
                                       var par = new EquationParameters
                                       {
                                           position = newPosition,
+                                          lastPosition = currentSliderPositon,
                                           time = sliderCurrentTime,
                                           progress = easedProgress,
                                           sprite = sprite,
@@ -353,6 +357,7 @@ namespace StorybrewScripts
                                       var parNext = new EquationParameters
                                       {
                                           position = nextPosition,
+                                          lastPosition = currentSliderPositon,
                                           time = sliderCurrentTime,
                                           progress = easedNextProgress,
                                           sprite = null,
@@ -413,9 +418,9 @@ namespace StorybrewScripts
                                   SliderMovement.Simplify(instance.HoldMovementPrecision);
                                   SliderScale.Simplify(instance.HoldScalePrecision);
                                   SliderRotation.Simplify(instance.HoldRotationPrecision);
-                                  SliderMovement.ForEachPair((start, end) => sprite.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
                                   SliderScale.ForEachPair((start, end) => sprite.ScaleVec(start.Time, end.Time, start.Value.X, start.Value.Y, end.Value.X, end.Value.Y));
                                   SliderRotation.ForEachPair((start, end) => sprite.Rotate(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
+                                  SliderMovement.ForEachPair((start, end) =>  sprite.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value));
                               });
 
 

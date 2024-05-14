@@ -422,23 +422,30 @@ namespace StorybrewScripts
 
                 if (!keepPosition)
                 {
+                    // Determine scale factors based on the ratio of new to old scales
+                    float scaleRatioX = newScale.X / receptorScale.X;
+                    float scaleRatioY = newScale.Y / receptorScale.Y;
 
-                    // Calculate the change in distance for receptor based on scale difference.
-                    float receptorDistanceChangeX = (receptorPosition.X - center.X) * (newScale.X / receptorScale.X - 1);
-                    float receptorDistanceChangeY = (center.Y - receptorPosition.Y) * (newScale.Y / receptorScale.Y - 1);
+                    // Calculate the scaled positions by directly applying the scale ratios to the distances from the center
+                    Vector2 receptorNewPosition = new Vector2(
+                        center.X + (receptorPosition.X - center.X) * scaleRatioX,
+                        center.Y + (receptorPosition.Y - center.Y) * scaleRatioY);
 
-                    // Adjust using the new coordinate system's basis.
-                    Vector2 receptorMovement = new Vector2(receptorDistanceChangeX, 0);
+                    Vector2 originNewPosition = new Vector2(
+                        center.X + (originPosition.X - center.X) * scaleRatioX,
+                        center.Y + (originPosition.Y - center.Y) * scaleRatioY);
 
-                    // Calculate the change in distance for origin based on scale difference.
-                    float originDistanceChangeX = (originPosition.X - center.X) * (newScale.X / originScale.X - 1);
-                    float originDistanceChangeY = (center.Y - originPosition.Y) * (newScale.Y / originPosition.Y - 1);
+                    // Calculate movement vectors
+                    Vector2 receptorMovement = receptorNewPosition - receptorPosition;
+                    Vector2 originMovement = originNewPosition - originPosition;
 
-                    Vector2 originMovement = new Vector2(originDistanceChangeX, 0);
-
+                    // Apply movements using an appropriate method that reflects position changes
                     receptor.MoveReceptorRelative(easing, starttime, endtime, receptorMovement);
                     origin.MoveOriginRelative(easing, starttime, endtime, originMovement);
                 }
+
+
+
 
             }
         }
@@ -575,6 +582,44 @@ namespace StorybrewScripts
             }
 
         }
+
+        public void MoveOriginNormalized(OsbEasing easing, double starttime, double endtime, double movementMagnitude, ColumnType column)
+        {
+            if (column == ColumnType.all)
+            {
+                foreach (Column currentColumn in columns.Values)
+                {
+                    Vector2 originPos = currentColumn.OriginPositionAt(starttime);
+                    Vector2 receptorPos = currentColumn.ReceptorPositionAt(starttime);
+
+                    // Calculate the normalized direction from origin to receptor
+                    Vector2 direction = Vector2.Normalize(receptorPos - originPos);
+
+                    // Scale the normalized direction by the movement magnitude
+                    Vector2 movementVector = direction * (float)movementMagnitude;
+
+                    // Apply the movement
+                    currentColumn.MoveOriginRelative(easing, starttime, endtime, movementVector);
+                }
+            }
+            else
+            {
+                Column currentColumn = columns[column];
+
+                Vector2 originPos = currentColumn.OriginPositionAt(starttime);
+                Vector2 receptorPos = currentColumn.ReceptorPositionAt(starttime);
+
+                // Calculate the normalized direction from origin to receptor
+                Vector2 direction = Vector2.Normalize(receptorPos - originPos);
+
+                // Scale the normalized direction by the movement magnitude
+                Vector2 movementVector = direction * (float)movementMagnitude;
+
+                // Apply the movement
+                currentColumn.MoveOriginRelative(easing, starttime, endtime, movementVector);
+            }
+        }
+
 
         public void RotateReceptorRelative(OsbEasing easing, double starttime, double endtime, double rotation, ColumnType column = ColumnType.all)
         {
@@ -887,21 +932,16 @@ namespace StorybrewScripts
         {
             Vector2 center;
 
-            Vector2 topLeft = new Vector2(0, 0);
-            Vector2 bottomRight = new Vector2(0, 0);
+            // Initialize to extreme values to correctly capture the extents
+            Vector2 topLeft = new Vector2(float.MaxValue, float.MaxValue);
+            Vector2 bottomRight = new Vector2(float.MinValue, float.MinValue);
 
             foreach (Column column in columns.Values)
             {
-
                 Vector2 receptor = column.ReceptorPositionAt(currentTime);
                 Vector2 origin = column.OriginPositionAt(currentTime);
 
-                if (topLeft == new Vector2(0, 0))
-                {
-                    topLeft = receptor;
-                    bottomRight = origin;
-                }
-
+                // Adjust topLeft to the minimum extents
                 if (receptor.X < topLeft.X)
                 {
                     topLeft.X = receptor.X;
@@ -913,13 +953,14 @@ namespace StorybrewScripts
 
                 if (receptor.Y < topLeft.Y)
                 {
-                    topLeft.Y = receptor.X;
+                    topLeft.Y = receptor.Y;  // Corrected from receptor.X to receptor.Y
                 }
                 if (origin.Y < topLeft.Y)
                 {
                     topLeft.Y = origin.Y;
                 }
 
+                // Adjust bottomRight to the maximum extents
                 if (receptor.X > bottomRight.X)
                 {
                     bottomRight.X = receptor.X;
@@ -931,19 +972,20 @@ namespace StorybrewScripts
 
                 if (receptor.Y > bottomRight.Y)
                 {
-                    bottomRight.Y = receptor.X;
+                    bottomRight.Y = receptor.Y;  // Corrected from receptor.X to receptor.Y
                 }
                 if (origin.Y > bottomRight.Y)
                 {
                     bottomRight.Y = origin.Y;
                 }
-
             }
 
+            // Calculate the center from the adjusted topLeft and bottomRight
             center.X = (topLeft.X + bottomRight.X) / 2;
             center.Y = (topLeft.Y + bottomRight.Y) / 2;
 
             return center;
         }
+
     }
 }

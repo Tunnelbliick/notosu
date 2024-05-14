@@ -60,12 +60,19 @@ namespace StorybrewScripts
                 relativeTime += playfieldInstance.delta;
             }
 
+            Dictionary<double, Note> notes = instance.playfieldInstance.columnNotes[column.type];
+
             movement.Simplify(1);
             movement.ForEachPair((start, end) =>
             {
                 receptor.renderedSprite.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value);
-                receptor.light.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value);
-                receptor.hit.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value);
+
+                // Only move hitlighting if there is something to hit
+                if (notes.Any(ho => Math.Abs(ho.Value.starttime - start.Time) <= 151 + playfieldInstance.delta))
+                {
+                    receptor.light.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value);
+                    receptor.hit.Move(OsbEasing.None, start.Time, end.Time, start.Value, end.Value);
+                }
             });
 
 

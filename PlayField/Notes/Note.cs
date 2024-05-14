@@ -262,7 +262,7 @@ namespace StorybrewScripts
                     localCurrentTime += iterationRate;
                 }
 
-                hold.Fade(renderEnd, 0);
+                hold.Fade(this.endtime, this.endtime + 50, 1, 0);
 
             }
 
