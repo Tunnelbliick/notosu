@@ -12,7 +12,6 @@ using StorybrewCommon.Storyboarding;
 
 namespace StorybrewScripts
 {
-
     public class Note
     {
         public int noteType = 0;
@@ -63,77 +62,26 @@ namespace StorybrewScripts
             }
 
             // Adjust the StartTime by the offset and calculate its position in the cycle
-
             int cycle = (int)Math.Floor((hitObject.StartTime - offset) / beatDuration);
 
             int adjustedTime = (int)Math.Round(hitObject.StartTime - offset - (cycle * beatDuration));
-
-            if (IsCloseTo(adjustedTime, beatDuration, 32))  // 1/3 rhythms
-            {
-                this.noteType = 16;  // Whole tick
-            }
-            if (IsCloseTo(adjustedTime, beatDuration, 24))  // 1/3 rhythms
-            {
-                this.noteType = 12;  // Whole tick
-            }
-            if (IsCloseTo(adjustedTime, beatDuration, 16))  // 1/3 rhythms
-            {
-                this.noteType = 16;  // Whole tick
-            }
-            if (IsCloseTo(adjustedTime, beatDuration, 12))  // 1/3 rhythms
-            {
-                this.noteType = 12;  // Whole tick
-            }
-            if (IsCloseTo(adjustedTime, beatDuration, 4))  // 1/3 rhythms
-            {
-                this.noteType = 4;  // Whole tick
-            }
-            if (IsCloseTo(adjustedTime, beatDuration, 3))  // 1/3 rhythms
-            {
-                this.noteType = 3;  // Whole tick
-            }
-            if (IsCloseTo(adjustedTime, beatDuration, 2))  // 1/3 rhythms
-            {
-                this.noteType = 2;  // Whole tick
-            }
-            if (IsCloseTo(adjustedTime, beatDuration, 1))  // 1/3 rhythms
-            {
-                this.noteType = 1;  // Whole tick
-            }
+            
+            NoteDivisor[] divisors = (NoteDivisor[])Enum.GetValues(typeof(NoteDivisor));
 
             OsbSprite sprite = null;
 
-            if (isColored == false)
-            {
-                switch (this.noteType)
+            foreach (NoteDivisor divisor in divisors) {
+                int tick = (int)divisor;
+
+                if (IsCloseTo(adjustedTime, beatDuration, tick))
                 {
-                    case 1:
-                        sprite = layer.CreateSprite("sb/sprites/1.png");
-                        break;
-                    case 2:
-                        sprite = layer.CreateSprite("sb/sprites/2.png");
-                        break;
-                    case 3:
-                        sprite = layer.CreateSprite("sb/sprites/3.png");
-                        break;
-                    case 4:
-                        sprite = layer.CreateSprite("sb/sprites/4.png");
-                        break;
-                    case 12:
-                        sprite = layer.CreateSprite("sb/sprites/12.png");
-                        break;
-                    case 16:
-                        sprite = layer.CreateSprite("sb/sprites/16.png");
-                        break;
-                    default:
-                        this.noteType = 1;
-                        sprite = layer.CreateSprite("sb/sprites/1.png");
-                        break;
+                    this.noteType = divisor.getNoteType();
+                    sprite = !isColored ? layer.CreateSprite($"sb/sprites/{tick}.png") : layer.CreateSprite("sb/sprites/arrow.png");
+                    break;
+                } else {
+                    this.noteType = (int)NoteDivisor.wholeTick;
+                    sprite = layer.CreateSprite("sb/sprites/arrow.png");
                 }
-            }
-            else
-            {
-                sprite = layer.CreateSprite("sb/sprites/arrow.png");
             }
 
             this.columnType = column.type;
